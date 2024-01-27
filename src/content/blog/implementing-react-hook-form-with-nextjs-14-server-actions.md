@@ -291,18 +291,22 @@ export default function ReactHookForm({ jokes }: { jokes: Joke[] }) {
 
 We pass the initial data and a function to update data optimistically. We can use the `optimisticJokes` return value somewhere else to display the data.
 
-Then we add the `addOptimisticJoke()` inside our `onSubmit()` function.
+Then we add the `addOptimisticJoke()` inside our `onSubmit()` function. In addition, we must use a transition around the state update.
 
 ```tsx
+  const [, startTransition] = useTransition();
+
   const onSubmit = handleSubmit(async data => {
-    addOptimisticJoke(data);
-    const response = await createJoke(data);
-    if (response?.error) {
-      toast.error(response.error);
-    } else {
-      toast.success('Joke added!');
-      reset();
-    }
+    startTransition(async () => {
+      addOptimisticJoke(data);
+      const response = await createJoke(data);
+      if (response?.error) {
+        toast.error(response.error);
+      } else {
+        toast.success('Joke added!');
+        reset();
+      }
+    });
   });
 ```
 
@@ -354,6 +358,7 @@ export default function ReactHookForm({ jokes }: { jokes: Joke[] }) {
       return [...state, newJoke];
     },
   );
+  const [, startTransition] = useTransition();
 
   const {
     handleSubmit,
@@ -366,14 +371,16 @@ export default function ReactHookForm({ jokes }: { jokes: Joke[] }) {
   });
 
   const onSubmit = handleSubmit(async data => {
-    addOptimisticJoke(data);
-    const response = await createJoke(data);
-    if (response?.error) {
-      toast.error(response.error);
-    } else {
-      toast.success('Joke added!');
-      reset();
-    }
+    startTransition(async () => {
+      addOptimisticJoke(data);
+      const response = await createJoke(data);
+      if (response?.error) {
+        toast.error(response.error);
+      } else {
+        toast.success('Joke added!');
+        reset();
+      }
+    });
   });
 
   return (
