@@ -2,7 +2,7 @@ import type { Site, SocialObjects } from "./types";
 
 export const SITE: Site = {
   website: "https://aurorawalberg.no/",
-  author: "Aurora Walberg",
+  author: "Aurora Walberg Scharff",
   desc: "My fullstack developer blog",
   title: "Aurora Walberg Scharff",
   ogImage: "dev-girl.png",
