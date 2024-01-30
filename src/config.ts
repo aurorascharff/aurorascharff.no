@@ -22,8 +22,20 @@ export const LOGO_IMAGE = {
 export const SOCIALS: SocialObjects = [
   {
     name: "Github",
-    href: "https://github.com/aurorawalberg",
+    href: "https://github.com/aurorascharff",
     linkTitle: ` ${SITE.title} on Github`,
+    active: true,
+  },
+  {
+    name: "Twitter",
+    href: "https://twitter.com/aurorascharff",
+    linkTitle: `${SITE.title} on Twitter`,
+    active: true,
+  },
+  {
+    name: "LinkedIn",
+    href: "https://www.linkedin.com/in/aurora-walberg-scharff-a86b88188/",
+    linkTitle: `${SITE.title} on LinkedIn`,
     active: true,
   },
   {
@@ -39,22 +51,10 @@ export const SOCIALS: SocialObjects = [
     active: false,
   },
   {
-    name: "LinkedIn",
-    href: "https://www.linkedin.com/in/aurora-lid-walberg-a86b88188",
-    linkTitle: `${SITE.title} on LinkedIn`,
-    active: true,
-  },
-  {
     name: "Mail",
     href: "mailto:yourmail@gmail.com",
     linkTitle: `Send an email to ${SITE.title}`,
     active: false,
-  },
-  {
-    name: "Twitter",
-    href: "https://twitter.com/aurora_walberg",
-    linkTitle: `${SITE.title} on Twitter`,
-    active: true,
   },
   {
     name: "Twitch",
