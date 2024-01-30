@@ -3,7 +3,7 @@ layout: ../layouts/AboutLayout.astro
 title: "About me"
 ---
 
-Hello, my name is Aurora Walberg. I'm a full-stack cloud developer from Norway. I'm skilled in multiple technologies and domains such as React, Angular, .NET, and Azure.
+Hello, my name is Aurora. I'm a full-stack cloud developer from Norway. I'm skilled in multiple technologies and domains such as React, Angular, .NET, and Azure.
 
 I hold a bachelor's degree in Robotics and Intelligent Systems, with knowledge of engineering mathematics, robotics, algorithms, data structures, and computer architecture.
 
