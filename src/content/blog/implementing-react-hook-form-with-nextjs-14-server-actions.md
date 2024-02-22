@@ -98,7 +98,7 @@ Then let's add the form labels and inputs. Our form will allow us to submit a jo
 Let's add our `onSubmit` function. We will fill this out later. For now we can just log the form data to the console and reset the form.
 
 ```tsx
-  const onSubmit = handleSubmit(async data => {
+  const onSubmit = handleSubmit(data => {
     console.log('data', data);
     reset();
   });
@@ -122,7 +122,7 @@ export default function ReactHookForm() {
     mode: 'onChange',
   });
 
-  const onSubmit = handleSubmit(async data => {
+  const onSubmit = handleSubmit(data => {
     console.log('data', data);
     reset();
   });
@@ -296,7 +296,7 @@ Then we add the `addOptimisticJoke()` inside our `onSubmit()` function. In addit
 ```tsx
   const [, startTransition] = useTransition();
 
-  const onSubmit = handleSubmit(async data => {
+  const onSubmit = handleSubmit(data => {
     startTransition(async () => {
       addOptimisticJoke(data);
       const response = await createJoke(data);
@@ -370,7 +370,7 @@ export default function ReactHookForm({ jokes }: { jokes: Joke[] }) {
     resolver: zodResolver(JokeSchema),
   });
 
-  const onSubmit = handleSubmit(async data => {
+  const onSubmit = handleSubmit(data => {
     startTransition(async () => {
       addOptimisticJoke(data);
       const response = await createJoke(data);
