@@ -24,7 +24,7 @@ I do not have a separate repository for this blog post, but you can find working
 
 ## Table of contents
 
-## Pre-requisites
+## Prerequisites
 
 This method applies to an existing Next.js 13 or 14 app that uses the App Router. If you don't have an existing app, you can create a starter app using the following command:
 
@@ -228,9 +228,15 @@ import { prisma } from '@/db';
 import { type JokeSchemaType } from '@/src/validations/jokeSchema';
 
 export async function createJoke(data: JokeSchemaType) {
-  await prisma.joke.create({
-    data,
-  });
+  try {
+    await prisma.joke.create({
+      data,
+    });
+  } catch (error) {
+    return {
+      error: 'SERVER ERROR',
+    };
+  }
   revalidatePath('/');
 }
 ```
@@ -408,7 +414,7 @@ export default function ReactHookForm({ jokes }: { jokes: Joke[] }) {
 
 Of course, add your own styling and make it look nice.
 
-A working example of this code can as mentioned be found [here](https://github.com/aurorawalberg/next14-remix-jokes-rebuild/blob/main/src/app/demo/forms/_components/ReactHookForm.tsx).
+A working example of this code can as mentioned be found [here](https://github.com/aurorascharff/next14-remix-jokes-rebuild/blob/main/app/demo/forms/_components/ReactHookForm.tsx).
 
 ## Conclusion
 
