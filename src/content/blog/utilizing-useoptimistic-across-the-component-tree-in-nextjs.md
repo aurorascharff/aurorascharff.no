@@ -21,14 +21,6 @@ Please note that the code here has been simplified for the sake of getting the p
 
 ## Table of contents
 
-## Prerequisites
-
-This method applies to an existing Next.js 13 or 14 app that uses the App Router. If you don't have an existing app, you can create a starter app using the following command:
-
-```bash
-npx create-next-app@latest
-```
-
 ## The Use-Case
 
 Let's say we have a simple server component with a list of jokes.
