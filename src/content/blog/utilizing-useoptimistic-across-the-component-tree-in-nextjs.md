@@ -15,7 +15,7 @@ description: The React Canary (soon to be React 19) hook useOptimistic is a powe
 
 The React Canary (soon to be React 19) hook `useOptimistic()` is a powerful tool for building fast and responsive UIs. It allows you to update the UI optimistically while waiting for the server to respond.
 
-I've been struggling with the practicality of the hook when working across the component tree, especially when working across layouts and pages since you can't pass props. I found a solution now - a provider. I do not know if this is the best solution, but it solves the problem I have been wanting to solve. Feedback appreciated!
+I've been struggling with the practicality of the hook when working across the component tree, especially when working across layouts and pages since you can't pass props. I found a solution now - a provider using React Context. I do not know if this is the best solution, but it solves the problem I have been wanting to solve. Feedback appreciated!
 
 Please note that the code here has been simplified for the sake of getting the point across.
 
@@ -241,8 +241,8 @@ export default function JokesList() {
 }
 ```
 
-And that's it! We can now use useOptimistic across the component tree, and avoid any uneccessary prop drilling or `"use client"` directives.
+And that's it! When we add a new joke, it will be added to the list optimistically, and if there's an error, the optimistic state will be rolled back.
 
 ## Conclusion
 
-In this blog post, I've shown you how to use useOptimistic across the component tree in Next.js. By passing server-fetched data to a provider and using the `useOptimistic()` hook inside it, we don't have to pass any props, and the simplicity of useOptimistic "merging" the client and server state is retained.
+In this blog post, I've shown you how to use useOptimistic across the component tree in Next.js. By passing server-fetched data to a provider and using the `useOptimistic()` hook inside it, we can use it across layouts and pages, we don't have to pass any props, and the simplicity of useOptimistic "merging" the client and server state is retained.
