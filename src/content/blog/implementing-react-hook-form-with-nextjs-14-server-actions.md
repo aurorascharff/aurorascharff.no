@@ -19,7 +19,7 @@ There seems to be a misconception that we do not need React Hook Form now that w
 
 We are going to be using Zod for validation and Prisma for our database. We will also be using Toast for displaying error messages. Then we will use the new React hook `useOptimistic()` to add optimistic UI in the end.
 
-I do not have a separate repository for this blog post, but you can find working code [here](https://github.com/aurorawalberg/next14-remix-jokes-rebuild/blob/main/src/app/demo/forms/_components/ReactHookForm.tsx).
+I do not have a separate repository for this blog post, but you can find working code [here](https://github.com/aurorascharff/next14-remix-jokes-rebuild/blob/main/app/demo/forms/_components/ReactHookForm.tsx).
 
 ## Table of contents
 
