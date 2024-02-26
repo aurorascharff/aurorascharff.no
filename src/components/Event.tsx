@@ -30,7 +30,7 @@ export default function Event({ frontmatter }: Props) {
         </h2>
       )}
       <Datetime hideTime={true} datetime={date} />
-      <p>{description}</p>
+      {/* <p>{description}</p> */}
     </li>
   );
 }
