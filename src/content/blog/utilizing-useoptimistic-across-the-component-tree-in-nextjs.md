@@ -2,7 +2,7 @@
 author: Aurora Walberg Scharff
 pubDatetime: 2024-02-24T15:22:00Z
 title: Utilizing useOptimistic() across the component tree in Next.js
-postSlug: utilizing-useoptimistic-across-the-component-tree-in-nextjs
+slug: utilizing-useoptimistic-across-the-component-tree-in-nextjs
 featured: true
 draft: false
 tags:
@@ -94,12 +94,12 @@ We want to be able to update the jokes with the `ùseOptimistic()` hook, and hav
 We are tied to the `useOptimistic` hook's structure:
 
 ```tsx
-  const [optimisticJokes, addOptimisticJoke] = useOptimistic(
-    jokes,
-    (state: JokeSchemaType[], newJoke: JokeSchemaType) => {
-      return [...state, newJoke];
-    },
-  );
+const [optimisticJokes, addOptimisticJoke] = useOptimistic(
+  jokes,
+  (state: JokeSchemaType[], newJoke: JokeSchemaType) => {
+    return [...state, newJoke];
+  }
+);
 ```
 
 However, our components are not in the same component tree. The list of jokes is in the layout, and the form is in a page a couple routes down. This means we can't pass props between them.
@@ -167,8 +167,10 @@ Now we can wrap our components in the provider.
 
 ```tsx
 // app/layout.tsx
-export default async function Layout({children}: {
-  children: React.ReactNode
+export default async function Layout({
+  children,
+}: {
+  children: React.ReactNode;
 }) {
   const jokes = await getJokes(); // Function to fetch jokes from the db
 

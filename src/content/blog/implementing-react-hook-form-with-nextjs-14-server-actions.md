@@ -2,7 +2,7 @@
 author: Aurora Walberg Scharff
 pubDatetime: 2023-12-30T15:22:00Z
 title: Implementing React Hook Form with Next.js 14 and Server Actions
-postSlug: implementing-react-hook-form-with-nextjs-14-server-actions
+slug: implementing-react-hook-form-with-nextjs-14-server-actions
 featured: true
 draft: false
 tags:
@@ -10,8 +10,7 @@ tags:
   - Next.js
   - React Hook Form
   - Server Actions
-description:
-  React Hook Form is a popular library for building interactive forms in React. In this blog post, I'll explain how to use React Hook Form with Next.js 14 and Server Actions.
+description: React Hook Form is a popular library for building interactive forms in React. In this blog post, I'll explain how to use React Hook Form with Next.js 14 and Server Actions.
 ---
 
 React Hook Form is a popular library for building forms in React. In this blog post, I'll explain how to use React Hook Form with Next.js 14 and Server Actions.
@@ -53,64 +52,66 @@ npm install @hookform/resolvers
 React Hook Form is client-side only, so our starting point will be a `"use client"` component.
 
 ```tsx
-'use client';
+"use client";
 
 export default function ReactHookForm() {
-  return (
-    <div>ReactHookForm</div>
-  )
+  return <div>ReactHookForm</div>;
 }
 ```
 
-Lets start by making a React Hook Form. We will be using the `useForm()` hook to create a form. The `onChange` mode will be used to validate the form as the user types. We will need the methods `handleSubmit()`, `register()`, `reset()`, and `formState` from  React Hook Form.
+Lets start by making a React Hook Form. We will be using the `useForm()` hook to create a form. The `onChange` mode will be used to validate the form as the user types. We will need the methods `handleSubmit()`, `register()`, `reset()`, and `formState` from React Hook Form.
 
 ```tsx
-  const {
-    handleSubmit,
-    register,
-    reset,
-    formState: { isSubmitting, isValid },
-  } = useForm({
-    mode: 'onChange',
-  });
+const {
+  handleSubmit,
+  register,
+  reset,
+  formState: { isSubmitting, isValid },
+} = useForm({
+  mode: "onChange",
+});
 ```
 
 Then let's add the form labels and inputs. Our form will allow us to submit a joke to a database. We will be using the `register()` method to register the inputs. We will also be using the `isSubmitting` and `isValid` variables to disable the submit button when the form is submitting or invalid.
 
 ```tsx
-  return (
-    <form onSubmit={onSubmit}>
-      <div>
-        <label htmlFor="name">Name:</label>
-        <input {...register('name')} id="name" name="name" type="text" />
-      </div>
-      <div>
-        <label htmlFor="content">Content:</label>
-        <textarea {...register('content')} id="content" name="content" />
-      </div>
-      <button className="self-end" disabled={isSubmitting || !isValid} type="submit">
-        {isSubmitting ? 'Adding...' : 'Add'}
-      </button>
-    </form>
-  );
+return (
+  <form onSubmit={onSubmit}>
+    <div>
+      <label htmlFor="name">Name:</label>
+      <input {...register("name")} id="name" name="name" type="text" />
+    </div>
+    <div>
+      <label htmlFor="content">Content:</label>
+      <textarea {...register("content")} id="content" name="content" />
+    </div>
+    <button
+      className="self-end"
+      disabled={isSubmitting || !isValid}
+      type="submit"
+    >
+      {isSubmitting ? "Adding..." : "Add"}
+    </button>
+  </form>
+);
 ```
 
 Let's add our `onSubmit` function. We will fill this out later. For now we can just log the form data to the console and reset the form.
 
 ```tsx
-  const onSubmit = handleSubmit(data => {
-    console.log('data', data);
-    reset();
-  });
+const onSubmit = handleSubmit(data => {
+  console.log("data", data);
+  reset();
+});
 ```
 
 The full code for our initial React Hook Form looks like this:
 
 ```tsx
-'use client';
+"use client";
 
-import React from 'react';
-import { useForm } from 'react-hook-form';
+import React from "react";
+import { useForm } from "react-hook-form";
 
 export default function ReactHookForm() {
   const {
@@ -119,28 +120,32 @@ export default function ReactHookForm() {
     reset,
     formState: { isSubmitting, isValid },
   } = useForm({
-    mode: 'onChange',
+    mode: "onChange",
   });
 
   const onSubmit = handleSubmit(data => {
-    console.log('data', data);
+    console.log("data", data);
     reset();
   });
 
   return (
-      <form onSubmit={onSubmit}>
-        <div>
-          <label htmlFor="name">Name:</label>
-          <input {...register('name')} id="name" name="name" type="text" />
-        </div>
-        <div>
-          <label htmlFor="content">Content:</label>
-          <textarea {...register('content')} id="content" name="content" />
-        </div>
-        <button className="self-end" disabled={isSubmitting || !isValid} type="submit">
-          {isSubmitting ? 'Adding...' : 'Add'}
-        </button>
-      </form>
+    <form onSubmit={onSubmit}>
+      <div>
+        <label htmlFor="name">Name:</label>
+        <input {...register("name")} id="name" name="name" type="text" />
+      </div>
+      <div>
+        <label htmlFor="content">Content:</label>
+        <textarea {...register("content")} id="content" name="content" />
+      </div>
+      <button
+        className="self-end"
+        disabled={isSubmitting || !isValid}
+        type="submit"
+      >
+        {isSubmitting ? "Adding..." : "Add"}
+      </button>
+    </form>
   );
 }
 ```
@@ -171,11 +176,11 @@ The `JokeSchemaType` and `JokeSchema` are defined as follows:
 ```tsx
 export const JokeSchema = z.object({
   content: z.string().min(5, {
-    message: 'Content must be at least 5 characters long',
+    message: "Content must be at least 5 characters long",
   }),
   id: z.string().optional(),
   name: z.string().min(2, {
-    message: 'Name must be at least 2 characters long',
+    message: "Name must be at least 2 characters long",
   }),
 });
 
@@ -185,21 +190,23 @@ export type JokeSchemaType = z.infer<typeof JokeSchema>;
 Next, we can display the validation errors. They will appear after the field has been started, but not valid, and removed once the field is valid.
 
 ```tsx
-  return (
-      <form onSubmit={onSubmit}>
-        <div>
-          <label htmlFor="name">Name:</label>
-          <input {...register('name')} id="name" name="name" type="text" />
-          {errors?.name && <p className="text-red">{errors?.name?.message}</p>}
-        </div>
-        <div>
-          <label htmlFor="content">Content:</label>
-          <textarea {...register('content')} id="content" name="content" />
-          {errors?.content && <p className="text-red">{errors?.content?.message}</p>}
-        </div>
-        ...
-      </form>
-  );
+return (
+  <form onSubmit={onSubmit}>
+    <div>
+      <label htmlFor="name">Name:</label>
+      <input {...register("name")} id="name" name="name" type="text" />
+      {errors?.name && <p className="text-red">{errors?.name?.message}</p>}
+    </div>
+    <div>
+      <label htmlFor="content">Content:</label>
+      <textarea {...register("content")} id="content" name="content" />
+      {errors?.content && (
+        <p className="text-red">{errors?.content?.message}</p>
+      )}
+    </div>
+    ...
+  </form>
+);
 ```
 
 ## Submitting with Server Actions
@@ -207,25 +214,25 @@ Next, we can display the validation errors. They will appear after the field has
 Let's now implement the `onSubmit` function. We will be using Server Actions to submit the form data to the server. We can call it async and await the response. If there is an error, we can display it using Toast. If there is no error, we can display a success message and reset the form.
 
 ```tsx
-  const onSubmit = handleSubmit(async data => {
-    const response = await createJoke(data);
-    if (response?.error) {
-      toast.error(response.error);
-    } else {
-      toast.success('Joke added!');
-      reset();
-    }
-  });
+const onSubmit = handleSubmit(async data => {
+  const response = await createJoke(data);
+  if (response?.error) {
+    toast.error(response.error);
+  } else {
+    toast.success("Joke added!");
+    reset();
+  }
+});
 ```
 
 The `createJoke()` function is defined as follows:
 
 ```tsx
-'use server';
+"use server";
 
-import { revalidatePath } from 'next/cache';
-import { prisma } from '@/db';
-import { type JokeSchemaType } from '@/src/validations/jokeSchema';
+import { revalidatePath } from "next/cache";
+import { prisma } from "@/db";
+import { type JokeSchemaType } from "@/src/validations/jokeSchema";
 
 export async function createJoke(data: JokeSchemaType) {
   try {
@@ -234,10 +241,10 @@ export async function createJoke(data: JokeSchemaType) {
     });
   } catch (error) {
     return {
-      error: 'SERVER ERROR',
+      error: "SERVER ERROR",
     };
   }
-  revalidatePath('/');
+  revalidatePath("/");
 }
 ```
 
@@ -300,20 +307,20 @@ We pass the initial data and a function to update data optimistically. We can us
 Then we add the `addOptimisticJoke()` inside our `onSubmit()` function. In addition, we must use a transition around the state update.
 
 ```tsx
-  const [, startTransition] = useTransition();
+const [, startTransition] = useTransition();
 
-  const onSubmit = handleSubmit(data => {
-    startTransition(async () => {
-      addOptimisticJoke(data);
-      const response = await createJoke(data);
-      if (response?.error) {
-        toast.error(response.error);
-      } else {
-        toast.success('Joke added!');
-        reset();
-      }
-    });
+const onSubmit = handleSubmit(data => {
+  startTransition(async () => {
+    addOptimisticJoke(data);
+    const response = await createJoke(data);
+    if (response?.error) {
+      toast.error(response.error);
+    } else {
+      toast.success("Joke added!");
+      reset();
+    }
   });
+});
 ```
 
 Lastly, we update our createJoke function to revalidate on errors. This will remove the optimistic data if there is an error.

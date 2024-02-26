@@ -2,7 +2,7 @@
 author: Aurora Walberg Scharff
 pubDatetime: 2023-09-10T15:22:00Z
 title: Running tests with RTL and Vitest on internationalized React Server Components in Next.js 13
-postSlug: running-tests-with-rtl-and-vitest-on-internationalized-react-server-components-in-next13
+slug: running-tests-with-rtl-and-vitest-on-internationalized-react-server-components-in-next13
 featured: true
 draft: false
 tags:
@@ -10,8 +10,7 @@ tags:
   - Next.js
   - Testing
   - i18n
-description:
-  Considering the relatively new React Server Components (RSC) and Next.js 13, there is not a lot of documentation on how to test them. In this blog post, I'll explain a method I found to work for running tests with Vitest and RTL (React Testing Library) on React Server Components that utilizes internationalization (i18n) via the next-international package.
+description: Considering the relatively new React Server Components (RSC) and Next.js 13, there is not a lot of documentation on how to test them. In this blog post, I'll explain a method I found to work for running tests with Vitest and RTL (React Testing Library) on React Server Components that utilizes internationalization (i18n) via the next-international package.
 ---
 
 Testing is a crucial part of any software development process, ensuring that your code functions as expected and maintains its integrity as your application evolves. Considering the relatively new React Server Components (RSC) and Next.js 13, there is not a lot of documentation on how to test them. In this blog post, I'll explain a method I found to work for running tests with Vitest and RTL (React Testing Library) on React Server Components that utilizes internationalization (i18n) via the next-international package.
@@ -45,33 +44,33 @@ Make sure your vitest config file looks something like this:
 
 ```js
 // vitest.config.js
-import react from '@vitejs/plugin-react';
-import viteTsconfigPaths from 'vite-tsconfig-paths';
-import { configDefaults, defineConfig } from 'vitest/config';
+import react from "@vitejs/plugin-react";
+import viteTsconfigPaths from "vite-tsconfig-paths";
+import { configDefaults, defineConfig } from "vitest/config";
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react(), viteTsconfigPaths()],
   test: {
-    environment: 'jsdom',
+    environment: "jsdom",
     globals: true,
-    setupFiles: 'src/setupTests.ts',
+    setupFiles: "src/setupTests.ts",
   },
 });
 ```
 
-Notice especially the `setupFiles` property, which points to a file that will be run before each test. Create this file inside the `/src` folder (or at the root if not using a `/src`  folder) and add the following code:
+Notice especially the `setupFiles` property, which points to a file that will be run before each test. Create this file inside the `/src` folder (or at the root if not using a `/src` folder) and add the following code:
 
 ```ts
 // src/setupTests.ts
-import '@testing-library/jest-dom';
+import "@testing-library/jest-dom";
 ```
 
 Now we have set up Vitest with Jest and React Testing Library. We will configure this file further later.
 
 ## Testing React Server Components
 
-Lets say we have an async React Server Component called `HelloWorld.tsx` that we want to test. *Note*: When a server component isn't async, we can test it normally. However, if we are fetching async data, the components has to be async. In this case there is no data, but there could have been. It looks something like this:
+Lets say we have an async React Server Component called `HelloWorld.tsx` that we want to test. _Note_: When a server component isn't async, we can test it normally. However, if we are fetching async data, the components has to be async. In this case there is no data, but there could have been. It looks something like this:
 
 ```tsx
 // src/components/HelloWorld.tsx
@@ -82,21 +81,20 @@ export default async function HelloWorld() {
     </div>
   );
 }
-
 ```
 
 Let's write a test for this component. We create a file called `HelloWorld.test.tsx`.
 
 ```tsx
 // src/components/tests/HelloWorld.test.tsx
-import { screen, render } from '@testing-library/react';
-import HelloWorld from '../HelloWorld';
+import { screen, render } from "@testing-library/react";
+import HelloWorld from "../HelloWorld";
 
-describe('HelloWorld', () => {
-  it('renders ', async () => {
+describe("HelloWorld", () => {
+  it("renders ", async () => {
     render(<HelloWorld />);
 
-    expect(screen.getByTestId('hello-world')).toHaveTextContent('Hello World');
+    expect(screen.getByTestId("hello-world")).toHaveTextContent("Hello World");
   });
 });
 ```
@@ -113,9 +111,9 @@ The test fails with the following error:
 Error: Objects are not valid as a React child (found: [object Promise]). If you meant to render a collection of children, use an array instead.
 ```
 
-This is because the component is async, and we need to use `await` to get the component before we can render it. At the moment there is not a lot of documentation on testing React Server Components, but there is an ongoing discussion on the [RTL GitHub](https://github.com/testing-library/react-testing-library/issues/1209). For now I am using a workaround from there by *caleb531*. We need to create a custom render function that uses `await` to get the component before rendering it. Using it results in the following modified test:
+This is because the component is async, and we need to use `await` to get the component before we can render it. At the moment there is not a lot of documentation on testing React Server Components, but there is an ongoing discussion on the [RTL GitHub](https://github.com/testing-library/react-testing-library/issues/1209). For now I am using a workaround from there by _caleb531_. We need to create a custom render function that uses `await` to get the component before rendering it. Using it results in the following modified test:
 
-```tsx  
+```tsx
 // src/components/tests/HelloWorld.test.tsx
 ...
 import { renderServerComponent } from '@/test-utils/renderServerComponent';
@@ -152,7 +150,7 @@ Another solution is to follow the [recommended workaround](https://github.com/te
 
 If using this method your test calls will look like this:
 
-```tsx  
+```tsx
 // src/components/tests/HelloWorld.test.tsx
 ...
 import { render } from '@testing-library/react';
@@ -180,14 +178,14 @@ Now let's say we have an internationalized React Server Component called `HelloW
 
 ```tsx
 // src/components/HelloWorld.tsx
-import { getI18n } from '@/locales/server';
+import { getI18n } from "@/locales/server";
 
 export default async function HelloWorld() {
   const t = await getI18n();
 
   return (
     <div>
-      <h1 data-testid="hello-world">{t('helloWorld')}</h1>
+      <h1 data-testid="hello-world">{t("helloWorld")}</h1>
     </div>
   );
 }
@@ -233,10 +231,10 @@ And it runs again! Let's mock all the next-international functions we need to us
 
 ```ts
 beforeEach(() => {
-  vi.mock('@/locales/server', async () => {
+  vi.mock("@/locales/server", async () => {
     return {
       getCurrentLocale: () => {
-        return 'en';
+        return "en";
       },
       getI18n: () => {
         return (str: string) => {
@@ -254,7 +252,7 @@ beforeEach(() => {
     };
   });
 
-  vi.mock('@/locales/client', async () => {
+  vi.mock("@/locales/client", async () => {
     return {
       useChangeLocale: () => {
         return () => {
@@ -262,7 +260,7 @@ beforeEach(() => {
         };
       },
       useCurrentLocale: () => {
-        return 'en';
+        return "en";
       },
       useI18n: () => {
         return (str: string) => {
