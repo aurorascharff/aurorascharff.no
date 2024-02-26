@@ -3,12 +3,12 @@ import { LOCALE } from "@config";
 interface DatetimesProps {
   pubDatetime: string | Date;
   modDatetime: string | Date | undefined | null;
+  hideTime?: boolean;
 }
 
 interface Props extends DatetimesProps {
   size?: "sm" | "lg";
   className?: string;
-  hideTime?: boolean;
 }
 
 export default function Datetime({
@@ -39,6 +39,7 @@ export default function Datetime({
       )}
       <span className={`italic ${size === "sm" ? "text-sm" : "text-base"}`}>
         <FormattedDatetime
+          hideTime={hideTime}
           pubDatetime={pubDatetime}
           modDatetime={modDatetime}
         />
@@ -69,10 +70,9 @@ const FormattedDatetime = ({
 
   return (
     <>
-      {date}
+      <time dateTime={myDatetime.toISOString()}>{date}</time>
       {!hideTime && (
         <>
-          <time dateTime={myDatetime.toISOString()}>{date}</time>
           <span aria-hidden="true"> | </span>
           <span className="sr-only">&nbsp;at&nbsp;</span>
           <span className="text-nowrap">{time}</span>
