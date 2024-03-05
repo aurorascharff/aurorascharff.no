@@ -7,7 +7,7 @@ Hello, my name is Aurora. I'm a full-stack cloud developer from Norway. I'm skil
 
 I hold a bachelor's degree in Robotics and Intelligent Systems, with knowledge of engineering mathematics, robotics, algorithms, data structures, and computer architecture.
 
-Recently I've been focusing on web development and staying updated on everything that's happening there. Currently I'm working projects using React Server Components and the Next.js App Router.
+Recently I've been focusing on web development and staying updated on everything that's happening there, for instance researching frameworks and rendering strategies. Currently I'm working projects using React Server Components and the Next.js App Router.
 
 After working for a couple of years at a financial technology startup, I'm continuing to develop as a consultant at Inmeta. I enjoy solving problems, learning new things, and sharing knowledge.
 
