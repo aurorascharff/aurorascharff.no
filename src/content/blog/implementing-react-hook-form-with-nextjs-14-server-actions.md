@@ -316,8 +316,8 @@ const onSubmit = handleSubmit(data => {
     const response = await createJoke(data);
     if (response?.error) {
       toast.error(response.error);
-      setValue("name", data.name);
-      setValue("content", data.content);
+      setValue("name", data.name, { shouldValidate: true });
+      setValue("content", data.content, { shouldValidate: true });
     }
   });
 });
@@ -357,8 +357,8 @@ export default function ReactHookForm({ jokes }: { jokes: Joke[] }) {
       const response = await createJoke(data);
       if (response?.error) {
         toast.error(response.error);
-        setValue('name', data.name);
-        setValue('content', data.content);
+        setValue('name', data.name, { shouldValidate: true });
+        setValue('content', data.content, { shouldValidate: true });
       }
     });
   });
