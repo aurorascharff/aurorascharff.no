@@ -304,56 +304,23 @@ export default function ReactHookForm({ jokes }: { jokes: Joke[] }) {
 
 We pass the initial data and a function to update data optimistically. We can use the `optimisticJokes` return value somewhere else to display the data.
 
-Then we add the `addOptimisticJoke()` inside our `onSubmit()` function. In addition, we must use a transition around the state update.
+Then we add the `addOptimisticJoke()` inside our `onSubmit()` function. In addition, we should use a transition around the optimistic update and server action call. We'll move the `reset()` function to run right after the optimistic state update, and then rollback on error.
 
 ```tsx
-const [, startTransition] = useTransition();
-
 const onSubmit = handleSubmit(data => {
   startTransition(async () => {
     addOptimisticJoke(data);
+    reset();
     const response = await createJoke(data);
     if (response?.error) {
       toast.error(response.error);
+      setValue("name", data.name);
+      setValue("content", data.content);
     } else {
       toast.success("Joke added!");
-      reset();
     }
   });
 });
-```
-
-Lastly, we update our createJoke function to revalidate on errors. This will remove the optimistic data if there is an error.
-
-```tsx
-'use server';
-...
-
-export async function createJoke(data: JokeSchemaType) {
-  const result = JokeSchema.safeParse(data);
-
-  if (!result.success) {
-    const errorMessages = result.error.issues.reduce((prev, issue) => {
-      return (prev += issue.message);
-    }, '');
-    revalidatePath('/');
-    return {
-      error: errorMessages,
-    };
-  }
-
-  try {
-    await prisma.joke.create({
-      data,
-    });
-  } catch (error) {
-    revalidatePath('/');
-    return {
-      error: 'SERVER ERROR',
-    };
-  }
-  revalidatePath('/');
-}
 ```
 
 The final code for our React Hook Form could look something like this:
@@ -386,12 +353,14 @@ export default function ReactHookForm({ jokes }: { jokes: Joke[] }) {
   const onSubmit = handleSubmit(data => {
     startTransition(async () => {
       addOptimisticJoke(data);
+      reset();
       const response = await createJoke(data);
       if (response?.error) {
         toast.error(response.error);
+        setValue('name', data.name);
+        setValue('content', data.content);
       } else {
-        toast.success('Joke added!');
-        reset();
+        toast.success("Joke added!");
       }
     });
   });
