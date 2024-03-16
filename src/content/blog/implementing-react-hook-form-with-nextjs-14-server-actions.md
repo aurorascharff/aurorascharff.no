@@ -304,7 +304,9 @@ export default function ReactHookForm({ jokes }: { jokes: Joke[] }) {
 
 We pass the initial data and a function to update data optimistically. We can use the `optimisticJokes` return value somewhere else to display the data.
 
-Then we add the `addOptimisticJoke()` inside our `onSubmit()` function. In addition, we should use a transition around the optimistic update and server action call. We'll move the `reset()` function to run right after the optimistic state update, and then rollback on error.
+Then we add the `addOptimisticJoke()` inside our `onSubmit()` function. In addition, we should use a transition around the optimistic update and server action call.
+
+We'll move the `reset()` function to run right after the optimistic state update, and then rollback on error. We also don't need to toast on success anymore.
 
 ```tsx
 const onSubmit = handleSubmit(data => {
@@ -316,8 +318,6 @@ const onSubmit = handleSubmit(data => {
       toast.error(response.error);
       setValue("name", data.name);
       setValue("content", data.content);
-    } else {
-      toast.success("Joke added!");
     }
   });
 });
@@ -359,8 +359,6 @@ export default function ReactHookForm({ jokes }: { jokes: Joke[] }) {
         toast.error(response.error);
         setValue('name', data.name);
         setValue('content', data.content);
-      } else {
-        toast.success("Joke added!");
       }
     });
   });
