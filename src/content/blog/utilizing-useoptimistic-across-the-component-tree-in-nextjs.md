@@ -21,7 +21,7 @@ Please note that the code here has been simplified for the sake of getting the p
 
 ## Table of contents
 
-## The Use-Case
+## The use-case
 
 Let's say we have a simple server component with a list of jokes.
 
@@ -89,7 +89,7 @@ export async function createJoke(data: JokeSchemaType) {
 }
 ```
 
-We want to be able to update the jokes with the `ùseOptimistic()` hook, and have it "roll-back" with `revalidatePath()` if there's an error.
+We want to be able to update the jokes with the `ùseOptimistic()` hook, and have it "roll-back" if there's an error.
 
 We are tied to the `useOptimistic` hook's structure:
 
@@ -163,7 +163,7 @@ export function useJokesContext() {
 }
 ```
 
-Now we can wrap our components in the provider.
+Now we can wrap our components in the provider, and pass the data to it.
 
 ```tsx
 // app/layout.tsx
