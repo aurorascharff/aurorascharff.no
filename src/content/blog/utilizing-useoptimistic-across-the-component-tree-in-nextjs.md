@@ -204,26 +204,6 @@ const onSubmit = handleSubmit(data => {
 });
 ```
 
-Then we have to update the `createJoke` server action to revalidate on error so that the optimistic state is rolled back.
-
-```tsx
-"use server";
-
-export async function createJoke(data: Joke) {
-  try {
-    await prisma.joke.create({
-      data,
-    });
-  } catch (error) {
-    revalidatePath("/");
-    return {
-      error: "SERVER ERROR",
-    };
-  }
-  revalidatePath("/");
-}
-```
-
 Finally, we can access the `optimisticJokes` in the list component. To do this we must turn it into a client component.
 
 ```tsx
@@ -243,7 +223,7 @@ export default function JokesList() {
 }
 ```
 
-And that's it! When we add a new joke, it will be added to the list optimistically, and if there's an error, the optimistic state will be rolled back.
+And that's it! When we add a new joke, it will be added to the list optimistically.
 
 ## Conclusion
 
