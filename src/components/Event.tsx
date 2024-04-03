@@ -30,11 +30,11 @@ export default function Event({ frontmatter }: Props) {
               className="pt-[6px]"
               height="30"
               width="30"
-              src="/src/assets/youtube.svg"
+              src="/public/assets/youtube.svg"
             />
           )}
           {link.includes("spotify") && (
-            <img height="30" width="30" src="/src/assets/spotify.svg" />
+            <img height="30" width="30" src="/public/assets/spotify.svg" />
           )}
         </div>
       ) : (
