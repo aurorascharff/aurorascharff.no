@@ -8,4 +8,3 @@ const getSortedEvents = (posts: CollectionEntry<"speaking">[]) =>
   );
 
 export default getSortedEvents;
-  

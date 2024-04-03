@@ -17,13 +17,26 @@ export default function Event({ frontmatter }: Props) {
         </a>
       )}
       {link ? (
-        <a
-          target="_blank"
-          href={link}
-          className="inline-block text-lg font-medium text-skin-accent decoration-dashed underline-offset-4 hover:underline focus-visible:no-underline focus-visible:underline-offset-0"
-        >
-          <h2>{name}</h2>
-        </a>
+        <div className="flex flex-row items-start gap-2">
+          <a
+            target="_blank"
+            href={link}
+            className="inline-block text-lg font-medium text-skin-accent decoration-dashed underline-offset-4 hover:underline focus-visible:no-underline focus-visible:underline-offset-0"
+          >
+            <h2>{name}</h2>
+          </a>
+          {link.includes("youtube") && (
+            <img
+              className="pt-[6px]"
+              height="30"
+              width="30"
+              src="/public/assets/youtube.svg"
+            />
+          )}
+          {link.includes("spotify") && (
+            <img height="30" width="30" src="/public/assets/spotify.svg" />
+          )}
+        </div>
       ) : (
         <h2 className="inline-block text-lg font-medium text-skin-accent">
           {name}
