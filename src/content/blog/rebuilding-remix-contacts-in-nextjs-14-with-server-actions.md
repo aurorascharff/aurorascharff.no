@@ -26,7 +26,7 @@ This app also replaces the Remix stylesheet with a tailwind one and uses Prisma 
 
 ## Executing the Rebuild
 
-Please view the [GutHub repo](https://github.com/aurorascharff/next14-remix-contacts-rebuild) for the full code. These steps are more to give an overview of the process and discuss the descisions made.
+Please view the [GitHub repo](https://github.com/aurorascharff/next14-remix-contacts-rebuild) for the full code. These steps are more to give an overview of the process and discuss the descisions made.
 
 Refer to the [Remix tutorial](https://remix.run/docs/en/main/start/tutorial) for each step of the process.
 
