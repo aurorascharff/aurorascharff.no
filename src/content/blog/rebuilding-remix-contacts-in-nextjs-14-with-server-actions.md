@@ -43,11 +43,7 @@ We make a new folder called `contacts/` and added a dynamic route subfolder `[co
 
 ```tsx
 // components/Favorite.tsx
-type Props = {
-  contact: Contact;
-};
-
-export default function Favorite({ contact }: Props) {
+export default function Favorite({ contact }: { contact: Contact }) {
   const favorite = contact.favorite;
   return (
     <form method="post">
@@ -63,7 +59,7 @@ export default function Favorite({ contact }: Props) {
 }
 ```
 
-We're also getting errors because I'm using `onSubmit` on the form, which is not allowed in server components. I'll split the form into a separate component with `use client`, `DeleteContactButton.tsx`.
+We're also getting errors because I'm using `onSubmit` on the form, which is not allowed in server components. I'll split the form into a separate component with `"use client"`, `DeleteContactButton.tsx`.
 
 In addition, we'll replace the `<form action="edit">` with a Next.js `Link` component to the edit page (and update styling):
 
@@ -85,7 +81,7 @@ Let's just replace the relevant `<a>` tags with Next.js `Link` components.
 
 ### "Loading Data"
 
-We will not be using route loaders, but instead fetch the data inside the root layout by making it async and calling a database query through a file in a new data access layer, `lib/services/getContacts.ts`, and add the tutorial code to the layout component. The database query will be a simple Prisma query, and we mark the file with "server-only" to avoid it being called from client code:¨
+We will not be using route loaders, but instead fetch the data inside the root layout by making it async and calling a database query through a file in a new data access layer, `lib/services/getContacts.ts`, and add the tutorial code to the layout component. The database query will be a simple Prisma query, and we mark the file with `"server-only"` to avoid it being called from client code:
 
 ```tsx
 // app/layout.tsx
@@ -129,7 +125,6 @@ export default async function ContactPage() {
 // lib/services/getContact.ts
 import "server-only";
 
-import { notFound } from "next/navigation";
 import invariant from "tiny-invariant";
 import { prisma } from "../../db";
 
@@ -149,6 +144,11 @@ We can just use the `notFound` function from Next.js to throw the correct error 
 
 ```ts
 // lib/services/getContact.ts
+
+import { notFound } from "next/navigation";
+import invariant from "tiny-invariant";
+import { prisma } from "../../db";
+
 export async function getContact(contactId: string) {
   invariant(contactId, "Missing contactId param");
   const contact = await prisma.contact.findUnique({
@@ -165,7 +165,7 @@ export async function getContact(contactId: string) {
 
 ### "Data Mutations"
 
-We will be following Remix's approach to data mutations, which is to use a form for mutations to ensure progressive enhancement. However, in Remix the action for the route is automatically called, but we will define which function to call per form. We will be binding to React's modified `<form>` element's `action` property to call the server action when the form is submitted.
+We will be following Remix's approach to data mutations, which is to use a form for mutations to ensure progressive enhancement. However, in Remix the action for the route is automatically called for a form submit, but we will define which function to call per form. We will be binding to React's modified `<form>` element's `action` property to call the server action when the form is submitted.
 
 ### "Creating Contacts"
 
@@ -200,7 +200,9 @@ We will create a new subfolder with a new page, `contacts/[contactId]/edit/page.
 
 ### "Updating Contacts with FormData"
 
-We will create a new file in the data access layer, `lib/actions/updateContact.ts`, and bind it to the form in the edit page. However, we have a problem. We don't recieve route params in the server action (unlike the action function in Remix), so we have to pass it to the action from the page. To do this without breaking the progressive enhancement, we could either create a hidden form field, or make a copy of `updateContact` with the `contactId` as initial arguments by using `.bind`. We will go with the latter:
+We will create a new file in the data access layer, `lib/actions/updateContact.ts`, and bind it to the form in the edit page.
+
+However, we have a problem. We don't recieve route params in the server action (unlike the action function in Remix), so we have to pass it to the action from the page. To do this without breaking the progressive enhancement, we could either create a hidden form field, or make a copy of `updateContact` with the `contactId` as initial arguments by using `.bind`. We will go with the latter:
 
 ```tsx
 // app/contacts/[contactId]/edit/page.tsx
@@ -235,7 +237,7 @@ export async function updateContact(contactId: string, formData: FormData) {
 }
 ```
 
-The formData is also passed to the server action, and the contact is updated in the database. Again, we have to revalidate the path, then use Next's redirect to the contact page after the contact has been updated. See the Remix tutorial for more information on the formData object handling.
+The formData is also passed to the server action, and the contact is updated in the database. Again, we have to revalidate the path, then use Next's `redirect` to the navigate to the contact page after the contact has been updated. See the Remix tutorial for more information on the formData object handling.
 
 ### "Redirecting new records to the edit page"
 
@@ -269,11 +271,7 @@ import { usePathname, useRouter } from "next/navigation";
 import React, { useTransition } from "react";
 import type { Contact } from "@prisma/client";
 
-type Props = {
-  contact: Contact;
-};
-
-export default function ContactButton({ contact }: Props) {
+export default function ContactButton({ contact }: { contact: Contact }) {
   const pathName = usePathname();
   const isActive = pathName.includes(`/contacts/${contact.id}`);
   const [isPending, startTransition] = useTransition();
@@ -445,7 +443,7 @@ Then we'll just use these components in place of the `Link` and `form` component
 <NavButton href={`/contacts/${contactId}/edit`}>Edit</NavButton>
 ```
 
-You get the idea. I also added the `ActionButton` inside the `DeleteContactButton` component, and extraced the contact form into a separate client component `ContactForm` to add logic here as well:
+You get the idea. We also add the `ActionButton` inside the `DeleteContactButton` component, and extract the contact form into a separate client component `ContactForm` to add logic here as well:
 
 ```tsx
 // components/ContactForm.tsx
@@ -455,11 +453,7 @@ import React from 'react';
 import { deleteContact } from '../lib/actions/deleteContact';
 import ActionButton from './ActionButton';
 
-type Props = {
-  contact: Contact;
-};
-
-export default function ContactForm({ contact }: Props) {
+export default function ContactForm({ contact }: { contact: Contact }) {
   const updateContactById = updateContact.bind(null, contact.id);
   const { startTransition } = useLoading();
 
@@ -473,6 +467,8 @@ export default function ContactForm({ contact }: Props) {
   return (
     <form action={updateContactById} onSubmit={onSubmit} key={contact.id}>
 ```
+
+Here we also use the `bind` function to pass the contact id to the server action, and replicate the loading state logic.
 
 ### "Deleting Records"
 
@@ -507,11 +503,11 @@ import React from "react";
 import { deleteContact } from "../lib/actions/deleteContact";
 import ActionButton from "./ActionButton";
 
-type Props = {
+export default function DeleteContactButton({
+  contactId,
+}: {
   contactId: string;
-};
-
-export default function DeleteContactButton({ contactId }: Props) {
+}) {
   const deleteContactById = deleteContact.bind(null, contactId);
 
   return (
@@ -549,7 +545,7 @@ We already made an abstraction for navigating and tracking the state, so we can 
 
 ### "URLSearchParams and GET Submissions"
 
-In Next.js, search params are not being passed to layout components, so the search params must be fetched from the client-side hook. I made a client-side `ContactList` component to filter the data based on the search params:
+In Next.js, search params are not being passed to layout components, so the search params must be fetched from the client-side hook. I made a `ContactList` client component to filter the data based on the search params:
 
 ```tsx
 // components/ContactList.tsx
@@ -561,11 +557,7 @@ import React from "react";
 import ContactButton from "./ContactButton";
 import type { Contact } from "@prisma/client";
 
-type Props = {
-  contacts: Contact[];
-};
-
-export default function ContactList({ contacts }: Props) {
+export default function ContactList({ contacts }: { contacts: Contact[] }) {
   const searchParams = useSearchParams();
   const query = searchParams.get("q") || "";
 
@@ -597,7 +589,7 @@ export default function ContactList({ contacts }: Props) {
 }
 ```
 
-This is not the behavior of the Remix tutorial. I would prefer to use the search params in the layout and get contacts based on the query. However, our search is now instant.
+This is not the behavior of the Remix tutorial. I would prefer to use the search params in the layout and get contacts based on the query. At least our search is now quicker.
 
 I'm not entirely sure why this is working without JavaScript. I think it might be because the `useSearchParams` hook behaves as URLSearchParams on the server. I could be completely wrong here, though. Please let me know if you have any insights.
 
@@ -743,7 +735,7 @@ onChange={e => {
 
 ### "Forms Without Navigation"
 
-Since we're using server actions on forms we don't have to worry about the default behavior of the form element. We'll make a new server action to update the favorite flag on the contact, `lib/actions/updateFavorite.ts`. We'll are going to use the same pattern of binding to this function with initial contactId arguments as we did in the `updateContact` function to maintain progressive enhancement:
+Since we're using server actions on forms we don't have to worry about the default page refresh behavior of the form element. We'll make a new server action to update the favorite flag on the contact, `lib/actions/updateFavorite.ts`. We'll are going to use the same pattern of binding to this function with initial `contactId` arguments as we did in the `updateContact` function to maintain progressive enhancement:
 
 ```ts
 // lib/actions/favoriteContact.ts
@@ -775,11 +767,7 @@ import React from "react";
 import { favoriteContact } from "../lib/actions/favoriteContact";
 import type { Contact } from "@prisma/client";
 
-type Props = {
-  contact: Contact;
-};
-
-export default function Favorite({ contact }: Props) {
+export default function Favorite({ contact }: { contact: Contact }) {
   const favorite = contact.favorite;
   const favoriteContactById = favoriteContact.bind(null, contact.id, favorite);
 
@@ -797,7 +785,7 @@ export default function Favorite({ contact }: Props) {
 
 ### "Optimistic UI"
 
-For this task, we will use the new `useOptimistic()` hook. We will create an onSubmit function that will trigger if JavaScript is loaded. The action poroperty will be used as a fallback. Then we can use the optimistic value to display the star-icon. We also have to prevent the default behavior inside our onSubmit, and wrap it in a transition (as instructed by the React docs):
+For this task, we will use the new `useOptimistic()` hook. We will create an `onSubmit` function that will trigger if JavaScript is loaded. The action poroperty will be used as a fallback. Then we can use the optimistic value to display the star-icon. We also have to prevent the default behavior inside our `onSubmit`, and wrap it in a transition (as instructed by the React docs):
 
 ```tsx
 // components/Favorite.tsx
@@ -865,9 +853,9 @@ However, we had to wrap a Suspense component around the `ContactList` and `Searc
 
 Server Actions are queued, and before firing a new one, the previous one must be resolved. In addition, unlike Remix, the actions are not automatically cancelled if fired in quick succession.
 
-This causes problems with our optimistic UI. If a user clicks the favorite button multiple times in quick succession, multipel server actions will fire, and the final value wont update until all of them are done.
+This causes problems with our optimistic UI. If a user clicks the favorite button multiple times in quick succession, multiple server actions will fire, and the final value won't update until all of them are done.
 
-We might want to add some timeout logic to prevent this. Howver, it is a known drawback of Server Actions, and might be worth waiting improvements from the Next.js team.
+We might want to add some timeout logic to prevent this. Howver, it is a known drawback of Server Actions, and we might as well wait for improvements from the Next.js team.
 
 ### The Next.js approach
 
