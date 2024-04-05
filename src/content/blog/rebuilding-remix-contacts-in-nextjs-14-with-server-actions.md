@@ -117,7 +117,7 @@ type PageProps = {
   };
 };
 
-export default async function ContactPage() {
+export default async function ContactPage({ params }: PageProps) {
   const contact = await getContact(params.contactId);
 ```
 
