@@ -288,4 +288,6 @@ That's it! Now we can test our internationalized React Server Components. This m
 
 ## Conclusion
 
-In this blog post, I walked you through what I have learned about running tests with Vitest and RTL on internationalized React Server Components in Next.js 13. I hope this blog post has been helpful to you. Happy testing!
+In this blog post, I walked you through what I have learned about running tests with Vitest and RTL on internationalized React Server Components in Next.js 13.
+
+I hope this post has been helpful. Please let me know if you have any questions or comments, and follow me on [Twitter](https://twitter.com/aurorascharff) for more updates. Happy coding! 🚀
