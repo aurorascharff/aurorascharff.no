@@ -310,7 +310,7 @@ In remix, we would use the `useNavigation()` hook. However, Next.js does not exp
 
 I found the article [Global progress in Next.js](https://buildui.com/posts/global-progress-in-nextjs) by Sam Selikoff and Ryan Toronto on how to create a global progress bar very helpful here - please refer to it for more information.
 
-I tested out adding a `data-pending` to the component firing a global pending state as mentioned in the article [Instant Search Params with React Server Components](https://buildui.com/posts/instant-search-params-with-react-server-components"), however I don't want to add this logic to every component that can trigger a loading state.
+I tested out a simpler approach using the `group-has-` CSS and adding a `data-pending` to the component firing a global pending state as mentioned in the article [Instant Search Params with React Server Components](https://buildui.com/posts/instant-search-params-with-react-server-components). However I don't want to add this logic to every component that can trigger a loading state.
 
 Instead, let's create a global pending state provider that can trigger a common transition for all components inside `providers/LoadingContext.tsx`:
 
