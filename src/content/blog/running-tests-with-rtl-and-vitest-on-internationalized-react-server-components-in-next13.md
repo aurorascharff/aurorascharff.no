@@ -3,7 +3,7 @@ author: Aurora Walberg Scharff
 pubDatetime: 2023-09-10T15:22:00Z
 title: Running tests with RTL and Vitest on internationalized React Server Components in Next.js 13
 slug: running-tests-with-rtl-and-vitest-on-internationalized-react-server-components-in-next13
-featured: true
+featured: false
 draft: false
 tags:
   - React Server Components
