@@ -17,13 +17,13 @@ description: Remix Contacts is Remix's official tutorial. In this post, we'll re
 
 ## Table of contents
 
-## The goal
+## The Goal
 
 - Duplicate the Remix Contacts tutorial in Next.js 14 using React Server Components and Server Actions, while mainataining progressive enhancement.
 
 This app also replaces the Remix stylesheet with a tailwind one and uses Prisma instead of a fake db.
 
-## Executing the rebuild
+## Executing the Rebuild
 
 Please view the [github repo](https://github.com/aurorascharff/next14-remix-contacts-rebuild) for the full code. These steps are more to give an overview of the process and discuss the descisions made.
 
