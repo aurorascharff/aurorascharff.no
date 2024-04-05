@@ -21,7 +21,7 @@ description: Remix Contacts is Remix's official tutorial. In this post, we'll re
 
 - Duplicate the Remix Contacts tutorial in Next.js 14 using React Server Components and Server Actions, while mainataining progressive enhancement.
 
-The correct Nextjs approach might be to use Suspense to handle loading states, but I wanted to replicate the features of Remix tutorial as closely as possible. This app also replaces the Remix stylesheet with a tailwind one and uses Prisma instead of a fake db.
+This app also replaces the Remix stylesheet with a tailwind one and uses Prisma instead of a fake db.
 
 ## Executing the rebuild
 
@@ -848,6 +848,8 @@ As encountered, we had to create a custom provider to handle global navigation e
 I could have just used the `data-pending` attribute on the component firing a global pending state and style the layout based on it. That would also be fine for this example, but I wanted to try out a generalized solution.
 
 Either way, we end up with a lot of boilerplate code to handle this, a trade-off for Next.js' composability.
+
+The correct Nextjs approach might be to use a combination of Suspense and Transitions to handle loading states, but I wanted to replicate the features of Remix tutorial as closely as possible.
 
 ### Problem 2: Search Params in Layouts
 
