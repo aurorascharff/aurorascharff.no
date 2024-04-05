@@ -1,6 +1,6 @@
 ---
 author: Aurora Walberg Scharff
-pubDatetime: 2024-04-05T15:22:00Z
+pubDatetime: 2024-04-05T08:22:00Z
 title: Rebuilding "Remix Contacts" in Next.js 14
 slug: rebuilding-remix-contacts-in-nextjs-14
 featured: true
