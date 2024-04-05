@@ -704,7 +704,7 @@ export default function Search() {
 
 In the Remix tutorial, code is written to avoid the main screen from fading out when the search spinner is active. However, since we are using a singular transition here in this component (and not using our "global navigating" hook), we don't have to worry about this.
 
-Also, I had to wrap a Suspense component around the `ContactList` component in the layout to [resolve build errors and follow best practises](https://nextjs.org/docs/app/api-reference/functions/use-search-params), and locally this does not break progressive enhancement. However, when deployed on vercel, it does. I'm not sure why.
+Also, I had to wrap a Suspense component around the `ContactList` component in the layout to [resolve build errors and follow best practises](https://nextjs.org/docs/app/api-reference/functions/use-search-params), and locally this does not break progressive enhancement. However, when deployed on vercel, it does. I'm not sure why, or if that is normal behavior. Please let me know if you have any insights.
 
 That leaves my `app/layout.tsx` containing this:
 
