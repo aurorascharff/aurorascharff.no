@@ -825,7 +825,7 @@ export default function Favorite({ contact }: { contact: Contact }) {
 
 And thats it! Please refer to the [GitHub repo](https://github.com/aurorascharff/next14-remix-contacts-rebuild) for the full code.
 
-## Discussing the two approaches
+## Discussing the Two Approaches
 
 ### Problem 1: Global Navigation Events
 
@@ -857,7 +857,7 @@ This causes problems with our optimistic UI. If a user clicks the favorite butto
 
 We might want to add some timeout logic to prevent this. Howver, it is a known drawback of Server Actions, and we might as well wait for improvements from the Next.js team.
 
-### The Next.js approach
+### The Next.js Approach
 
 Positives
 
@@ -875,7 +875,7 @@ Negatives
 - Deviates from web standards.
 - Does not progressively enhance as well as the Remix approach.
 
-### The Remix approach
+### The Remix Approach
 
 Positives
 
