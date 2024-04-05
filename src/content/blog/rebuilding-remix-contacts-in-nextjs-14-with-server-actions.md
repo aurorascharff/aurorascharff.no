@@ -12,6 +12,7 @@ tags:
   - Server Actions
   - useOptimistic
   - useTransition
+  - Prisma
 description: Remix Contacts is Remix's official tutorial. In this post, we'll rebuild it in Next.js 14 using React Server Components and Server Actions, and compare the two approaches.
 ---
 

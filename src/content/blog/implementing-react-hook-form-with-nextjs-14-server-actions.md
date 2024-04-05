@@ -9,6 +9,7 @@ tags:
   - React Server Components
   - Next.js
   - React Hook Form
+  - Prisma
   - Server Actions
 description: React Hook Form is a popular library for building interactive forms in React. In this blog post, I'll explain how to use React Hook Form with Next.js 14 and Server Actions.
 ---
