@@ -431,7 +431,7 @@ export default function ActionButton({ action, onClick, children }: Props) {
 }
 ```
 
-Remember to wrap the app with the `LoadingStateProvider` in `layout.tsx`.
+We'll wrap the app with the `LoadingStateProvider` in `layout.tsx`.
 
 Then we'll just use these components in place of the `Link` and `form` components in the layout and contact components:
 
