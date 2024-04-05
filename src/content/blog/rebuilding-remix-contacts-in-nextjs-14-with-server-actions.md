@@ -26,7 +26,7 @@ This app also replaces the Remix stylesheet with tailwind and uses Prisma instea
 
 ## Executing the Rebuild
 
-Please view the [GitHub repo](https://github.com/aurorascharff/next14-remix-contacts-rebuild) for the full code. These steps are more to give an overview of the process and discuss the descisions made.
+Please view the [GitHub repo](https://github.com/aurorascharff/next14-remix-contacts-rebuild) for the full code. These steps are more to give an overview of the process and discuss the decisions made.
 
 Refer to the [Remix tutorial](https://remix.run/docs/en/main/start/tutorial) for each step of the process.
 
@@ -203,7 +203,7 @@ We will create a new subfolder with a new page, `contacts/[contactId]/edit/page.
 
 We will create a new file in the data access layer, `lib/actions/updateContact.ts`, and bind it to the form in the edit page.
 
-However, we have a problem. We don't recieve route params in the server action (unlike the action function in Remix), so we have to pass it to the action from the page. To do this without breaking the progressive enhancement, we could either create a hidden form field, or make a copy of `updateContact` with the `contactId` as initial arguments by using `.bind`. We will go with the latter:
+However, we have a problem. We don't receive route params in the server action (unlike the action function in Remix), so we have to pass it to the action from the page. To do this without breaking the progressive enhancement, we could either create a hidden form field, or make a copy of `updateContact` with the `contactId` as initial arguments by using `.bind`. We will go with the latter:
 
 ```tsx
 // app/contacts/[contactId]/edit/page.tsx
@@ -362,6 +362,24 @@ export function useLoading() {
 }
 ```
 
+We'll wrap the app with the `LoadingStateProvider` in `layout.tsx`, and create a new client component `Details` to fade the detail view when the app is in a loading state:
+
+```tsx
+// components/Details.tsx
+"use client";
+
+import { useLoading } from "../providers/LoadingContext";
+import { cn } from "../utils/style";
+
+export const Details = ({ children }: { children: React.ReactNode }) => {
+  const { isLoading } = useLoading();
+
+  return <div className={isLoading ? "animate-pulse" : ""}>{children}</div>;
+};
+```
+
+Note, this will still render server components since they are slotted as children of the `Details` component.
+
 However, to use this we now need to make all the components that can trigger a loading state a progressively enhanced client component that can use the `useLoading` hook. This is a lot of boilerplate code. Let's make some abstractions:
 
 ```tsx
@@ -430,8 +448,6 @@ export default function ActionButton({ action, onClick, children }: Props) {
 }
 ```
 
-We'll wrap the app with the `LoadingStateProvider` in `layout.tsx`.
-
 Then we'll just use these components in place of the `Link` and `form` components in the layout and contact components:
 
 ```tsx
@@ -473,7 +489,7 @@ Here we also use the `bind` function to pass the contact id to the server action
 
 ### "Deleting Records"
 
-Phew, let's get to something easier. Instead of creating seperate routes for specific form operations like in the Remix example, server actions let's us easily call a delete function in the data access layer, `lib/actions/deleteContact.ts`, and bind it to the delete button in the contact component:
+Phew, let's get to something easier. Instead of creating separate routes for specific form operations like in the Remix example, server actions let's us easily call a delete function in the data access layer, `lib/actions/deleteContact.ts`, and bind it to the delete button in the contact component:
 
 ```ts
 // lib/actions/deleteContact.ts
@@ -704,7 +720,7 @@ export default function Search() {
 
 In the Remix tutorial, code is written to avoid the main screen from fading out when the search spinner is active. However, since we are using a singular transition here in this component (and not using our "global navigating" hook), we don't have to worry about this.
 
-Also, I had to wrap a Suspense component around the `ContactList` component in the layout to [resolve build errors and follow best practises](https://nextjs.org/docs/app/api-reference/functions/use-search-params).
+Also, I had to wrap a Suspense component around the `ContactList` component in the layout to [resolve build errors and follow best practices](https://nextjs.org/docs/app/api-reference/functions/use-search-params).
 
 That leaves my `app/layout.tsx` containing this:
 
@@ -786,7 +802,7 @@ export default function Favorite({ contact }: { contact: Contact }) {
 
 ### "Optimistic UI"
 
-For this task, we will use the new `useOptimistic()` hook. We will create an `onSubmit` function that will trigger if JavaScript is loaded. The action poroperty will be used as a fallback. Then we can use the optimistic value to display the star-icon. We also have to prevent the default behavior inside our `onSubmit`, and wrap it in a transition (as instructed by the React docs):
+For this task, we will use the new `useOptimistic()` hook. We will create an `onSubmit` function that will trigger if JavaScript is loaded. The action property will be used as a fallback. Then we can use the optimistic value to display the star-icon. We also have to prevent the default behavior inside our `onSubmit`, and wrap it in a transition (as instructed by the React docs):
 
 ```tsx
 // components/Favorite.tsx
@@ -854,7 +870,7 @@ Server Actions are queued, and before firing a new one, the previous one must be
 
 This causes problems with our optimistic UI. If a user clicks the favorite button multiple times in quick succession, multiple server actions will fire, and the final value won't update until all of them are done.
 
-We might want to add some timeout logic to prevent this. Howver, it is a known drawback of Server Actions, and we might as well wait for improvements from the Next.js team.
+We might want to add some timeout logic to prevent this. However, it is a known drawback of Server Actions, and we might as well wait for improvements from the Next.js team.
 
 ### The Next.js Approach
 
