@@ -1,8 +1,8 @@
 ---
 author: Aurora Walberg Scharff
 pubDatetime: 2024-04-05T08:22:00Z
-title: Rebuilding "Remix Contacts" in Next.js 14
-slug: rebuilding-remix-contacts-in-nextjs-14-with-server-actions
+title: Rebuilding "Remix Contacts" in Next.js 14 with Transitions, Server Actions and Prisma
+slug: rebuilding-remix-contacts-in-nextjs-14-with-transitions-server-actions-and-prisma
 featured: true
 draft: false
 tags:
@@ -12,17 +12,20 @@ tags:
   - Server Actions
   - useOptimistic
   - useTransition
+  - Progressive Enhancement
   - Prisma
-description: Remix Contacts is Remix's official tutorial. In this post, we'll rebuild it in Next.js 14 using React Server Components and Server Actions, and compare the two approaches.
+description: Remix Contacts is Remix's official tutorial. In this post, we'll rebuild it in Next.js 14 using React Server Components, Server Actions, Transitions and Prisma, and compare the two approaches.
 ---
 
 ## Table of contents
 
 ## The Goal
 
-- Replicate the Remix Contacts tutorial in Next.js 14 using React Server Components and Server Actions and maintain progressive enhancement.
+- Replicate the Remix Contacts tutorial in Next.js 14 using React Server Components, Server Actions, Transitions and Prisma while maintaining progressive enhancement.
 
-This app also replaces the Remix stylesheet with tailwind and uses Prisma instead of a fake db.
+The [Remix Contacts tutorial](https://remix.run/docs/en/main/start/tutorial) is Remix's official tutorial. It is a simple CRUD app that allows you to create, read, update and delete contacts. Remix focuses on web standards, and therefore the app is naturally progressively enhanced. With the introduction of React Server Components, I wanted to see how the tutorial would look in Next.js, and see if I could replicate it while maintaining progressive enhancement.
+
+This app also replaces the Remix stylesheet with tailwind.
 
 ## Executing the Rebuild
 
