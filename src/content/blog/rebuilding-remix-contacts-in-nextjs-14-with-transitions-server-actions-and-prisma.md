@@ -843,6 +843,27 @@ export default function Favorite({ contact }: { contact: Contact }) {
 }
 ```
 
+However, Server Actions are queued, and before firing a new one, the previous one must be resolved.
+
+This causes problems with our optimistic UI. If a user clicks the favorite button multiple times in quick succession, multiple server actions will fire, and the final value won't update until all of them are done.
+
+We can add some logic to prevent multiple requests from firing:
+
+```tsx
+const [isPending, startTransition] = useTransition();
+
+const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  event.preventDefault();
+  startTransition(async () => {
+    addOptimisticFavorite(!optimisticFavorite);
+    if (isPending) return;
+    await favoriteContactById();
+  });
+};
+```
+
+But this is not a perfect solution since we're updating with the first value fired. When this happens in Remix, the previous actions are automatically cancelled, and only the final one is completed. We might as well hope that the Next.js team will implement something similar.
+
 And thats it! Please refer to the [GitHub repo](https://github.com/aurorascharff/next14-remix-contacts-rebuild) for the full code.
 
 ## Discussing the Two Approaches
@@ -869,26 +890,7 @@ As encountered, we had to use a client component to fetch the search params in t
 
 [Execution](#optimistic-ui)
 
-Server Actions are queued, and before firing a new one, the previous one must be resolved. In addition, unlike Remix, the actions are not automatically cancelled if fired in quick succession.
-
-This causes problems with our optimistic UI. If a user clicks the favorite button multiple times in quick succession, multiple server actions will fire, and the final value won't update until all of them are done.
-
-We might want to add some logic to prevent multiple requests from firing:
-
-```tsx
-const [isPending, startTransition] = useTransition();
-
-const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-  event.preventDefault();
-  startTransition(async () => {
-    addOptimisticFavorite(!optimisticFavorite);
-    if (isPending) return;
-    await favoriteContactById();
-  });
-};
-```
-
-But this is not a perfect solution since we updating with the first value fired. In addition, the fact that Server Actions are queued is a known drawback, and we might as well wait for improvements from the Next.js team.
+As encountered, Server Actions and optimistic UI can cause a lot of requests to fire, and create a bad UX. We added some logic to prevent multiple requests from firing, but I'm hoping Next.js will implement something to handle this problem like Remix does.
 
 ### The Next.js Approach
 
