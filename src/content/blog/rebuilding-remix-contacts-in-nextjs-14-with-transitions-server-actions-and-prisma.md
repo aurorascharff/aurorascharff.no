@@ -873,7 +873,22 @@ Server Actions are queued, and before firing a new one, the previous one must be
 
 This causes problems with our optimistic UI. If a user clicks the favorite button multiple times in quick succession, multiple server actions will fire, and the final value won't update until all of them are done.
 
-We might want to add some timeout logic to prevent this. However, it is a known drawback of Server Actions, and we might as well wait for improvements from the Next.js team.
+We might want to add some logic to prevent multiple requests from firing:
+
+```tsx
+const [isPending, startTransition] = useTransition();
+
+const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  event.preventDefault();
+  startTransition(async () => {
+    addOptimisticFavorite(!optimisticFavorite);
+    if (isPending) return;
+    await favoriteContactById();
+  });
+};
+```
+
+But this is not a perfect solution since we updating with the first value fired. In addition, the fact that Server Actions are queued is a known drawback, and we might as well wait for improvements from the Next.js team.
 
 ### The Next.js Approach
 
