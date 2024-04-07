@@ -12,8 +12,12 @@ export default function Event({ frontmatter }: Props) {
     <li className="my-6 flex flex-col gap-[1px]">
       <h3 className="text-lg font-medium">{organizer}</h3>
       {websiteLink && (
-        <a href={websiteLink} className="text-lg font-medium hover:underline">
-          {websiteLink.replace(/(https?:\/\/)?(www\.)?\/?$/, "")}
+        <a
+          href={websiteLink}
+          target="_blank"
+          className="text-lg font-medium hover:underline"
+        >
+          {websiteLink.replace(/(https?:\/\/)?(www\.)?/, "")}
         </a>
       )}
       {link ? (
