@@ -13,7 +13,7 @@ export default function Event({ frontmatter }: Props) {
       <h3 className="text-lg font-medium">{organizer}</h3>
       {websiteLink && (
         <a href={websiteLink} className="text-lg font-medium hover:underline">
-          {websiteLink}
+          {websiteLink.replace(/(https?:\/\/)?(www\.)?\/?$/, "")}
         </a>
       )}
       {link ? (
