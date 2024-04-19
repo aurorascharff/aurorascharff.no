@@ -909,6 +909,7 @@ Negatives
 - Is more difficult to learn and understand.
 - Deviates from web standards.
 - Does not progressively enhance as well as the Remix approach.
+- Does not handle firing multiple server actions as well as Remix does.
 
 ### The Remix Approach
 
