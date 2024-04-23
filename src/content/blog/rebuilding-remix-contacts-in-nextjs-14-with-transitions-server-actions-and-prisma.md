@@ -705,7 +705,10 @@ export default function Search() {
   return (
     <form role="search">
       <input
-        className={searching ? "loading" : ""}
+        className={cn(
+          !searching && "search-icon",
+          "w-full pl-8 outline-offset-1"
+        )}
         onChange={e => {
           startTransition(() => {
             router.push(`${pathName}?q=${e.target.value}`);
