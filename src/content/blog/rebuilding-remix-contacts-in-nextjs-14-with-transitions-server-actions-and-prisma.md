@@ -822,15 +822,20 @@ import { cn } from "../utils/style";
 import type { Contact } from "@prisma/client";
 
 export default function Favorite({ contact }: { contact: Contact }) {
-  const favorite = contact.favorite;
-  const favoriteContactById = favoriteContact.bind(null, contact.id, favorite);
-  const [optimisticFavorite, addOptimisticFavorite] = useOptimistic(favorite);
+  const favoriteContactById = favoriteContact.bind(
+    null,
+    contact.id,
+    contact.favorite
+  );
+  const [optimisticFavorite, addOptimisticFavorite] = useOptimistic(
+    contact.favorite
+  );
   const [, startTransition] = useTransition();
 
-  const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     startTransition(async () => {
-      addOptimisticFavorite(!favorite);
+      addOptimisticFavorite(!optimisticFavorite);
       await favoriteContactById();
     });
   };
@@ -839,35 +844,19 @@ export default function Favorite({ contact }: { contact: Contact }) {
     <form action={favoriteContactById} onSubmit={onSubmit}>
       <button
         type="submit"
-        aria-label={favorite ? "Remove from favorites" : "Add to favorites"}
+        aria-label={
+          optimisticFavorite ? "Remove from favorites" : "Add to favorites"
+        }
       >
         {optimisticFavorite ? "★" : "☆"}
       </button>
     </form>
   );
 }
+s;
 ```
 
-However, Server Actions are queued, and before firing a new one, the previous one must be resolved.
-
-This causes problems with our optimistic UI. If a user clicks the favorite button multiple times in quick succession, multiple server actions will fire, and the final value won't update until all of them are done.
-
-We can add some logic to prevent multiple requests from firing:
-
-```tsx
-const [isPending, startTransition] = useTransition();
-
-const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-  event.preventDefault();
-  startTransition(async () => {
-    addOptimisticFavorite(!optimisticFavorite);
-    if (isPending) return;
-    await favoriteContactById();
-  });
-};
-```
-
-But this is not a perfect solution since we're updating with the first value fired. When this happens in Remix, the previous actions are automatically cancelled, and only the final one is completed. We might as well hope that the Next.js team will implement something similar.
+Since the actions inside the transitions are batched, we can click the favorite button multiple times in quick succession, have multiple server actions fire, and have the final value correspond to the amount of clicks.
 
 And thats it! Please refer to the [GitHub repo](https://github.com/aurorascharff/next14-remix-contacts-rebuild) for the full code.
 
@@ -893,18 +882,13 @@ As encountered, we had to use a client component to fetch the search params in t
 
 TODO: Try [this fix](https://www.nico.fyi/blog/workaround-layout-has-no-search-params?ck_subscriber_id=2432679768&utm_source=convertkit&utm_medium=email&utm_campaign=%E2%9A%9B%EF%B8%8F%20This%20Week%20In%20React%20#182:%20v18.3,%20useDeferredValue,%20Next.js,%20DevTools,%20Zustand,%20CSS-in-JS,%20R19,%20Remix,%20Jest,%20XState,%20Astro,%20RNSC,%20Strict%20DOM,%203D,%20Metro,%20Worklets,%20TC39,%20TypeScript,%20Effect,%20Rspack,%20GraphQL...%20-%2013652674)
 
-### Problem 3: Server Actions and Optimistic UI
-
-[Execution](#optimistic-ui)
-
-As encountered, Server Actions and optimistic UI can cause a lot of requests to fire, and create a bad UX. We added some logic to prevent multiple requests from firing, but I'm hoping Next.js will implement something to handle this problem like Remix does.
-
 ### The Next.js Approach
 
 Positives
 
 - Is more flexible and allows for more customization and composability.
 - Is more familiar to React developers.
+- Simplifies handling multiple forms in one route.
 
 Neutrals
 
@@ -916,7 +900,6 @@ Negatives
 - Is more difficult to learn and understand.
 - Deviates from web standards.
 - Does not progressively enhance as well as the Remix approach.
-- Does not handle firing multiple server actions as well as Remix does.
 
 ### The Remix Approach
 
