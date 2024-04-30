@@ -25,6 +25,15 @@ const { fontRegular, fontBold } = await fetchFonts();
 const options: SatoriOptions = {
   width: 1200,
   height: 630,
+  tailwindConfig: {
+    theme: {
+      colors: {
+        primary: "#d3006a",
+        background: "#fafcfc",
+        text: "#d3006a",
+      },
+    },
+  },
   embedFont: true,
   fonts: [
     {
