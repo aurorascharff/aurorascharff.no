@@ -357,9 +357,7 @@ export default function LoadingStateProvider({
 export function useLoading() {
   const context = React.useContext(LoadingContext);
   if (context === undefined) {
-    throw new Error(
-      "useThemeContext must be used within a ThemeContextProvider"
-    );
+    throw new Error("useLoading must be used within a LoadingStateProvider");
   }
   return context;
 }
