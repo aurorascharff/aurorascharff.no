@@ -307,18 +307,20 @@ We pass the initial data and a function to update data optimistically. We can us
 
 Then we add the `addOptimisticJoke()` inside our `onSubmit()` function. In addition, we should use a transition around the optimistic update and server action call.
 
-We'll move the `reset()` function to run right after the optimistic state update, and then rollback on error. We also don't need to toast on success anymore.
+We'll move the `reset()` function to run right away, and then rollback on error.
 
 ```tsx
 const onSubmit = handleSubmit(data => {
+  reset();
   startTransition(async () => {
     addOptimisticJoke(data);
-    reset();
     const response = await createJoke(data);
     if (response?.error) {
       toast.error(response.error);
       setValue("name", data.name, { shouldValidate: true });
       setValue("content", data.content, { shouldValidate: true });
+    } else {
+      toast.success("Joke added!");
     }
   });
 });
