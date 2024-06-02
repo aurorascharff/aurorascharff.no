@@ -2,9 +2,9 @@ import type { Site, SocialObjects } from "./types";
 
 export const SITE: Site = {
   website: "https://aurorascharff.no/",
-  author: "Aurora Walberg Scharff",
+  author: "Aurora Scharff",
   desc: "My fullstack developer blog",
-  title: "Aurora Walberg Scharff",
+  title: "Aurora Scharff",
   ogImage: "dev-girl.png",
   lightAndDarkMode: true,
   postPerPage: 3,
@@ -38,7 +38,7 @@ export const SOCIALS: SocialObjects = [
   },
   {
     name: "LinkedIn",
-    href: "https://www.linkedin.com/in/aurora-walberg-scharff-a86b88188/",
+    href: "https://www.linkedin.com/in/aurora-scharff-a86b88188/",
     linkTitle: `${SITE.title} on LinkedIn`,
     active: true,
   },

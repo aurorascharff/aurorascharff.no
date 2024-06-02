@@ -1,5 +1,5 @@
 ---
-author: Aurora Walberg Scharff
+author: Aurora Scharff
 pubDatetime: 2024-02-24T15:22:00Z
 title: Utilizing useOptimistic() across the component tree in Next.js
 slug: utilizing-useoptimistic-across-the-component-tree-in-nextjs
