@@ -15,7 +15,7 @@ tags:
 description: With React 19 on the horizon, the `useFormStatus` hook is a powerful tool for handling form submissions. It will allow us to create a submit button that can be used across multiple forms, while it handles the form state for us. In this blog post, we'll create a reusable SubmitButton with `useFormStatus`.
 ---
 
-The React 19 `useFormStatus` hook is a powerful tool for handling form submissions. It will allow us to create a submit button that can be used across multiple forms, while it handles the form state for us. In this blog post, we'll create a reusable SubmitButton with `useFormStatus`. In addition, it will allow us to create progressively enhanced forms that work even if JavaScript is disabled or the app isn't done hydrating yet.
+The React 19 `useFormStatus` hook is a powerful tool for handling form submissions. In this blog post, we'll create a reusable SubmitButton with the hook. In addition, it will allow us to create progressively enhanced forms that work even if JavaScript is disabled or the app isn't done hydrating yet.
 
 ## Table of contents
 
