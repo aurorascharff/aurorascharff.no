@@ -1,6 +1,6 @@
 ---
 author: Aurora Scharff
-pubDatetime: 2024-06-11T15:22:00Z
+pubDatetime: 2024-06-11T12:30:00Z
 title: Creating a Reusable SubmitButton with UseFormStatus
 slug: creating-a-reusable-submitbutton-with-useformstatus
 featured: true
@@ -307,7 +307,7 @@ And we can add additional client-side login to the forms' `onSubmit` if needed. 
 
 ![something](@assets/deletebutton.gif)
 
-See the app and the full code of the app where I have implemented the patterns mentioned in my Remix Contacts Rebuild V2 [GitHub repository](https://github.com/next14-remix-contacts-rebuild-v2).
+See the app and the full code where I have implemented the patterns mentioned in my Remix Contacts Rebuild V2 [GitHub repository](https://github.com/aurorascharff/next14-remix-contacts-rebuild-v2).
 
 ## Conclusion
 
