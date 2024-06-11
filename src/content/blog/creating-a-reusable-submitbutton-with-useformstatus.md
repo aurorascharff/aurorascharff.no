@@ -307,7 +307,7 @@ And we can add additional client-side login to the forms' `onSubmit` if needed. 
 
 ![something](@assets/deletebutton.gif)
 
-See the app and the full code of the app where I have implemented the patterns mentioned in my Remix Contacts Rebuild V2 [GitHub repository](https://github.com/aurorascharff/next14-contacts).
+See the app and the full code of the app where I have implemented the patterns mentioned in my Remix Contacts Rebuild V2 [GitHub repository](https://github.com/next14-remix-contacts-rebuild-v2).
 
 ## Conclusion
 
