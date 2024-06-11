@@ -870,7 +870,9 @@ I could have just used the `data-pending` attribute on the component firing a gl
 
 Either way, we end up with a lot of boilerplate code to handle this, a trade-off for Next.js' composability.
 
-The correct Nextjs approach might be to use a combination of Suspense and Transitions to handle loading states, but I wanted to replicate the features of Remix tutorial as closely as possible. Edit: See my [Remix Contacts Rebuild V2 GitHub repository](https://github.com/aurorascharff/next14-contacts) for exmaples this.
+The correct Nextjs approach might be to use a combination of Suspense and Transitions to handle loading states, but I wanted to replicate the features of Remix tutorial as closely as possible.
+
+Edit: See my [Remix Contacts Rebuild V2 GitHub repository](https://github.com/aurorascharff/next14-remix-contacts-rebuild-v2).
 
 ### Problem 2: Search Params in Layouts
 
