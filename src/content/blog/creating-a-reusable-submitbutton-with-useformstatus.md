@@ -297,9 +297,11 @@ export async function deleteContact(formData: FormData) {
   const contactId = formData.get('contactId');
 ```
 
-And we can add additional client-side login to the forms' `onSubmit` if needed. Like an alert dialog or optimistic updates, see my [previous blog post](https://aurorascharff.no/blog/rebuilding-remix-contacts-in-nextjs-14-with-transitions-server-actions-and-prisma) for examples of this. See the app and the full code where I have implemented the patterns mentioned in my Remix Contacts Rebuild V2 [GitHub repository](https://github.com/aurorascharff/next14-remix-contacts-rebuild-v2).
+And we can add additional client-side login to the forms' `onSubmit` if needed. Like an alert dialog or optimistic updates, see my [previous blog post](https://aurorascharff.no/blog/rebuilding-remix-contacts-in-nextjs-14-with-transitions-server-actions-and-prisma) for examples of this.
 
 ## The Result
+
+See the app and the full code where I have implemented the patterns mentioned in my Remix Contacts Rebuild V2 [GitHub repository](https://github.com/aurorascharff/next14-remix-contacts-rebuild-v2).
 
 ![something](@assets/savebutton.gif)
 
