@@ -184,9 +184,9 @@ Bonus: the form is progressively enhanced, so it will work even if JavaScript is
 
 This is already good, but let's take it a step further. We can actually use this to make progressively enhanced buttons all around our application!
 
-## The form Component and Server Actions
+## The `<form />` Component and Server Actions
 
-With the introduction of React 19's `<form>`-component, we can bind a form to a sever action. This will allow us to create progressively enhanced forms. If JavaScript is disabled or hasn't hydrated the form yet, it will still work as expected. However, it won't show the feedback that we use JavaScript to display.
+With the introduction of React 19's `<form />`-component, we can bind a form to a sever action. This will allow us to create progressively enhanced forms. If JavaScript is disabled or hasn't hydrated the form yet, it will still work as expected. However, it won't show the feedback that we use JavaScript to display.
 
 To maintain progressive enhancement across different use cases, we should know about the following techniques:
 
