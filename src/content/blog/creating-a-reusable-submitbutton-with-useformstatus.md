@@ -261,7 +261,7 @@ export default async function Page() {
 }
 ```
 
-Furthermore, when we need to pass data to the server action, we can use the `.bind` function:
+Furthermore, when we need to pass additional data to the server action, we can use the `.bind` function:
 
 ```tsx
 export default function Component({ contactId }: { contactId: string }) {
@@ -269,9 +269,7 @@ export default function Component({ contactId }: { contactId: string }) {
 
   return (
     <form action={deleteRecordById}>
-      <SubmitButton loading={isPending} theme="destroy">
-        Delete
-      </SubmitButton>
+      <SubmitButton theme="destroy">Delete</SubmitButton>
     </form>
   );
 }
@@ -288,9 +286,7 @@ export default function Component({ contactId }: { contactId: string }) {
   return (
     <form action={deleteRecord}>
       <input type="hidden" name="contactId" value={contactId} />
-      <SubmitButton loading={isPending} theme="destroy">
-        Delete
-      </SubmitButton>
+      <SubmitButton theme="destroy">Delete</SubmitButton>
     </form>
   );
 }
@@ -301,17 +297,19 @@ export async function deleteContact(formData: FormData) {
   const contactId = formData.get('contactId');
 ```
 
-And we can add additional client-side login to the forms' `onSubmit` if needed. Like an alert dialog or optimistic updates, see my [previous blog post](https://aurorascharff.no/blog/rebuilding-remix-contacts-in-nextjs-14-with-transitions-server-actions-and-prisma) for examples of this.
+And we can add additional client-side login to the forms' `onSubmit` if needed. Like an alert dialog or optimistic updates, see my [previous blog post](https://aurorascharff.no/posts/rebuilding-remix-contacts-in-nextjs-14-with-transitions-server-actions-and-prisma/) for examples of this.
 
 ## The Result
 
-See the app and the full code where I have implemented the patterns mentioned in my Remix Contacts Rebuild V2 [GitHub repo](https://github.com/aurorascharff/next14-remix-contacts-rebuild-v2).
+Smooth.
 
 ![something](@assets/savebutton.gif)
 
 ![something](@assets/newbutton.gif)
 
 ![something](@assets/deletebutton.gif)
+
+See the app and the full code where I have implemented the patterns mentioned in my Remix Contacts Rebuild V2 [GitHub repo](https://github.com/aurorascharff/next14-remix-contacts-rebuild-v2).
 
 ## Conclusion
 
