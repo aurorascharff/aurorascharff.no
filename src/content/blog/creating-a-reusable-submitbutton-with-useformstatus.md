@@ -80,7 +80,7 @@ export default function Button({
 }
 ```
 
-### The SubmitButton - Version 1
+## The SubmitButton - Version 1
 
 We will use the `Button`-component as a base and extend it with the `useFormStatus`-hook. Then, when the form is submitting, we will disable it and show a "Submitting..."-text. We also need to make it of type `submit`. And, we need to make it client component to allow the hook to run on the client side.
 
@@ -125,7 +125,7 @@ This button is now ready to be used in any form. It will automatically disable i
 </form>
 ```
 
-### The SubmitButton - Version 2
+## The SubmitButton - Version 2
 
 Let's improve the SubmitButton by adding a loading spinner when the form is submitting, and allow the button to take in children. This way it's alot more resuable for any form context. Let's also allow passing in a `loading`-prop to trigger loading spinner so it's even more flexible.
 
@@ -183,7 +183,7 @@ Bonus: the form is progressively enhanced, so it will work even if JavaScript is
 
 This is already good, but let's take it a step further. We can actually use this to make progressively enhanced buttons all around our application!
 
-### The form Component and Server Actions
+## The form Component and Server Actions
 
 With the introduction of React 19's `<form>`-component, we can bind a form to a sever action. This will allow us to create progressively enhanced forms. If JavaScript is disabled or hasn't hydrated the form yet, it will still work as expected. However, it won't show the feedback that we use JavaScript to display.
 
@@ -195,7 +195,7 @@ To maintain progressive enhancement across different use cases, we should know a
 
 This pattern is commonly seen in Remix applications, but we can use it in Next.js with React 19 as well.
 
-### Progressively Enhanced Buttons
+## Progressively Enhanced Buttons
 
 Let's say we have a button to create a new record:
 
@@ -299,7 +299,7 @@ export async function deleteContact(formData: FormData) {
 
 And we can add additional client-side login to the forms' `onSubmit` if needed. Like an alert dialog.
 
-### The Result
+## The Result
 
 ![something](@assets/savebutton.gif)
 
