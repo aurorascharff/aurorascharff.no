@@ -210,6 +210,7 @@ export default function NewRecordButton() {
 
   return (
     <Button
+      theme="secondary"
       onClick={() => {
         startTransition(async () => {
           await createEmptyRecord();
