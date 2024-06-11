@@ -21,7 +21,7 @@ Please note that the code here has been simplified for the sake of getting the p
 
 ## Table of contents
 
-## The use-case
+## The Use Case
 
 Let's say we have a simple server component with a list of jokes.
 

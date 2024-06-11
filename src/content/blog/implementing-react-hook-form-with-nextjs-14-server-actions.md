@@ -389,7 +389,7 @@ export default function ReactHookForm({ jokes }: { jokes: Joke[] }) {
 }
 ```
 
-Of course, add your own styling and make it look nice.
+Of course, add your own styling and make it look nice, and possibly generalize the rollback when you have multiple fields.
 
 A working example of this code can as mentioned be found [here](https://github.com/aurorascharff/next14-remix-jokes-rebuild/blob/main/app/demo/forms/_components/ReactHookForm.tsx).
 
