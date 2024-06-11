@@ -40,7 +40,7 @@ It returns an object with the following properties:
 
 See the [useFormStatus docs](https://react.dev/reference/react-dom/hooks/useFormStatus) for more information.
 
-It mused be used inside a component that is contained in a `<form>`-element. We will see why this is useful and what benefits it will give us later.
+It must be used inside a component that is contained in a `<form>`-element. We will see why this is useful and what benefits it will give us later.
 
 ## The Starting Point
 
@@ -179,6 +179,8 @@ This button is now more resuable and flexible. It can be used in any form, and i
   <SubmitButton>Save</SubmitButton>
 </form>
 ```
+
+The SubmitButton can be thrown into any component without forcing us to make seperate client components to handle submission state.
 
 Bonus: the form is progressively enhanced, so it will work even if JavaScript is disabled, and it will show the feedback when the button is hydrated.
 
