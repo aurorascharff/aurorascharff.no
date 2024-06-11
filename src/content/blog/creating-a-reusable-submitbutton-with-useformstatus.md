@@ -311,6 +311,6 @@ See the app and the full code where I have implemented the patterns mentioned in
 
 ## Conclusion
 
-In this blog post, we created a reusable SubmitButton with `useFormStatus`. We saw how we can use the `useFormStatus`-hook to create a button that can be used across multiple forms, while it handles the form state for us. We also saw how we can create progressively enhanced forms and buttons that work even if JavaScript is disabled. This is a powerful pattern that can be used in any React 19 application.
+In this blog post, we created a reusable SubmitButton with `useFormStatus`. We also saw how we can create progressively enhanced forms and buttons that work even if JavaScript is disabled or the page isn't hydrated. This is a powerful pattern that can be used in any SSR React 19 application.
 
-I hope this post has been helpful in understanding the useOptimistic hook and it's limiations. Please let me know if you have any questions or comments, and follow me on [Twitter](https://twitter.com/aurorascharff) for more updates. Happy coding! 🚀
+Please let me know if you have any questions or comments, and follow me on [Twitter](https://twitter.com/aurorascharff) for more updates. Happy coding! 🚀
