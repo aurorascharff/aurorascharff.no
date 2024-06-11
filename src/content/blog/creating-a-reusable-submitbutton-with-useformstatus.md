@@ -297,7 +297,7 @@ export async function deleteContact(formData: FormData) {
   const contactId = formData.get('contactId');
 ```
 
-And we can add additional client-side login to the forms' `onSubmit` if needed. Like an alert dialog.
+And we can add additional client-side login to the forms' `onSubmit` if needed. Like an alert dialog or optimistic updates, see my [previous blog post](https://aurorascharff.no/blog/rebuilding-remix-contacts-in-nextjs-14-with-transitions-server-actions-and-prisma) for examples of this.
 
 ## The Result
 
@@ -307,6 +307,10 @@ And we can add additional client-side login to the forms' `onSubmit` if needed. 
 
 ![something](@assets/deletebutton.gif)
 
+See the app and the full code of the app where I have implemented the patterns mentioned in my Remix Contacts Rebuild V2 [GitHub repository](https://github.com/aurorascharff/next14-contacts).
+
 ## Conclusion
 
 In this blog post, we created a reusable SubmitButton with `useFormStatus`. We saw how we can use the `useFormStatus`-hook to create a button that can be used across multiple forms, while it handles the form state for us. We also saw how we can create progressively enhanced forms and buttons that work even if JavaScript is disabled. This is a powerful pattern that can be used in any React 19 application.
+
+I hope this post has been helpful in understanding the useOptimistic hook and it's limiations. Please let me know if you have any questions or comments, and follow me on [Twitter](https://twitter.com/aurorascharff) for more updates. Happy coding! 🚀
