@@ -8,13 +8,14 @@ draft: false
 tags:
   - React Server Components
   - Next.js
+  - React 19
   - useFormStatus
   - Progressive Enhancement
   - Server Actions
 description: With React 19 on the horizon, the `useFormStatus` hook is a powerful tool for handling form submissions. It will allow us to create a submit button that can be used across multiple forms, while it handles the form state for us. In this blog post, we'll create a reusable SubmitButton with `useFormStatus`.
 ---
 
-With React 19 on the horizon, the `useFormStatus` hook is a powerful tool for handling form submissions. It will allow us to create a submit button that can be used across multiple forms, while it handles the form state for us. In this blog post, we'll create a reusable SubmitButton with `useFormStatus`. In addition, it will allow us to create progressively enhanced forms that work even if JavaScript is disabled or the app isn't done hydrating yet.
+The React 19 `useFormStatus` hook is a powerful tool for handling form submissions. It will allow us to create a submit button that can be used across multiple forms, while it handles the form state for us. In this blog post, we'll create a reusable SubmitButton with `useFormStatus`. In addition, it will allow us to create progressively enhanced forms that work even if JavaScript is disabled or the app isn't done hydrating yet.
 
 ## Table of contents
 
@@ -301,7 +302,7 @@ And we can add additional client-side login to the forms' `onSubmit` if needed. 
 
 ## The Result
 
-See the app and the full code where I have implemented the patterns mentioned in my Remix Contacts Rebuild V2 [GitHub repository](https://github.com/aurorascharff/next14-remix-contacts-rebuild-v2).
+See the app and the full code where I have implemented the patterns mentioned in my Remix Contacts Rebuild V2 [GitHub repo](https://github.com/aurorascharff/next14-remix-contacts-rebuild-v2).
 
 ![something](@assets/savebutton.gif)
 
