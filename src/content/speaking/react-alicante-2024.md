@@ -1,6 +1,6 @@
 ---
 organizer: React Alicante 2024
-date: 2024-20-09T08:00:00Z
+date: 2024-09-20T08:00:00Z
 name: "Enhancing Forms with React Server Components"
 completed: false
 websiteLink: "https://reactalicante.es/"

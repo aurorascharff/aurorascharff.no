@@ -1,6 +1,6 @@
 ---
 organizer: Web Summer Camp 2024
-date: 2024-05-07T08:00:00Z
+date: 2024-07-05T08:00:00Z
 name: "Hands-on React Server Components, Server Actions, and Forms in the Next.js App Router"
 completed: false
 websiteLink: "https://websummercamp.com/2024/"
