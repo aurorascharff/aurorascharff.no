@@ -20,7 +20,7 @@ There seems to be a misconception that we do not need React Hook Form now that w
 
 We are going to be using Zod for validation and Prisma for our database. We will also be using Toast for displaying error messages. Then we will use the new React hook `useOptimistic()` to add optimistic UI in the end.
 
-I do not have a separate repository for this blog post, but you can find working code [here](https://github.com/aurorascharff/next14-remix-jokes-rebuild/blob/main/app/demo/forms/_components/ReactHookForm.tsx).
+I do not have a separate repository for this blog post, but you can find working code [here](https://github.com/aurorascharff/next15-remix-jokes-rebuild/blob/main/app/demo/forms/_components/ReactHookForm.tsx).
 
 ## Table of contents
 
@@ -391,7 +391,7 @@ export default function ReactHookForm({ jokes }: { jokes: Joke[] }) {
 
 Of course, add your own styling and make it look nice, and possibly generalize the rollback when you have multiple fields.
 
-A working example of this code can as mentioned be found [here](https://github.com/aurorascharff/next14-remix-jokes-rebuild/blob/main/app/demo/forms/_components/ReactHookForm.tsx).
+A working example of this code can as mentioned be found [here](https://github.com/aurorascharff/next15-remix-jokes-rebuild/blob/main/app/demo/forms/_components/ReactHookForm.tsx).
 
 ## Conclusion
 
