@@ -315,10 +315,10 @@ I found the article [Global progress in Next.js](https://buildui.com/posts/globa
 
 I tested out a simpler approach using the `group-has-` CSS and adding a `data-pending` to the component firing a global pending state as mentioned in the article [Instant Search Params with React Server Components](https://buildui.com/posts/instant-search-params-with-react-server-components). However I don't want to add this logic to every component that can trigger a loading state.
 
-Instead, let's create a global pending state provider that can trigger a common transition for all components inside `providers/LoadingContext.tsx`:
+Instead, let's create a global pending state provider that can trigger a common transition for all components inside `providers/LoadingProvider.tsx`:
 
 ```tsx
-// providers/LoadingContext.tsx
+// providers/LoadingProvider.tsx
 "use client";
 
 import React, { createContext, useTransition } from "react";
@@ -332,7 +332,7 @@ export const LoadingContext = createContext<LoadingContextType | undefined>(
   undefined
 );
 
-export default function LoadingStateProvider({
+export default function LoadingProvider({
   children,
 }: {
   children: React.ReactNode;
@@ -357,19 +357,19 @@ export default function LoadingStateProvider({
 export function useLoading() {
   const context = React.useContext(LoadingContext);
   if (context === undefined) {
-    throw new Error("useLoading must be used within a LoadingStateProvider");
+    throw new Error("useLoading must be used within a LoadingProvider");
   }
   return context;
 }
 ```
 
-We'll wrap the app with the `LoadingStateProvider` in `layout.tsx`, and create a new client component `Details` to fade the detail view when the app is in a loading state:
+We'll wrap the app with the `LoadingProvider` in `layout.tsx`, and create a new client component `Details` to fade the detail view when the app is in a loading state:
 
 ```tsx
 // components/Details.tsx
 "use client";
 
-import { useLoading } from "../providers/LoadingContext";
+import { useLoading } from "../providers/LoadingProvider";
 import { cn } from "../utils/style";
 
 export const Details = ({ children }: { children: React.ReactNode }) => {
@@ -390,7 +390,7 @@ However, to use this we now need to make all the components that can trigger a l
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React from "react";
-import { useLoading } from "../providers/LoadingContext";
+import { useLoading } from "../providers/LoadingProvider";
 
 type Props = {
   children: React.ReactNode;
@@ -422,7 +422,7 @@ export default function NavButton({ children, href }: Props) {
 "use client";
 
 import React from "react";
-import { useLoading } from "../providers/LoadingContext";
+import { useLoading } from "../providers/LoadingProvider";
 
 type Props = {
   action: () => void;
