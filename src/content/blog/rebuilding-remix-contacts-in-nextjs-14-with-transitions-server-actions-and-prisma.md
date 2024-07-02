@@ -874,7 +874,7 @@ Edit: See my [Remix Contacts Rebuild V2 GitHub repository](https://github.com/au
 
 [Execution](#urlsearchparams-and-get-submissions)
 
-As encountered, we had to use a client component to fetch the search params in the layout component, since Next.js's layouts does not pass search params. I would prefer to use the search params in the layout and get contacts based on the query, but in return we get instant search.
+As encountered, we had to use a client component to fetch the search params in the layout component, since Next.js's layouts does not pass search params. Luckily this method still works without JavaScript or when hydration isn't complete.
 
 TODO: Try [this fix](https://www.nico.fyi/blog/workaround-layout-has-no-search-params?ck_subscriber_id=2432679768&utm_source=convertkit&utm_medium=email&utm_campaign=%E2%9A%9B%EF%B8%8F%20This%20Week%20In%20React%20#182:%20v18.3,%20useDeferredValue,%20Next.js,%20DevTools,%20Zustand,%20CSS-in-JS,%20R19,%20Remix,%20Jest,%20XState,%20Astro,%20RNSC,%20Strict%20DOM,%203D,%20Metro,%20Worklets,%20TC39,%20TypeScript,%20Effect,%20Rspack,%20GraphQL...%20-%2013652674)
 
