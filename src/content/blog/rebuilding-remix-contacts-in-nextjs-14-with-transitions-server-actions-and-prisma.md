@@ -682,7 +682,7 @@ export default function Search() {
 
 ### "Adding Search Spinner"
 
-We will bring in a transition to track the state of router, and add a spinner to the search component:
+We will bring in useDeferredValue to track the state of router, and add a spinner to the search component:
 
 ```tsx
 // components/Search.tsx
@@ -696,9 +696,9 @@ export default function Search() {
   const router = useRouter();
   const pathName = usePathname();
   const searchParams = useSearchParams();
-  const query = searchParams.get("q") || "";
-  const [isPending, startTransition] = useTransition();
-  const searching = isPending && query;
+  const [query, setQuery] = useState(searchParams.get('q') || '');
+  const deferredQuery = useDeferredValue(query);
+  const searching = query !== deferredQuery;
 
   return (
     <form role="search">
@@ -708,9 +708,7 @@ export default function Search() {
           "w-full pl-8 outline-offset-1"
         )}
         onChange={e => {
-          startTransition(() => {
-            router.push(`${pathName}?q=${e.target.value}`);
-          });
+          router.push(`${pathName}?q=${e.target.value}`);
         }}
         defaultValue={query}
         aria-label="Search contacts"
@@ -724,7 +722,7 @@ export default function Search() {
 }
 ```
 
-In the Remix tutorial, code is written to avoid the main screen from fading out when the search spinner is active. However, since we are using a singular transition here in this component (and not using our "global navigating" hook), we don't have to worry about this.
+In the Remix tutorial, code is written to avoid the main screen from fading out when the search spinner is active. However, since we are not using our global navigation utility, we don't have to worry about this.
 
 Also, I had to wrap a Suspense component around the `ContactList` component in the layout to [resolve build errors and follow best practices](https://nextjs.org/docs/app/api-reference/functions/use-search-params).
 
@@ -748,11 +746,9 @@ We will just switch between `router.push()` and `router.replace()` in the search
 ```tsx
 onChange={e => {
   const isFirstSearch = query === null;
-  startTransition(() => {
-    isFirstSearch
-      ? router.push(`${pathName}?q=${e.target.value}`)
-      : router.replace(`${pathName}?q=${e.target.value}`);
-  });
+  isFirstSearch
+    ? router.push(`${pathName}?q=${e.target.value}`)
+    : router.replace(`${pathName}?q=${e.target.value}`);
 }}
 ```
 
