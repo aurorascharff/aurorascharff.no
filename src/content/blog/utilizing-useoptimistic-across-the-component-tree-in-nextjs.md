@@ -225,6 +225,12 @@ export default function JokesList() {
 
 And that's it! When we add a new joke, it will be added to the list optimistically.
 
+## Additional notes
+
+Some additional notes on the value of the useOptimistic hook as stated by a [reddit user](https://www.reddit.com/r/nextjs/comments/1azxoon/comment/l9ew8uz/?context=3) (thanks!):
+
+The value of optimistic state is automatically updated on every new version of the "initial" state passed from the server component after revalidation. Compared to other eager update approaches that rely on e.g. react-query, zustand or simple component state, you would manually need to keep those in sync, probably by returning the updated state from the server action and manually updating the current version on the client. Aside from that, you would also need to manually revert updates in case the server action errors out. This two is taken care of automatically in case of a useOptimistic hook.
+
 ## Conclusion
 
 In this blog post, I've shown you how to use useOptimistic across the component tree in Next.js. By passing server-fetched data to a provider and using the `useOptimistic()` hook inside it, we can use it across layouts and pages, we don't have to pass any props, and the simplicity of useOptimistic "merging" the client and server state is retained.
