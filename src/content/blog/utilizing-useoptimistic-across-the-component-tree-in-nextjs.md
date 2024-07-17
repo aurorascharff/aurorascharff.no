@@ -97,7 +97,7 @@ However, our components are not in the same component tree. The list of jokes is
 'app/layout.tsx' contains <JokesList/>
 ```
 
-And even if our components were somewhere inside a `page.tsx` and we could pass props, we don't want to add multiple `"use client"` directives to components that don't need it just to pass props (that are functions) around.
+And even if our components were somewhere inside a `page.tsx` and we could pass props, we don't want to add multiple `"use client"` directives to components that don't need it just to pass the `useOptimistic` hook around.
 
 How do we solve this?
 
@@ -105,7 +105,7 @@ How do we solve this?
 
 Let's create a provider to wrap the components that need to use the useOptimistic hook.
 
-The provider will take in server-fetched data and pass it to the useOptimistic hook. It will return the optimistic jokes as well as the function to optimistically add a new joke.
+The provider will take in server-fetched data and pass it to the useOptimistic hook, as the state to show when no action is pending. It will return the optimistic jokes as well as the function to optimistically add a new joke.
 
 ```tsx
 "use client";
@@ -175,9 +175,9 @@ The `{children}` prop is the page component, which contains the form.
 
 Next, we can use the `useJokes` hook to access `addOptimisticJoke` in the form component, and use it inside a `createJokeAction` function.
 
-Using the action property, the function is automatically wrapped in `startTransition` (which you should do with `useOptimistic`). If we had been using the onSubmit property, we would have had to `e.preventDefault()` and wrap the function in `startTransition` ourselves.
+To do this the `Form.tsx` needs to become a client component.
 
-The component also needs to become a client component to use the provider and the onSubmit property.
+Using the action property, the function is automatically wrapped in `startTransition` (which you should do with `useOptimistic`). If we had been using the onSubmit property, we would have had to add `e.preventDefault()` and call a `startTransition` ourselves.
 
 ```tsx
 // components/Form.tsx
@@ -196,7 +196,7 @@ return (
   <form ref={formRef} action={createJokeAction}>
 ```
 
-Finally, we can access the `optimisticJokes` in the list component. To do this we must also turn it into a client component.
+Finally, we can access the `optimisticJokes` in the `JokesList` component. It also needs to be a client component.
 
 ```tsx
 // components/JokesList.tsx
