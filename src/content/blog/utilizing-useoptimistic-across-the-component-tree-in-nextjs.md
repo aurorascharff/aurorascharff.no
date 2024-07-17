@@ -77,7 +77,7 @@ export async function createJoke(formData: FormData) {
 }
 ```
 
-We want to be able to update the jokes with the `useOptimistic()` hook, and have it "roll-back" if there's an error (similarly to other optimistic UI libraries like React Query). See additional notes at the end of the blog post for more on the value of the useOptimistic hook.
+We want to be able to update the jokes with the `useOptimistic()` hook, and have it "roll-back" if there's an error (similarly to other optimistic UI libraries like React Query). See [additional notes](#additional-notes)  at the end of the blog post for more on the value of the useOptimistic hook.
 
 We are tied to the `useOptimistic` hook's structure:
 
@@ -219,7 +219,7 @@ And that's it! When we add a new joke, it will be added to the list optimistical
 
 An example where a provider is being used with the useOptimistic hook across the component tree in Next.js can be found [here](https://github.com/aurorascharff/next14-message-box/tree/optimistic-retry).
 
-## Additional notes
+## Additional Notes
 
 Some additional notes on the value of the useOptimistic hook as stated by a [reddit user](https://www.reddit.com/r/nextjs/comments/1azxoon/comment/l9ew8uz/?context=3) (thanks!):
 
