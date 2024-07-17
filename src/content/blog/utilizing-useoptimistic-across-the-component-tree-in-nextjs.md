@@ -28,7 +28,7 @@ Let's say we have a simple server component with a list of jokes.
 ```tsx
 // components/JokesList.tsx
 export default async function JokesList() {
-  const jokes = await prism.joke.findMany();
+  const jokes = await prisma.joke.findMany();
 
   return (
     <ul>
