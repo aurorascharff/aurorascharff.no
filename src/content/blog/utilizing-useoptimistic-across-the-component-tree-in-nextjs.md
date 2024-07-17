@@ -40,30 +40,20 @@ export default async function JokesList() {
 }
 ```
 
-We also have a form to add new jokes (in my case a react-hook-form, hence the the `onSubmit()` property).
+We also have a form to add new jokes:
 
 ```tsx
 // components/Form.tsx
-const onSubmit = handleSubmit(data => {
-  startTransition(async () => {
-    const response = await createJoke(data);
-    if (response?.error) {
-      toast.error(response.error);
-    } else {
-      reset();
-    }
-  });
-});
 
 return (
-  <form onSubmit={onSubmit}>
+  <form action={createJoke}>
     <label>
       Name:
-      <input {...register("name")} name="name" type="text" />
+      <input name="name" type="text" />
     </label>
     <label>
       Content:
-      <textarea {...register("content")} name="content" />
+      <textarea name="content" />
     </label>
     <button type="submit">Add joke</button>
   </form>
@@ -75,30 +65,28 @@ It calls the server action `createJoke` to add a new joke to the database and re
 ```tsx
 "use server";
 
-export async function createJoke(data: JokeSchemaType) {
-  try {
-    await prisma.joke.create({
-      data,
-    });
-  } catch (error) {
-    return {
-      error: "SERVER ERROR",
-    };
-  }
-  revalidatePath("/");
+export async function createJoke(formData: FormData) {
+  const joke = await prisma.joke.create({
+    data: {
+      content: formData.get('content') as string,
+      name: formData.get('name') as string,
+    },
+  });
+
+  revalidatePath('/jokes');
 }
 ```
 
-We want to be able to update the jokes with the `ùseOptimistic()` hook, and have it "roll-back" if there's an error.
+We want to be able to update the jokes with the `useOptimistic()` hook, and have it "roll-back" if there's an error (similarly to other optimistic UI libraries like React Query). See additional notes at the end of the blog post for more on the value of the useOptimistic hook.
 
 We are tied to the `useOptimistic` hook's structure:
 
 ```tsx
 const [optimisticJokes, addOptimisticJoke] = useOptimistic(
   jokes,
-  (state: JokeSchemaType[], newJoke: JokeSchemaType) => {
+  (state: OptimisticJoke[], newJoke: OptimisticJoke) => {
     return [...state, newJoke];
-  }
+  },
 );
 ```
 
@@ -109,11 +97,11 @@ However, our components are not in the same component tree. The list of jokes is
 'app/layout.tsx' contains <JokesList/>
 ```
 
-And even if our components were somewhere inside a `page.tsx` and we could pass props, we don't want to add multiple `"use client"` directives to components that don't need it just to pass props around.
+And even if our components were somewhere inside a `page.tsx` and we could pass props, we don't want to add multiple `"use client"` directives to components that don't need it just to pass props (that are functions) around.
 
 How do we solve this?
 
-## The solution
+## The Solution
 
 Let's create a provider to wrap the components that need to use the useOptimistic hook.
 
@@ -123,24 +111,24 @@ The provider will take in server-fetched data and pass it to the useOptimistic h
 "use client";
 
 type JokesContextType = {
-  optimisticJokes: JokeSchemaType[];
-  addOptimisticJoke: (joke: Joke) => void;
+  optimisticJokes: OptimisticJoke[];
+  addOptimisticJoke: (_joke: OptimisticJoke) => void;
 };
 
 export const JokesContext = createContext<JokesContextType | undefined>(
   undefined
 );
 
-export default function JokesContextProvider({
+export default function JokesProvider({
   children,
   jokes,
 }: {
   children: React.ReactNode;
-  jokes: JokeSchemaType[];
+  jokes: OptimisticJoke[];
 }) {
   const [optimisticJokes, addOptimisticJoke] = useOptimistic(
     jokes,
-    (state: JokeSchemaType[], newJoke: JokeSchemaType) => {
+    (state: OptimisticJoke[], newJoke: OptimisticJoke) => {
       return [...state, newJoke];
     }
   );
@@ -152,18 +140,18 @@ export default function JokesContextProvider({
   );
 }
 
-export function useJokesContext() {
+export function useJokes() {
   const context = React.useContext(JokesContext);
   if (context === undefined) {
     throw new Error(
-      "useJokesContext must be used within a JokesContextProvider"
+      "useJokes must be used within a JokesProvider"
     );
   }
   return context;
 }
 ```
 
-Now we can wrap our components in the provider, and pass the data to it.
+Now we can wrap our components in the provider, and pass the server data "truth" to it.
 
 ```tsx
 // app/layout.tsx
@@ -172,7 +160,7 @@ export default async function Layout({
 }: {
   children: React.ReactNode;
 }) {
-  const jokes = await getJokes(); // Function to fetch jokes from the db
+  const jokes = await prisma.joke.findMany();
 
   return (
     <JokesContextProvider jokes={jokes}>
@@ -185,33 +173,37 @@ export default async function Layout({
 
 The `{children}` prop is the page component, which contains the form.
 
-Next, we can use the `useJokesContext` hook to access `addOptimisticJoke` in the form component, and use it inside the `onSubmit` function.
+Next, we can use the `useJokes` hook to access `addOptimisticJoke` in the form component, and use it inside a `createJokeAction` function.
+
+Using the action property, the function is automatically wrapped in `startTransition` (which you should do with `useOptimistic`). If we had been using the onSubmit property, we would have had to `e.preventDefault()` and wrap the function in `startTransition` ourselves.
+
+The component also needs to become a client component to use the provider and the onSubmit property.
 
 ```tsx
 // components/Form.tsx
+"use client";
+
+const formRef = useRef();
 const { addOptimisticJoke } = useJokesContext();
 
-const onSubmit = handleSubmit(data => {
-  startTransition(async () => {
-    addOptimisticJoke(data);
-    const response = await createJoke(data);
-    if (response.error) {
-      toast.error(response.error);
-    } else {
-      reset();
-    }
-  });
-});
+const createJokeAction = (formData: FormData) => {
+  addOptimisticJoke(data);
+  formRef.current.reset();
+  await createJoke(formData);
+};
+
+return (
+  <form ref={formRef} action={createJokeAction}>
 ```
 
-Finally, we can access the `optimisticJokes` in the list component. To do this we must turn it into a client component.
+Finally, we can access the `optimisticJokes` in the list component. To do this we must also turn it into a client component.
 
 ```tsx
 // components/JokesList.tsx
 "use client";
 
 export default function JokesList() {
-  const { optimisticJokes } = useJokesContext();
+  const { optimisticJokes } = useJokes();
 
   return (
     <ul>
@@ -224,6 +216,8 @@ export default function JokesList() {
 ```
 
 And that's it! When we add a new joke, it will be added to the list optimistically.
+
+An example where a provider is being used with the useOptimistic hook across the component tree in Next.js can be found [here](https://github.com/aurorascharff/next14-message-box/tree/optimistic-retry)
 
 ## Additional notes
 
