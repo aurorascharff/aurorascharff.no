@@ -111,27 +111,59 @@ The test fails with the following error:
 Error: Objects are not valid as a React child (found: [object Promise]). If you meant to render a collection of children, use an array instead.
 ```
 
-This is because the component is async, and we need to use `await` to get the component before we can render it. At the moment there is not a lot of documentation on testing React Server Components, but there is an ongoing discussion on the [RTL GitHub](https://github.com/testing-library/react-testing-library/issues/1209). For now I am using a workaround from there by _caleb531_. We need to create a custom render function that uses `await` to get the component before rendering it. Using it results in the following modified test:
+This is because the component is async, and we need to use `await` to get the component before we can render it. At the moment there is not a lot of documentation on testing React Server Components, but there is an ongoing discussion on the [RTL GitHub](https://github.com/testing-library/react-testing-library/issues/1209). For now I am using a workaround from there by _caleb531_. We need to create a custom render function that uses `await` to get the component before rendering it. The code for the custom render function looks like this:
+
+```tsx
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { act, render } from '@testing-library/react';
+
+// Return true if the supplied value is an async function; otherwise, return
+// false
+function isAsyncFunction(value: any): boolean {
+  return Object.prototype.toString.call(value) === '[object AsyncFunction]';
+}
+
+// Retrieve the nearest (i.e. outermost) client component in the component tree
+// represented by the given JSX node
+async function getNearestClientComponent(node: JSX.Element) {
+  if (!isAsyncFunction(node.type)) {
+    return node;
+  }
+  const nodeReturnValue = await node.type({ ...node.props });
+  return getNearestClientComponent(nodeReturnValue);
+}
+
+// Follow <https://github.com/testing-library/react-testing-library/issues/1209>
+// for the latest updates on React Testing Library support for React Server
+// Components (RSC)
+export async function renderAsync(node: JSX.Element) {
+  await act(async () => {
+    render(await getNearestClientComponent(node));
+  });
+}
+```
+
+Using it results in the following modified test:
 
 ```tsx
 // src/components/tests/HelloWorld.test.tsx
 ...
-import { renderServerComponent } from '@/test-utils/renderServerComponent';
+import { renderAsync } from '@/test-utils/renderAsync';
 
 describe('HelloWorld', () => {
   it('renders ', async () => {
-    await renderServerComponent(<HelloWorld />);
+    await renderAsync(<HelloWorld />);
 
     expect(screen.getByTestId('hello-world')).toHaveTextContent('Hello World');
   });
 });
 ```
 
-Now the test passes! We can also use the `renderServerComponent` function to test other async React Server Components.
+Now the test passes! We can also use the `renderAsync` function to test other async React Server Components.
 
 ### Note on testing nested async React Server Components
 
-If you are testing an async server component that contains other async server components, the same error will occur. My fix for this so far is to mock the nested components. For example, if we have a `HelloWorldContainer.tsx` component that contains the `HelloWorld.tsx` component, we can mock the `HelloWorld.tsx` component in the test for `HelloWorldContainer.tsx` and test it separately. The test for `HelloWorldContainer.tsx` would contain a some kind of mock like this:
+If you are testing an async server component that contains other async server components, the same error as previously encountered will occur. My fix for this so far is to mock the nested components. For example, if we have a `HelloWorldContainer.tsx` component that contains the `HelloWorld.tsx` component, we can mock the `HelloWorld.tsx` component in the test for `HelloWorldContainer.tsx` and test it separately. The test for `HelloWorldContainer.tsx` would contain some kind of mock like this:
 
 ```tsx
 vi.mock('./HelloWorld.tsx', () => {', () => {
@@ -146,7 +178,9 @@ vi.mock('./HelloWorld.tsx', () => {', () => {
 
 ### Updated method
 
-Another solution is to follow the [recommended workaround](https://github.com/testing-library/react-testing-library/issues/1209#issuecomment-1569813305) By NickMcCurdy which includes using React Canary and testing with Suspense and async test-calls. Previously I had issues with this method, but it's working now after communicating with him to clarify the steps.
+Another solution is to follow the [recommended workaround](https://github.com/testing-library/react-testing-library/issues/1209#issuecomment-1569813305) By NickMcCurdy which includes using React Canary and testing with Suspense and async test-calls.
+
+If the method is failing, make sure you are using the correct React version in your tests. You can check it by throwing a `console.log(React.version)` into a test. If it is not using React 19, run `npm install react@rc react-dom@rc` again (even though you already have React RC in your dependencies).
 
 If using this method your test calls will look like this:
 
@@ -169,6 +203,14 @@ describe('HelloWorld', () => {
 ```
 
 Note that you do not need to worry about nested async components with this method.
+
+## Note on testing React 19 hooks
+
+If you are using React 19 hooks such as `useFormStatus` and `useOptimistic` in your components, you may run into issues. For RTL to work correctly in Next.js, you need to make sure RTL is using React 19 RC. Follow the same steps as above to check the React version in your tests.
+
+With it installed, all the new hooks can be tested as expected.
+
+When suspending a component using the `use` API, the `renderAsync` function can be used again to wait for the component to be resolved before running tests.
 
 ## Testing internationalized React Server Components
 
@@ -219,7 +261,7 @@ vi.mock('@/locales/server', async () => {
 
 describe('HelloWorld', () => {
   it('renders ', async () => {
-    await renderServerComponent(<HelloWorld />);
+    await renderAsync(<HelloWorld />);
 
     expect(screen.getByTestId('hello-world')).toHaveTextContent('Hello World');
   });
