@@ -1,7 +1,7 @@
 ---
 author: Aurora Scharff
 pubDatetime: 2023-09-10T15:22:00Z
-title: Running Tests with RTL and Vitest on Internationalized React Server Components in Next.js 13
+title: Running Tests with RTL and Vitest on Async and Internationalized React Server Components in Next.js App Router
 slug: running-tests-with-rtl-and-vitest-on-internationalized-react-server-components-in-next13
 featured: false
 draft: false
@@ -10,10 +10,10 @@ tags:
   - Next.js
   - Testing
   - i18n
-description: Considering the relatively new React Server Components (RSC) and Next.js 13, there is not a lot of documentation on how to test them. In this blog post, I'll explain a method I found to work for running tests with Vitest and RTL (React Testing Library) on React Server Components that utilizes internationalization (i18n) via the next-international package.
+description: Considering the relatively new React Server Components (RSC) and Next.js App Router, there is not a lot of documentation on how to test them. In this blog post, I'll explain a method I found to work for running tests with Vitest and RTL (React Testing Library) on React Server Components that utilizes internationalization (i18n) via the next-international package.
 ---
 
-Testing is a crucial part of any software development process, ensuring that your code functions as expected and maintains its integrity as your application evolves. Considering the relatively new React Server Components (RSC) and Next.js 13, there is not a lot of documentation on how to test them. In this blog post, I'll explain a method I found to work for running tests with Vitest and RTL (React Testing Library) on React Server Components that utilizes internationalization (i18n) via the next-international package.
+Testing is a crucial part of any software development process, ensuring that your code functions as expected and maintains its integrity as your application evolves. Considering the relatively new React Server Components (RSC) and Next.js App Router, there is not a lot of documentation on how to test them. In this blog post, I'll explain a method I found to work for running tests with Vitest and RTL (React Testing Library) on React Server Components that utilizes internationalization (i18n) via the next-international package.
 
 Please note that this method is not officially supported by Next.js or next-international, and may not work for all use cases. I am also not an expert on testing, so if you have any suggestions for improvements, please let me know!
 
@@ -21,7 +21,7 @@ Please note that this method is not officially supported by Next.js or next-inte
 
 ## Prerequisites
 
-This method applies to an existing Next.js 13 app that uses the App Router and next-international for i18n. If you don't have an existing app, you can create a starter app using the following command:
+This method applies to an existing Next.js app that uses the App Router and next-international for i18n. If you don't have an existing app, you can create a starter app using the following command:
 
 ```bash
 npx create-next-app@latest
@@ -330,6 +330,6 @@ That's it! Now we can test our internationalized React Server Components. This m
 
 ## Conclusion
 
-In this blog post, I walked you through what I have learned about running tests with Vitest and RTL on internationalized React Server Components in Next.js 13.
+In this blog post, I walked you through what I have learned about running tests with Vitest and RTL on internationalized React Server Components in Next.js App Router.
 
 I hope this post has been helpful. Please let me know if you have any questions or comments, and follow me on [Twitter](https://twitter.com/aurorascharff) for more updates. Happy coding! 🚀
