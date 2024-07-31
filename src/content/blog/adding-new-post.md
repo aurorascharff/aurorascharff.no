@@ -70,7 +70,7 @@ title: The title of the post
 author: your name
 pubDatetime: 2022-09-21T05:17:19Z
 slug: the-title-of-the-post
-featured: true
+featured: false
 draft: false
 tags:
   - some

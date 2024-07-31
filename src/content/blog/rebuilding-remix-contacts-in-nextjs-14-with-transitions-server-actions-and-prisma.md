@@ -3,7 +3,7 @@ author: Aurora Scharff
 pubDatetime: 2024-04-05T08:22:00Z
 title: Rebuilding "Remix Contacts" in Next.js 14 with Transitions, Server Actions and Prisma
 slug: rebuilding-remix-contacts-in-nextjs-14-with-transitions-server-actions-and-prisma
-featured: true
+featured: false
 draft: false
 tags:
   - React Server Components
