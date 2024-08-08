@@ -1,7 +1,7 @@
 ---
 organizer: thegeekconf 2024
 date: 2024-07-25T08:00:00Z
-name: "Enhancing Forms with React Server Components"
+name: "Remote Talk: Enhancing Forms with React Server Components"
 completed: true
 link: "https://www.youtube.com/watch?v=7Z4W2Je-SoQ&t=3750s"
 websiteLink: "https://www.thegeekconf.com"

@@ -1,7 +1,7 @@
 ---
 organizer: React Paris 2024
 date: 2024-03-22T08:00:00Z
-name: "Enhancing Forms with React Server Components"
+name: "Talk: Enhancing Forms with React Server Components"
 completed: true
 link: "https://www.youtube.com/watch?v=V0rRu7cevR0"
 websiteLink: "https://react.paris"

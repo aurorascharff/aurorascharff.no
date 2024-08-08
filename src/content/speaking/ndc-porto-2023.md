@@ -1,7 +1,7 @@
 ---
 organizer: NDC Porto 2023
 date: 2023-10-18T08:00:00Z
-name: "React Server Components: A New Way to Build Fast and Interactive Web Apps"
+name: "Talk: React Server Components: A New Way to Build Fast and Interactive Web Apps"
 completed: true
 link: "https://www.youtube.com/watch?v=zuAw2FEd5lI"
 websiteLink: "https://ndcporto.com"

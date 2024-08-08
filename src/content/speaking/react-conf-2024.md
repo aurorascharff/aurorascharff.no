@@ -1,7 +1,7 @@
 ---
 organizer: React Conf 2024
 date: 2024-05-16T08:00:00Z
-name: "Enhancing Forms with React Server Components"
+name: "Talk: Enhancing Forms with React Server Components"
 completed: true
 websiteLink: "https://conf.react.dev"
 link: "https://www.youtube.com/watch?v=X9cw4VczYVg"

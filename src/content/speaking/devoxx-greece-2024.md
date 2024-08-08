@@ -1,7 +1,7 @@
 ---
 organizer: Devoxx Greece 2024
 date: 2024-04-18T08:00:00Z
-name: "React Server Components: A New Way to Build Fast and Interactive Web Apps"
+name: "Talk: React Server Components: A New Way to Build Fast and Interactive Web Apps"
 completed: true
 websiteLink: "https://devoxx.gr"
 link: "https://www.youtube.com/watch?v=z52e7IRTsqc"

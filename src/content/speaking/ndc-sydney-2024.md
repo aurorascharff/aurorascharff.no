@@ -1,7 +1,7 @@
 ---
 organizer: NDC Sydney 2024
 date: 2024-02-15T08:00:00Z
-name: "React Server Components: A New Way to Build Fast and Interactive Web Apps"
+name: "Talk: React Server Components: A New Way to Build Fast and Interactive Web Apps"
 completed: true
 link: "https://www.youtube.com/watch?v=UBc0IbJUzKA"
 websiteLink: "https://ndcsydney.com"

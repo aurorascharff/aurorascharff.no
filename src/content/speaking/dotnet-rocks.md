@@ -1,7 +1,7 @@
 ---
 organizer: .NET Rocks Podcast
 date: 2023-11-16T08:00:00Z
-name: React Server Components with Aurora Walberg
+name: "Podcast: React Server Components with Aurora Walberg"
 completed: true
 link: "https://open.spotify.com/episode/0H7qULd6k1w1Zp09G8lcWZ?si=W0qzUL8RSvO4eJO6IkyAUA"
 websiteLink: "https://www.dotnetrocks.com"
