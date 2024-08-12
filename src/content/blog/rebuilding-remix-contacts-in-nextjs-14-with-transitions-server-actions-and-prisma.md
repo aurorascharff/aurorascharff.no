@@ -27,6 +27,8 @@ The [Remix Contacts tutorial](https://remix.run/docs/en/main/start/tutorial) is 
 
 This app also replaces the Remix stylesheet with tailwind.
 
+NB! See my [Remix Contacts Rebuild V2 GitHub repository](https://github.com/aurorascharff/next15-remix-contacts-rebuild-v2) for a "better", more Next.js-like approach of rebuilding the Remix Contacts tutorial.
+
 ## Executing the Rebuild
 
 Please view the [GitHub repo](https://github.com/aurorascharff/next14-remix-contacts-rebuild) for the full code. These steps are more to give an overview of the process and discuss the decisions made.
