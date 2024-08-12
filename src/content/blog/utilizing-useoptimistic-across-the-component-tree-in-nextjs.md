@@ -217,7 +217,7 @@ export default function JokesList() {
 
 And that's it! When we add a new joke, it will be added to the list optimistically.
 
-A proper example where a provider is being used with the useOptimistic hook across the component tree can be found [here](https://github.com/aurorascharff/next14-message-box/tree/optimistic-retry).
+A proper example where a provider is being used with the useOptimistic hook across the component tree can be found [here](https://github.com/aurorascharff/next15-remix-contacts-rebuild-v2/blob/main/app/contacts/%5BcontactId%5D/_components/Favorite.tsx) and [here](https://github.com/aurorascharff/next14-message-box/tree/optimistic-retry).
 
 ## Additional Notes
 
