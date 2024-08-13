@@ -206,7 +206,16 @@ describe('HelloWorld', () => {
 
 Notice the `await` in the `expect` call. This is because the `findBy` queries are async and need to be awaited.
 
-Note that you do not need to worry about nested async components with this method.
+Note that you do not need to worry about nested async components with this method. You can of course also create your own custom render function that includes the `Suspense` component:
+
+```tsx
+import { render } from '@testing-library/react';
+import { Suspense } from 'react';
+
+export function suspenseRender(children: JSX.Element) {
+  return render(<Suspense>{children}</Suspense>);
+}
+```
 
 ## Note on testing React 19 hooks
 
@@ -265,9 +274,11 @@ vi.mock('@/locales/server', async () => {
 
 describe('HelloWorld', () => {
   it('renders ', async () => {
-    await renderAsync(<HelloWorld />);
+    suspenseRender(
+      <HelloWorld />
+    );
 
-    expect(screen.getByTestId('hello-world')).toHaveTextContent('Hello World');
+    expect(await screen.findByTestId('hello-world')).toHaveTextContent('Hello World');
   });
 });
 
