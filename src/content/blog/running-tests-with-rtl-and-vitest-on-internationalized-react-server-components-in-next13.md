@@ -111,7 +111,9 @@ The test fails with the following error:
 Error: Objects are not valid as a React child (found: [object Promise]). If you meant to render a collection of children, use an array instead.
 ```
 
-This is because the component is async, and we need to use `await` to get the component before we can render it. At the moment there is not a lot of documentation on testing React Server Components, but there is an ongoing discussion on the [RTL GitHub](https://github.com/testing-library/react-testing-library/issues/1209). For now I am using a workaround from there by _caleb531_. We need to create a custom render function that uses `await` to get the component before rendering it. The code for the custom render function looks like this:
+This is because the component is async, and we need to use `await` to get the component before we can render it. At the moment there is not a lot of documentation on testing React Server Components, but there is an ongoing discussion on the [RTL GitHub](https://github.com/testing-library/react-testing-library/issues/1209).
+
+One workaround from there is by _caleb531_. We need to create a custom render function that uses `await` to get the component before rendering it. The code for the custom render function looks like this:
 
 ```tsx
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -178,7 +180,7 @@ vi.mock('./HelloWorld.tsx', () => {', () => {
 
 ### Updated method
 
-Another solution is to follow the [recommended workaround](https://github.com/testing-library/react-testing-library/issues/1209#issuecomment-1569813305) By NickMcCurdy which includes using React Canary and testing with Suspense and async test-calls.
+Another, better solution is to follow the [recommended workaround](https://github.com/testing-library/react-testing-library/issues/1209#issuecomment-1569813305) By NickMcCurdy which includes using React Canary and testing with Suspense and async test-calls.
 
 If the method is failing, make sure you are using the correct React version in your tests. You can check it by throwing a `console.log(React.version)` into a test. If it is not using React 19, run `npm install react@rc react-dom@rc` again (even though you already have React RC in your dependencies).
 
@@ -202,6 +204,8 @@ describe('HelloWorld', () => {
 });
 ```
 
+Notice the `await` in the `expect` call. This is because the `findBy` queries are async and need to be awaited.
+
 Note that you do not need to worry about nested async components with this method.
 
 ## Note on testing React 19 hooks
@@ -210,7 +214,7 @@ If you are using React 19 hooks such as `useFormStatus` and `useOptimistic` in y
 
 With it installed, all the new hooks can be tested as expected.
 
-When suspending a component using the `use` API, the `renderAsync` function can be used again to wait for the component to be resolved before running tests.
+When suspending a component using the `use` API, using a Suspense and `await` with `findBy` can be used again to wait for the component to be resolved before running tests.
 
 ## Testing internationalized React Server Components
 
