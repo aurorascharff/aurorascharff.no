@@ -27,7 +27,7 @@ The [Remix Contacts tutorial](https://remix.run/docs/en/main/start/tutorial) is 
 
 This app also replaces the Remix stylesheet with tailwind.
 
-NB! See my [Remix Contacts Rebuild V2 GitHub repository](https://github.com/aurorascharff/next15-remix-contacts-rebuild-v2) for a "better", more Next.js-like approach of rebuilding the Remix Contacts tutorial.
+NB! See my [Remix Contacts Rebuild V2 GitHub repository](https://github.com/aurorascharff/next15-remix-contacts-rebuild-v2) for a "better", more Next.js-like approach of rebuilding the Remix Contacts tutorial. That version also has additional improvements.
 
 ## Executing the Rebuild
 
@@ -684,7 +684,7 @@ export default function Search() {
 
 ### "Adding Search Spinner"
 
-We will bring in useDeferredValue to track the state of router, and add a spinner to the search component:
+We will bring in useTransition to track the state of router, and add a spinner to the search component:
 
 ```tsx
 // components/Search.tsx
@@ -698,9 +698,8 @@ export default function Search() {
   const router = useRouter();
   const pathName = usePathname();
   const searchParams = useSearchParams();
-  const [query, setQuery] = useState(searchParams.get('q') || '');
-  const deferredQuery = useDeferredValue(query);
-  const searching = query !== deferredQuery;
+  const query = searchParams.get('q') || '';
+  const [searching, startTransition] = useTransition();
 
   return (
     <form role="search">
@@ -710,7 +709,9 @@ export default function Search() {
           "w-full pl-8 outline-offset-1"
         )}
         onChange={e => {
-          router.push(`${pathName}?q=${e.target.value}`);
+          startTransition(() => {
+            router.push(`${pathName}?q=${e.target.value}`)
+          });
         }}
         defaultValue={query}
         aria-label="Search contacts"
@@ -747,10 +748,12 @@ We will just switch between `router.push()` and `router.replace()` in the search
 
 ```tsx
 onChange={e => {
-  const isFirstSearch = query === null;
-  isFirstSearch
-    ? router.push(`${pathName}?q=${e.target.value}`)
-    : router.replace(`${pathName}?q=${e.target.value}`);
+  startTransition(() => {
+    const isFirstSearch = query === null;
+    isFirstSearch
+      ? router.push(`${pathName}?q=${e.target.value}`)
+      : router.replace(`${pathName}?q=${e.target.value}`);
+  });
 }}
 ```
 
