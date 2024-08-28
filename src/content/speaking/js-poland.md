@@ -1,5 +1,5 @@
 ---
-organizer: JsPoland 2024
+organizer: JS Poland 2024
 date: 2024-11-08T08:00:00Z
 name: "Talk: Enhancing Forms with React Server Components"
 completed: false
