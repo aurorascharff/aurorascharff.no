@@ -661,7 +661,6 @@ import React from "react";
 
 export default function Search() {
   const router = useRouter();
-  const pathName = usePathname();
   const searchParams = useSearchParams();
   const query = searchParams.get("q") || "";
 
@@ -669,7 +668,7 @@ export default function Search() {
     <form role="search">
       <input
         onChange={e => {
-          router.push(`${pathName}?q=${e.target.value}`);
+          router.push(`?q=${e.target.value}`);
         }}
         defaultValue={query}
         aria-label="Search contacts"
@@ -710,7 +709,7 @@ export default function Search() {
         )}
         onChange={e => {
           startTransition(() => {
-            router.push(`${pathName}?q=${e.target.value}`)
+            router.push(`$?q=${e.target.value}`)
           });
         }}
         defaultValue={query}
@@ -751,8 +750,8 @@ onChange={e => {
   startTransition(() => {
     const isFirstSearch = query === null;
     isFirstSearch
-      ? router.push(`${pathName}?q=${e.target.value}`)
-      : router.replace(`${pathName}?q=${e.target.value}`);
+      ? router.push(`$?q=${e.target.value}`)
+      : router.replace(`$?q=${e.target.value}`);
   });
 }}
 ```
