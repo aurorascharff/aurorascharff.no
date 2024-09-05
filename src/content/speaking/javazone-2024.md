@@ -1,5 +1,5 @@
 ---
-organizer: Java>one 2024
+organizer: JavaZone 2024
 date: 2024-09-04T08:00:00Z
 name: "Talk: React Server Components: A New Way to Build Fast and Interactive Web Apps"
 completed: true
