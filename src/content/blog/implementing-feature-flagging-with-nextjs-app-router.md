@@ -177,7 +177,41 @@ export default function Messages() {
 
 ## Example: Controlling available sidebar routes with feature flags
 
-Let's say we have a sidebar with features we want to toggle on or off. We can mark a item as a feature:
+Let's say we have a sidebar with features we want to toggle on or off. We can assign the name of the feature per sidebar item:
+
+```tsx
+  { icon: <HelpIcon  />, name: 'help', path: routes.help() },
+  {
+    feature: 'FEATURE_TEMPLATES',
+    icon: <DocIcon  />,
+    isAuthenticated: true,
+    name: 'templates',
+    path: routes.templates(),
+  },
+```
+
+And our sidebar looks something like this:
+
+```tsx
+<ul>
+  {visibleRoutes.map(item => {
+    if (item.isAuthenticated && !isAuthenticated) {
+      return null;
+    }
+    return (
+      <SidebarItem
+        feature={item.feature}
+        key={item.path}
+        name={item.name}
+        icon={item.icon}
+        path={item.path}
+      />
+    );
+  })}
+</ul>
+```
+
+Then, we can check if the feature is enabled in the `SidebarItem` component:
 
 ```tsx
 type Props = {
@@ -198,7 +232,7 @@ export default function SidebarItem({ feature }: Props) {
 }
 ```
 
-But, we always want to show items that don't have a feature flag. We can add a default feature flag to the `serverSchema`:
+And this works well. However, we always want to show items that don't have a feature flag. We can add a default feature flag to the `serverSchema`:
 
 ```tsx
 export const serverSchema = Yup.object({
