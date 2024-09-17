@@ -8,6 +8,7 @@ draft: false
 tags:
   - React Server Components
   - Next.js
+  - App Router
   - React 19
   - useFormStatus
   - Progressive Enhancement

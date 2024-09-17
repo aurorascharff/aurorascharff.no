@@ -9,6 +9,7 @@ tags:
   - React Server Components
   - Next.js
   - Remix
+  - App Router
   - Server Actions
   - useOptimistic
   - useTransition
