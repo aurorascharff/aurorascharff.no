@@ -64,7 +64,7 @@ export const serverEnv = serverSchema.validateSync({
 
 Now we can use our `serverEnv` object to access the environment variables in our application.
 
-### Toggling features in Server Components
+## Toggling features in Server Components
 
 We can now use the environment variables to toggle features in our server components. Let's create a function to simplify this:
 
@@ -105,7 +105,7 @@ export default async function Page() {
 
 We can now turn on or off a feature in our App Service or relevant deployment environment by changing the environment variables. On page refresh, the feature will be toggled on or off.
 
-### Toggling features in Client Components
+## Toggling features in Client Components
 
 Since we are on the client, we can't access the environment variables directly. But, we still want the same flexibility of live turning on/off features. The initial solution here could be to pass down the feature flags as props to the client components. However, this is not ideal because we might have to pass down the feature flags through multiple the components in the component tree.
 
@@ -175,7 +175,7 @@ export default function Messages() {
   const isEnabled = useFeature('FEATURE_MESSAGES');
 ```
 
-### Example: Controlling available sidebar routes with feature flags
+## Example: Controlling available sidebar routes with feature flags
 
 Let's say we have a sidebar with features we want to toggle on or off. We can mark a item as a feature:
 
@@ -227,7 +227,7 @@ export default function SidebarItem({ feature = 'FEATURE_DEFAULT' }: Props) {
 
 And our sidebar will always show items that don't have a feature flag.
 
-### Conclusion
+## Conclusion
 
 In this blog post, I showed you how to implement simple feature flagging with the Next.js App Router. We used environment variables to toggle features in both server and client components.
 
