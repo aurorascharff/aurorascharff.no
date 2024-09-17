@@ -29,7 +29,7 @@ We want to turn specific features on or off using the environment variables. Let
  We can do this by creating a `.env` file in the root of our project. Here is an example of how you can set up your environment variables:
 
 ```env
-NEXT_PUBLIC_API_URL=https://api.example.com
+...
 FEATURE_TEMPLATES=1
 FEATURE_MESSAGES=1
 FEATURE_FORWARDING=0
