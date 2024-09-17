@@ -1,7 +1,7 @@
 ---
 author: Aurora Scharff
 pubDatetime: 2024-17-09T11:30:00Z
-title: Implementing Feature Flagging with Next.js App Router
+title: Implementing Feature Flagging with the Next.js App Router
 slug: implementing-feature-flagging-with-nextjs-app-router
 featured: false
 draft: false
