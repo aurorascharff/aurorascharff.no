@@ -9,11 +9,8 @@ tags:
   - React Server Components
   - Next.js
   - Feature flagging
+  - Providers
   - App Router
-  - React 19
-  - useFormStatus
-  - Progressive Enhancement
-  - Server Actions
 description: In this blog post, I will show you how to implement a simple version of feature flagging with the Next.js App Router. 
 ---
 
