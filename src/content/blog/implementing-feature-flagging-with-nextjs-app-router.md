@@ -42,38 +42,38 @@ These environment variables will be available in your Next.js application throug
 We will create a server schema using [Yup](https://www.npmjs.com/package/yup) to validate the environment variables. You could also use Zod with its equivalent methods. This is optional but can be useful to ensure that the environment variables are set correctly. In this case it doesn't really matter because we are using the environment variables as booleans, but it can be useful if you want to validate the values.
 
 ```ts
-export const serverSchema = Yup.object({
+export const featureSchema = Yup.object({
   FEATURE_TEMPLATES: Yup.string(),
   FEATURE_MESSAGES: Yup.string(),
   FEATURE_FORWARDING: Yup.string(),
 });
-export type ServerSchemaType = Yup.InferType<typeof serverSchema>;
+export type FeatureSchemaType = Yup.InferType<typeof featureSchema>;
 ```
 
 We will also create a `env.mjs` file to validate the environment variables:
 
 ```js
-import { serverSchema } from '@/validations/envSchema';
+import { featureSchema } from '@/validations/envSchema';
 
-export const serverEnv = serverSchema.validateSync({
+export const featureEnv = featureSchema.validateSync({
   FEATURE_TEMPLATES: process.env.FEATURE_TEMPLATES,
   FEATURE_MESSAGES: process.env.FEATURE_MESSAGES,
   FEATURE_FORWARDING: process.env.FEATURE_FORWARDING,
 });
 ```
 
-Now we can use our `serverEnv` object to access the environment variables in our application.
+Now we can use our `featureEnv` object to access the environment variables in our application.
 
 ## Toggling features in Server Components
 
 We can now use the environment variables to toggle features in our server components. Let's create a function to simplify this:
 
 ```ts
-import type { ServerSchemaType } from '@/validations/envSchema.js';
-import { serverEnv } from '../../env.mjs';
+import type { FeatureSchemaType } from '@/validations/envSchema.js';
+import { featureEnv } from '../../env.mjs';
 
-export async function getFeature(feature: keyof ServerSchemaType): Promise<boolean> {
-  return serverEnv[feature] === '1';
+export async function getFeature(feature: keyof FeatureSchemaType): Promise<boolean> {
+  return featureEnv[feature] === '1';
 }
 ```
 
@@ -115,10 +115,10 @@ Instead, lets create a feature provider that will provide the feature flags to t
 'use client';
 
 import React, { createContext } from 'react';
-import type { ServerSchemaType } from '@/validations/envSchema';
+import type { FeatureSchemaType } from '@/validations/envSchema';
 
 type FeatureContextType = {
-  features: ServerSchemaType;
+  features: FeatureSchemaType;
 };
 
 const FeatureContext = createContext<FeatureContextType | undefined>(undefined);
@@ -127,7 +127,7 @@ export default function FeatureProvider({
   features,
   children,
 }: {
-  features: ServerSchemaType;
+  features: FeatureSchemaType;
   children: React.ReactNode;
 }) {
   return (
@@ -141,7 +141,7 @@ export default function FeatureProvider({
   );
 }
 
-export function useFeature(feature: keyof ServerSchemaType) {
+export function useFeature(feature: keyof FeatureSchemaType) {
   const context = React.useContext(FeatureContext);
   if (context === undefined) {
     throw new Error('useFeature must be used within a FeatureProvider');
@@ -154,11 +154,11 @@ We can use this in our root layout and pass down the feature flags from the serv
 
 ```tsx
 ...
-import { serverEnv } from '../../env.mjs';
+import { featureEnv } from '../../env.mjs';
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-      <FeatureProvider serverEnv={serverEnv}>
+      <FeatureProvider featureEnv={featureEnv}>
         {children}
       </FeatureProvider>
   );
@@ -216,7 +216,7 @@ Then, we can check if the feature is enabled in the `SidebarItem` component:
 ```tsx
 type Props = {
   ...
-  feature?: keyof ServerSchemaType;
+  feature?: keyof FeatureSchemaType;
 };
 
 export default function SidebarItem({ feature }: Props) {
@@ -232,10 +232,10 @@ export default function SidebarItem({ feature }: Props) {
 }
 ```
 
-And this works well. However, we always want to show items that don't have a feature flag. We can add a default feature flag to the `serverSchema`:
+And this works well. However, we always want to show items that don't have a feature flag. We can add a default feature flag to the `featureSchema`:
 
 ```tsx
-export const serverSchema = Yup.object({
+export const featureSchema = Yup.object({
   FEATURE_DEFAULT: Yup.string().default('1'),
   FEATURE_MALER: Yup.string(),
   FEATURE_MELDINGER: Yup.string(),
