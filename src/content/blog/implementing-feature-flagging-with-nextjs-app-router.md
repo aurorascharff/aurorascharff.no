@@ -180,14 +180,25 @@ export default function Messages() {
 Let's say we have a sidebar with features we want to toggle on or off. We can assign the name of the feature per sidebar item:
 
 ```tsx
-  { icon: <HelpIcon  />, name: 'help', path: routes.help() },
-  {
-    feature: 'FEATURE_TEMPLATES',
-    icon: <DocIcon  />,
-    isAuthenticated: true,
-    name: 'templates',
-    path: routes.templates(),
-  },
+export type RouteObject = {
+  name: string;
+  path: string;
+  icon?: React.ReactNode;
+  isAuthenticated?: boolean;
+  feature?: keyof FeatureSchemaType;
+};
+
+...
+
+{ icon: <HelpIcon  />, name: 'help', path: routes.help() },
+{
+  feature: 'FEATURE_TEMPLATES',
+  icon: <DocIcon  />,
+  isAuthenticated: true,
+  name: 'templates',
+  path: routes.templates(),
+},
+...
 ```
 
 And our sidebar looks something like this:
