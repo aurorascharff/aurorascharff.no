@@ -35,7 +35,7 @@ FEATURE_MESSAGES=1
 FEATURE_FORWARDING=0
 ```
 
-These environment variables will be available in your Next.js application through `process.env`. They can be set in your App Service or other deployment environments.
+These environment variables will be available in your Next.js application through `process.env`. They can be set in your App Service or other deployment environments. Any feature that does not have an environment variable set to "1" will be turned off by default.
 
 ## Creating a server schema with Yup and exporting the environment variables
 
