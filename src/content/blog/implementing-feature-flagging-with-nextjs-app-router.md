@@ -50,7 +50,7 @@ export const featureSchema = Yup.object({
 export type FeatureSchemaType = Yup.InferType<typeof featureSchema>;
 ```
 
-We will also create a `env.mjs` file to validate the environment variables:
+Then we will create a `env.mjs` file to validate the environment variables:
 
 ```js
 import { featureSchema } from '@/validations/envSchema';
