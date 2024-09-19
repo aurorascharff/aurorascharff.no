@@ -37,9 +37,9 @@ FEATURE_FORWARDING=0
 
 These environment variables will be available in your Next.js application through `process.env`. They can be set in your App Service or other deployment environments. Any feature that does not have an environment variable set to "1" will be turned off by default.
 
-## Creating a server schema with Yup and exporting the environment variables
+## Creating a feature schema with Yup and exporting the environment variables
 
-We will create a server schema using [Yup](https://www.npmjs.com/package/yup) to validate the environment variables. You could also use Zod with its equivalent methods. This is optional but can be useful to ensure that the environment variables are set correctly. In this case it doesn't really matter because we are using the environment variables as booleans, but it can be useful if you want to validate the values.
+We will create a feature schema using [Yup](https://www.npmjs.com/package/yup) to validate the environment variables. You could also use Zod with its equivalent methods. This is optional but can be useful to ensure that the environment variables are set correctly. In this case it doesn't really matter because we are using the environment variables as booleans, but it can be useful if you want to validate the values.
 
 ```ts
 export const featureSchema = Yup.object({
