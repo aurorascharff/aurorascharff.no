@@ -1,6 +1,6 @@
 ---
 author: Aurora Scharff
-pubDatetime: 2024-10-04T11:30:00Z
+pubDatetime: 2024-10-04T10:30:00Z
 title: Handling Form Validation Errors and Resets with useActionState
 slug: handling-form-validation-errors-and-resets-with-useactionstate
 featured: true
