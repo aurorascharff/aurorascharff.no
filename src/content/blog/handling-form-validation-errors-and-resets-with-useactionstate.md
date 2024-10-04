@@ -178,22 +178,18 @@ We will pass the `updateContactById` function to the hook, and we will also pass
 
 And we need to make the component a client component, because we are using the `useActionState` hook. And we have to pass the returned, wrapped action `updateContactAction` to the form.
 
+Then, we can use these errors to display them in the form. On form submission, the errors will be returned from the action and displayed in the form.
+
 ```tsx
 "use client"
 
-...
 
 export default function ContactForm({ contact }: { contact: Contact }) {
   const updateContactById = updateContact.bind(null, contact.id);
   const [state, updateContactAction] = useActionState(updateContactById, {
     errors: {} as ContactSchemaErrorType,
   });
-  ...
-```
 
-Now we can use these errors to display them in the form. On form submission, the errors will be returned from the action and displayed in the form.
-
-```tsx
   return (
     <form className="flex max-w-[40rem] flex-col gap-4 @container" action={updateContactAction}>
       <div className="grip-rows-5 grid gap-2 @sm:grid-cols-[1fr_4fr] @sm:gap-4">
