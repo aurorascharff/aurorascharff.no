@@ -227,7 +227,7 @@ We are getting more typescript errors. That's nbecause the action that `useActio
 
 So we define this additional parameter in the `updateContact` function as `_prevState`.  
 
-We will also define a `State` type for pevious.
+We will also define a `State` type for pevious state.
 
 ```ts
 type State = {
