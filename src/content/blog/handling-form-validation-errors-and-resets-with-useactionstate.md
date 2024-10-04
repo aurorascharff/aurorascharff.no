@@ -282,7 +282,7 @@ export async function updateContact(contactId: string, _prevState: State, formDa
 }
 ```
 
-And we will update the `useActionState` hook to use the contact as the initial values of the data, but then update it with the data returned from the action.
+And we will update the `useActionState` hook to use the contact as the initial values of the data, but then have it update with the data returned from the action.
 
 ```tsx
 "use client"
