@@ -343,7 +343,7 @@ This is a great example of Progressive Enhancement, where we enhance the form wi
 
 ## Reach Hook Form as an alternative
 
-If you are not a fan of `useActionState`, you can use Reach Hook Form as an alternative. It is a great library for form validation and handling. It is also a good choice if you want to use controlled inputs.
+If you are not a fan of `useActionState`, you can use Reach Hook Form as an alternative. It is a great library for form validation and handling, and uses controlled inputs to manage a controlled form state for you.
 
 I have an example of that in a [separate branch](https://github.com/aurorascharff/next15-remix-contacts-rebuild-v2/blob/react-hook-form/app/contacts/%5BcontactId%5D/edit/_components/ContactForm.tsx).
 
