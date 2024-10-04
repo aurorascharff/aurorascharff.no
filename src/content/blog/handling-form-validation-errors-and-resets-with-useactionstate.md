@@ -198,7 +198,7 @@ export default function ContactForm({ contact }: { contact: Contact }) {
           <Input
             errors={state.errors?.fieldErrors?.first}
             defaultValue={contact?.first || undefined}
-            aria-label="First name"
+            aria-label="First name"f
             name="first"
             type="text"
             placeholder="First"
@@ -223,7 +223,9 @@ export default function ContactForm({ contact }: { contact: Contact }) {
         ...
 ```
 
-We also need to define an addition parameter in the `updateContact` function, `_prevState`.  This is useful when we want to access the previous state of the action. However, we don't need it in this case.
+We are getting more typescript errors. That's nbecause the action that `useActionState` is wrapping is passed an additional parameter, the previous state. This is useful when we want to access the previous state of the action. However, we don't need it in this case.
+
+So we dine this additional parameter in the `updateContact` function as `_prevState`.  
 
 We will also define a `State` type for the state object in the `updateContact` function.
 
