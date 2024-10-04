@@ -341,6 +341,12 @@ We called `useActionState` directly with a Server Function, and passed the retur
 
 This is a great example of Progressive Enhancement, where we enhance the form with JavaScript, but it still works without it. This blog post did not cover additional loading states and interactions, but these can be added to further enhance the form.
 
+## Reach Hook Form as an alternative
+
+If you are not a fan of `useActionState`, you can use Reach Hook Form as an alternative. It is a great library for form validation and handling. It is also a good choice if you want to use controlled inputs.
+
+I have an example of that in a [separate branch](https://github.com/aurorascharff/next15-remix-contacts-rebuild-v2/blob/react-hook-form/app/contacts/%5BcontactId%5D/edit/_components/ContactForm.tsx).
+
 ## Conclusion
 
 In this blog post, we've seen how to use the `useActionState` hook to create a validated form. We've also seen how to handle form resets with it. The final result can be found [on GithHub](https://github.com/aurorascharff/next15-remix-contacts-rebuild-v2/blob/main/app/contacts/%5BcontactId%5D/edit/_components/ContactForm.tsx) and tried out [on Vercel](https://next15-remix-contacts-rebuild-v2.vercel.app/). Again, just give the app a minute if it initially throws an application error - the database is sleeping.
