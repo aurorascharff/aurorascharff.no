@@ -19,7 +19,7 @@ description: With React 19 RC announced, the `useActionState` hook is a powerful
 
 The React 19 `useActionState` hook is a powerful tool for creating a state based on the result of an action, typically useful with form submissions. However, there are unclear usage patterns and some gotchas that can make it hard to work with. In this blog post, we'll create a validated form using the hook, and we'll see how we can handle form resets and errors with it.
 
-The final result can be found [on GithHub](https://github.com/aurorascharff/next15-remix-contacts-rebuild-v2/blob/main/app/contacts/%5BcontactId%5D/edit/_components/ContactForm.tsx) and tried out [on Vercel](next15-remix-contacts-rebuild-v2.vercel.app). Just give the app a minute if it initially throws an application error - the database is sleeping.
+The final result can be found [on GithHub](https://github.com/aurorascharff/next15-remix-contacts-rebuild-v2/blob/main/app/contacts/%5BcontactId%5D/edit/_components/ContactForm.tsx) and tried out [on Vercel](https://next15-remix-contacts-rebuild-v2.vercel.app/). Just give the app a minute if it initially throws an application error - the database is sleeping.
 
 ## Table of contents
 
@@ -335,12 +335,12 @@ What happens now is that when the form is submitted, the data is returned from t
 
 ## Note on Progressive Enhancement
 
-We called `useActionState` directly with a Server Function, and passed the returned, wrapped action directly to the form. This enables the form to be used without JavaScript, before hydration has completed. Had we used the `onSubmit` event, the form would not have worked without JavaScript. 
+We called `useActionState` directly with a Server Function, and passed the returned, wrapped action directly to the form. This enables the form to be used without JavaScript, before hydration has completed. Had we used the `onSubmit` event, the form would not have worked without JavaScript.
 
 This is a great example of Progressive Enhancement, where we enhance the form with JavaScript, but it still works without it. This blog post did not cover additional loading states and interactions, but these can be added to further enhance the form.
 
 ## Conclusion
 
-In this blog post, we've seen how to use the `useActionState` hook to create a validated form. We've also seen how to handle form resets with it. The final result can be found [on GithHub](https://github.com/aurorascharff/next15-remix-contacts-rebuild-v2/blob/main/app/contacts/%5BcontactId%5D/edit/_components/ContactForm.tsx) and tried out [on Vercel](next15-remix-contacts-rebuild-v2.vercel.app). Again, just give the app a minute if it initially throws an application error - the database is sleeping.
+In this blog post, we've seen how to use the `useActionState` hook to create a validated form. We've also seen how to handle form resets with it. The final result can be found [on GithHub](https://github.com/aurorascharff/next15-remix-contacts-rebuild-v2/blob/main/app/contacts/%5BcontactId%5D/edit/_components/ContactForm.tsx) and tried out [on Vercel](https://next15-remix-contacts-rebuild-v2.vercel.app/). Again, just give the app a minute if it initially throws an application error - the database is sleeping.
 
 I hope this post has been helpful. Please let me know if you have any questions or comments, and follow me on [Twitter](https://twitter.com/aurorascharff) for more updates. Happy coding! 🚀
