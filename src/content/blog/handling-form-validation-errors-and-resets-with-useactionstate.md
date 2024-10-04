@@ -17,7 +17,7 @@ tags:
 description: With React 19 RC announced, the `useActionState` hook is a powerful tool for creating a state based on the result of an action, typically useful with form submissions. However, there are unclear usage patterns and some gotchas that can make it hard to work with. In this blog post, we'll create a validated form using the hook, and we'll see how we can handle form resets and errors with it.
 ---
 
-The React 19 `useActionState` hook is a powerful tool for creating a state based on the result of an action, typically useful with form submissions. However, there are unclear usage patterns and some gotchas that can make it hard to work with. In this blog post, we'll create a validated form using the hook, and we'll see how we can handle form resets and errors with it.
+The React 19 `useActionState` hook is a powerful tool for creating a component state based on the result of an action, typically useful with form submissions. However, there are unclear usage patterns and some gotchas that can make it hard to work with. In this blog post, we'll create a validated form using the hook, and we'll see how we can handle form resets and errors with it.
 
 The final result can be found [on GithHub](https://github.com/aurorascharff/next15-remix-contacts-rebuild-v2/blob/main/app/contacts/%5BcontactId%5D/edit/_components/ContactForm.tsx) and tried out [on Vercel](https://next15-remix-contacts-rebuild-v2.vercel.app/). Just give the app a minute if it initially throws an application error - the database is sleeping.
 
