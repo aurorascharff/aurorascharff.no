@@ -304,6 +304,33 @@ export default function ContactForm({ contact }: { contact: Contact }) {
   ...
 ```
 
+Then, we will instead use the returned data from the action as our default form values.
+
+```tsx
+  return (
+    <form className="flex max-w-[40rem] flex-col gap-4 @container" action={updateContactAction}>
+      <div className="grip-rows-5 grid gap-2 @sm:grid-cols-[1fr_4fr] @sm:gap-4">
+        <span className="flex">Name</span>
+        <div className="flex gap-4">
+          <Input
+            errors={state.errors?.fieldErrors?.first}
+            defaultValue={state.data?.first || undefined}
+            aria-label="First name"
+            name="first"
+            type="text"
+            placeholder="First"
+          />
+          <Input
+            errors={state.errors?.fieldErrors?.last}
+            aria-label="Last name"
+            defaultValue={state.data?.last || undefined}
+            name="last"
+            placeholder="Last"
+            type="text"
+          />
+          ...
+```
+
 What happens now is that when the form is submitted, the data is returned from the Server Function and the form is updated with the data. If there are errors, the form is updated with the errors. This way, it feels like the form is not resetting.
 
 ## Note on Progressive Enhancement
