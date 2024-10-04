@@ -225,7 +225,7 @@ export default function ContactForm({ contact }: { contact: Contact }) {
 
 We are getting more typescript errors. That's nbecause the action that `useActionState` is wrapping is passed an additional parameter, the previous state. This is useful when we want to access the previous state of the action. However, we don't need it in this case.
 
-So we dine this additional parameter in the `updateContact` function as `_prevState`.  
+So we define this additional parameter in the `updateContact` function as `_prevState`.  
 
 We will also define a `State` type for the state object in the `updateContact` function.
 
