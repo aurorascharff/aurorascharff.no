@@ -9,8 +9,10 @@ tags:
   - React Server Components
   - Next.js
   - Remix
+  - Forms
   - App Router
   - Server Actions
+  - Server Functions
   - useOptimistic
   - useTransition
   - Progressive Enhancement

@@ -9,10 +9,12 @@ tags:
   - React Server Components
   - Next.js
   - App Router
+  - Forms
   - React 19
   - useFormStatus
   - Progressive Enhancement
   - Server Actions
+  - Server Functions
 description: With React 19 on the horizon, the `useFormStatus` hook is a powerful tool for handling form submissions. It will allow us to create a submit button that can be used across multiple forms, while it handles the form state for us. In this blog post, we'll create a reusable SubmitButton with `useFormStatus`.
 ---
 
