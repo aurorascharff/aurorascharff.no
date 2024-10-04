@@ -25,7 +25,7 @@ The final result can be found [on GithHub](https://github.com/aurorascharff/next
 
 ## The starting point
 
-We have a simple form that allows us to edit a contact. The form is a React component that receives a `contact` prop, which is the contact we want to edit. The form has fields for the contact's first name, last name, twitter, notes, and an avatarUrl.
+We have a simple form that allows us to edit a contact. The form is a React component that receives a `contact` prop, which is the contact we want to edit. The form has fields for the contact's first name, last name, twitter, notes, and an avatar URL.
 
 ```tsx
 export default function ContactForm({ contact }: { contact: Contact }) {
