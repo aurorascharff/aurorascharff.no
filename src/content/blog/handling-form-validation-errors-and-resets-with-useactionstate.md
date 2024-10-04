@@ -243,9 +243,11 @@ Everything should now work as expected. The form will display errors if there ar
 
 ## Handling form resets
 
-We notice that when we submit the form, but it fails due to errors, the form resets. This is because in React 19, when using uncontrolled inputs and the `action` property, the form resets on submission. When it resets, it resets back to its default values, which is the contact data. If we didn't have default values, it would be reset back to an empty form.
+We notice that when we submit the form, but it fails due to errors, the form resets. This is because in React 19, when using uncontrolled inputs and the `action` property, the form will reset on submission. This can be good because it mimicks the MPA form submission behavior.
 
-We can opt out by using an `onSubmit` or by using controlled inputs. However, this is not a very good solution. Instead, lets return the data submitted from the Server Function. We will use the `ContactSchemaType` type we created earlier to type the `data` object in the state.
+When it resets, it resets back to its default values, which is the contact data. If we didn't have default values, it would be reset back to an empty form.
+
+For our case, this is not a good user experience. We can opt out by using an `onSubmit` or by using controlled inputs. However, this is not a very good solution. Instead, lets return the data submitted from the Server Function. We will use the `ContactSchemaType` type we created earlier to type the `data` object in the state.
 
 ```ts
 'use server';
