@@ -131,7 +131,7 @@ This button is now ready to be used in any form. It will automatically disable i
 
 ## The SubmitButton - Version 2
 
-Let's improve the SubmitButton by adding a loading spinner when the form is submitting, and allow the button to take in children. This way it's alot more resuable for any form context. Let's also allow passing in a `loading`-prop to trigger loading spinner so it's even more flexible.
+Let's improve the SubmitButton by adding a loading spinner when the form is submitting, and allow the button to take in children. This way it's a lot more reusable for any form context. Let's also allow passing in a `loading`-prop to trigger loading spinner so it's even more flexible.
 
 ```tsx
 export default function SubmitButton({
@@ -174,7 +174,7 @@ export default function SubmitButton({
 }
 ```
 
-This button is now more resuable and flexible. It can be used in any form, and it will show a loading spinner when the form is submitting. It can also take in children, so you can customize the button text.
+This button is now more reusable and flexible. It can be used in any form, and it will show a loading spinner when the form is submitting. It can also take in children, so you can customize the button text.
 
 ```tsx
 <form action={createRecord}>
@@ -183,7 +183,7 @@ This button is now more resuable and flexible. It can be used in any form, and i
 </form>
 ```
 
-The SubmitButton can be thrown into any component without forcing us to make seperate client components to handle submission state.
+The SubmitButton can be thrown into any component without forcing us to make separate client components to handle submission state.
 
 Bonus: the form is progressively enhanced, so it will work even if JavaScript is disabled, and it will show the feedback when the button is hydrated.
 
@@ -228,7 +228,7 @@ export default function NewRecordButton() {
 }
 ```
 
-We're using a transition because we want to disable the button and dipslay text feedback when the action is underway. This is a common pattern in React 19 applications.
+We're using a transition because we want to disable the button and display text feedback when the action is underway. This is a common pattern in React 19 applications.
 
 Problem is, this requires the component to be hydrated to work. We can improve this.
 
@@ -248,7 +248,7 @@ export default function NewRecordButton() {
 
 The SubmitButton will automatically disable itself and show the spinner when the form is submitting. This will work even if JavaScript is disabled or hasn't hydrated the form yet!
 
-And actually, this doesnt need to be a seperate component anymore! We can put the content back into whatever component it is being used in directly, even async server components.
+And actually, this doesn't need to be a separate component anymore! We can put the content back into whatever component it is being used in directly, even async server components.
 
 ```tsx
 export default async function Page() {

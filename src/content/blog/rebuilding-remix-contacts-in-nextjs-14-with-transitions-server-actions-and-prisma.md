@@ -314,7 +314,7 @@ export default function ContactButton({ contact }: { contact: Contact }) {
 
 This is where it gets interesting. We want to fade the main page whenever the app is in a loading state, and we know that different buttons across the app can trigger this state.
 
-In remix, we would use the `useNavigation()` hook. However, Next.js does not expose router events for composability reasons, and expects you to use transitions instead.
+In remix, we would use the `useNavigation()` hook. However, Next.js does not expose router events for composition reasons, and expects you to use transitions instead.
 
 I found the article [Global progress in Next.js](https://buildui.com/posts/global-progress-in-nextjs) by Sam Selikoff and Ryan Toronto on how to create a global progress bar very helpful here - please refer to it for more information.
 
@@ -871,7 +871,7 @@ As encountered, we had to create a custom provider to handle global navigation e
 
 I could have just used the `data-pending` attribute on the component firing a global pending state and style the layout based on it. That would also be fine for this example, but I wanted to try out a generalized solution.
 
-Either way, we end up with a lot of boilerplate code to handle this, a trade-off for Next.js' composability.
+Either way, we end up with a lot of boilerplate code to handle this, a trade-off for Next.js' composition.
 
 The correct Nextjs approach might be to use a combination of Suspense and Transitions to handle loading states, but I wanted to replicate the features of Remix tutorial as closely as possible.
 
@@ -889,7 +889,7 @@ TODO: Try [this fix](https://www.nico.fyi/blog/workaround-layout-has-no-search-p
 
 Positives
 
-- Is more flexible and allows for more customization and composability.
+- Is more flexible and allows for more customization and composition.
 - Is more familiar to React developers.
 - Simplifies handling multiple forms in one route.
 
@@ -919,6 +919,6 @@ Neutrals
 
 ## Conclusion
 
-In this blog post, I've rebuilt the Remix Contacts tutorial in Next.js 14 using React Server Components and Server Actions, and compared the two approaches. I've found that the Next.js approach is more flexible and allows for more customization and composability, but is more complex and requires more boilerplate code. The Remix approach is more straightforward and easier to learn and understand, and progressively enhances better.
+In this blog post, I've rebuilt the Remix Contacts tutorial in Next.js 14 using React Server Components and Server Actions, and compared the two approaches. I've found that the Next.js approach is more flexible and allows for more customization and composition, but is more complex and requires more boilerplate code. The Remix approach is more straightforward and easier to learn and understand, and progressively enhances better.
 
 I hope this post has been helpful in understanding the differences between the two approaches and how to implement them in your own projects. Please let me know if you have any questions or comments, and follow me on [Twitter](https://twitter.com/aurorascharff) for more updates. Happy coding! 🚀

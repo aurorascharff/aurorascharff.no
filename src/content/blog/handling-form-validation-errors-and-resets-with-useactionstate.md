@@ -61,7 +61,7 @@ export default function ContactForm({ contact }: { contact: Contact }) {
 
 ## Submitting the form with an action
 
-We want to submit the form to our database using an action with the upgraded React 19 `action` property. This property can now be bound to a function, ƒor example a Server Function. It will recieve the form data as a `FormData` object.
+We want to submit the form to our database using an action with the upgraded React 19 `action` property. This property can now be bound to a function, ƒor example a Server Function. It will receive the form data as a `FormData` object.
 
 Let's write the Server Function that will handle the form submission. We'll call it `updateContact`.
 
@@ -223,11 +223,11 @@ export default function ContactForm({ contact }: { contact: Contact }) {
         ...
 ```
 
-We are getting more typescript errors. That's nbecause the action that `useActionState` is wrapping is passed an additional parameter, the previous state. This is useful when we want to access the previous state of the action. However, we don't need it in this case.
+We are getting more typescript errors. That's because the action that `useActionState` is wrapping is passed an additional parameter, the previous state. This is useful when we want to access the previous state of the action. However, we don't need it in this case.
 
 So we define this additional parameter in the `updateContact` function as `_prevState`.  
 
-We will also define a `State` type for pevious state.
+We will also define a `State` type for pervious state.
 
 ```ts
 type State = {
@@ -243,7 +243,7 @@ Everything should now work as expected. The form will display errors if there ar
 
 ## Handling form resets
 
-We notice that when we submit the form, but it fails due to errors, the form resets. This is because in React 19, when using uncontrolled inputs and the `action` property, the form will reset on submission. This can be good because it mimicks the MPA form submission behavior.
+We notice that when we submit the form, but it fails due to errors, the form resets. This is because in React 19, when using uncontrolled inputs and the `action` property, the form will reset on submission. This can be good because it mimics the MPA form submission behavior.
 
 When it resets, it resets back to its default values, which is the contact data. If we didn't have default values, it would be reset back to an empty form.
 
