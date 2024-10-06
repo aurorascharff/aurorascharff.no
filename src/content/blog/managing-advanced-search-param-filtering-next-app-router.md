@@ -403,7 +403,7 @@ export default function Search() {
 export default function CategoryFilter({ categoriesPromise }: Props) {
   const categoriesMap = use(categoriesPromise);
   const { filters, updateFilters } = useFilters();
-  const categories = filters.category;
+  const categories = filters.category || [];
   const [isPending, startTransition] = useTransition();
 
   return (
