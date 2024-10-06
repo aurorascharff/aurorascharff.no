@@ -274,6 +274,7 @@ To do that, we need to get them into the same transition and the same optimistic
 First, we can define a Filter type and a context to hold and update the filter state:
 
 ```tsx
+// FilterProvider.tsx
 
 'use client';
 
@@ -337,7 +338,7 @@ Then, we can define an `updateFilters` function to update the filters, which use
 
     startTransition(() => {
       setOptimisticFilters(updates || {});
-      router.push(`?${newSearchParams}`);
+      router.push(`?${newSearchParams}`, { scroll: false });
     });
   }
 ```
