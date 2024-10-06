@@ -21,7 +21,7 @@ The React 19 `useActionState` hook is a powerful tool for creating a component s
 
 The final result can be found [on GithHub](https://github.com/aurorascharff/next15-remix-contacts-rebuild-v2/blob/main/app/contacts/%5BcontactId%5D/edit/_components/ContactForm.tsx) and tried out [on Vercel](https://next15-remix-contacts-rebuild-v2.vercel.app/). Just give the app a minute if it initially throws an application error - the database is sleeping.
 
-![something](@assets/form.gif)
+![Form validation example](@assets/form.gif)
 
 ## Table of contents
 

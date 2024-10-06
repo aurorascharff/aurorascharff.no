@@ -306,11 +306,11 @@ And we can add additional client-side login to the forms' `onSubmit` if needed. 
 
 Smooth.
 
-![something](@assets/savebutton.gif)
+![Save button spinning](@assets/savebutton.gif)
 
-![something](@assets/newbutton.gif)
+![New button spinning](@assets/newbutton.gif)
 
-![something](@assets/deletebutton.gif)
+![Delete button spinning](@assets/deletebutton.gif)
 
 See the app and the full code where I have implemented the patterns mentioned in my Remix Contacts Rebuild V2 [GitHub repo](https://github.com/aurorascharff/next15-remix-contacts-rebuild-v2).
 
