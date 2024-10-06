@@ -448,8 +448,7 @@ A working example can be found [on Vercel](next15-filterlist.vercel.app) and the
 
 ## Note on Nuqs
 
-I tried to implement the same pattern with Nuqs, and the implementation is pretty simple. However, when clicking multiple filters, there are some buggy flashes going on. It seems nuqs is not using useOptimistic internally.
-
+I tried to implement the same pattern with Nuqs, and the implementation is pretty simple. However, when clicking multiple filters, there are some buggy flashes going on. It's possible that I did something wrong with my implementation.
 The code for the nuqs implementation can be found [here](https://github.com/aurorascharff/next15-filterlist/tree/filter-nuqs).
 
 ## Conclusion
