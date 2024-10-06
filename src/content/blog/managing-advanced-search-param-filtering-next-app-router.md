@@ -444,6 +444,12 @@ Don't forget that you can apply the same pattern to other filters, like paginati
 
 A working example can be found [on Vercel](next15-filterlist.vercel.app) and the code can be found [on GitHub](https://github.com/aurorascharff/next15-filterlist).
 
+## Note on Nuqs
+
+I tried to implement the same pattern with Nuqs, and the implementation is pretty simple. However, when clicking multiple filters, there are some buggy flashes going on. It seems nuqs is not using useOptimistic internally.
+
+The code for the nuqs implementation can be found [here](https://github.com/aurorascharff/next15-filterlist/tree/filter-nuqs).
+
 ## Conclusion
 
 In this blog post, we explored how to implement advanced search param filtering in the Next.js App Router. We learned how to track the pending state of the search with `useTransition()`, implement a responsive category filter with `useOptimistic()`, and coordinate the search and filter state with a React Context provider.
