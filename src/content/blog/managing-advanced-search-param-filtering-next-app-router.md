@@ -448,8 +448,8 @@ A working example can be found [on Vercel](next15-filterlist.vercel.app) and the
 
 ## Note on Nuqs
 
-I tried to implement the same pattern with Nuqs, and the implementation is pretty simple. However, when clicking multiple filters, there are some buggy flashes going on. It's possible that I did something wrong with my implementation.
-The code for the nuqs implementation can be found [here](https://github.com/aurorascharff/next15-filterlist/tree/filter-nuqs).
+I tried to implement the same functionality with [Nuqs](https://nuqs.47ng.com/), and the implementation is pretty simple. However, when clicking multiple filters, there are some buggy flashes going on. My suspicion is that the Nuqs implementation is not batching the transitions correctly, and the filters are being applied one by one. It's possible this is related to a startTransition change in newer Next.js versions.
+The code for the Nuqs implementation can be found [here](https://github.com/aurorascharff/next15-filterlist/tree/filter-nuqs).
 
 ## Conclusion
 
