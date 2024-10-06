@@ -277,11 +277,12 @@ First, we can define a Filter type and a context to hold and update the filter s
 
 'use client';
 
-type Filters = {
-  category: string[];
-  q: string | undefined;
-};
+const filterSchema = z.object({
+  category: z.array(z.string()).default([]).optional(),
+  q: z.string().default('').optional(),
+});
 
+type Filters = z.infer<typeof filterSchema>;
 type FilterContextType = {
   filters: Filters;
   isPending: boolean;
@@ -295,22 +296,23 @@ A filter provider can hold the optimistic search params, and should define to al
   
 ```tsx
 export default function FilterProvider({ children }: { children: React.ReactNode }) {
-const searchParams = useSearchParams();
-const router = useRouter();
-const [isPending, startTransition] = useTransition();
-
-const [optimisticFilters, setOptimisticFilters] = useOptimistic(
-  {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const filters = filterSchema.safeParse({
     category: searchParams.getAll('category'),
     q: searchParams.get('q') || undefined,
-  },
-  (prevState, newFilters: Partial<Filters>) => {
-    return {
-      ...prevState,
-      ...newFilters,
-    };
-  },
-);
+  });
+  
+  const [isPending, startTransition] = useTransition();
+  const [optimisticFilters, setOptimisticFilters] = useOptimistic(
+    filters.data,
+    (prevState, newFilters: Partial<Filters>) => {
+      return {
+        ...prevState,
+        ...newFilters,
+      };
+    },
+  );
 ```
 
 Then, we can define an `updateFilters` function to update the filters, which uses a transition to correctly update the URL and the optimistic state, and return a pending state.
@@ -334,7 +336,7 @@ Then, we can define an `updateFilters` function to update the filters, which use
     });
 
     startTransition(() => {
-      setOptimisticFilters(updates);
+      setOptimisticFilters(updates || {});
       router.push(`?${newSearchParams}`);
     });
   }
@@ -344,7 +346,7 @@ Finally, we can use the `FilterContext.Provider` to provide the optimistic filte
 
 ```tsx
   return (
-    <FilterContext.Provider value={{ filters: optimisticFilters, isPending, updateFilters }}>
+    <FilterContext.Provider value={{ filters: optimisticFilters || {}, isPending, updateFilters }}>
       {children}
     </FilterContext.Provider>
   );
