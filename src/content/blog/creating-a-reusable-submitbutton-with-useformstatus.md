@@ -1,7 +1,7 @@
 ---
 author: Aurora Scharff
 pubDatetime: 2024-06-10T11:30:00Z
-title: Creating a Reusable SubmitButton with UseFormStatus
+title: Creating a Reusable SubmitButton with useFormStatus
 slug: creating-a-reusable-submitbutton-with-useformstatus
 featured: true
 draft: false
