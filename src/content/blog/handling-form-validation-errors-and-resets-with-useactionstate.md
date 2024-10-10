@@ -337,9 +337,13 @@ What happens now is that when the form is submitted, the data is returned from t
 
 ## Note on Progressive Enhancement
 
-We called `useActionState` directly with a Server Function, and passed the returned, wrapped action directly to the form. This enables the form to be used without JavaScript, before hydration has completed. Had we used the `onSubmit` event, the form would not have worked without JavaScript.
+We called `useActionState` directly with a Server Function, and passed the returned, wrapped action directly to the form. This enables the form to submit and return errors without JavaScript, before hydration has completed. Had we used the `onSubmit` event, the form would not have worked without JavaScript.
 
 This is a great example of Progressive Enhancement, where we enhance the form with JavaScript, but it still works without it. This blog post did not cover additional loading states and interactions, but these can be added to further enhance the form.
+
+## Note on the `onSubmit` event
+
+The added benefit of using the `action` property is that the `onSubmit` event can be used to provide additional functionality, like client-only optimistic updates on top of the no-js base case. See [example here](https://github.com/aurorascharff/next14-message-box/blob/optimistic/components/message-box/MessageInput.tsx).
 
 ## Reach Hook Form as an alternative
 
