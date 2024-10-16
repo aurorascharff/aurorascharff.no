@@ -185,7 +185,6 @@ Then, we can use these errors to display them in the form. On form submission, t
 ```tsx
 "use client"
 
-
 export default function ContactForm({ contact }: { contact: Contact }) {
   const updateContactById = updateContact.bind(null, contact.id);
   const [state, updateContactAction] = useActionState(updateContactById, {
