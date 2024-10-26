@@ -448,7 +448,7 @@ After implementing the above changes, the app is working as expected. The search
 
 Don't forget that you can apply the same pattern to other filters, like pagination and sorting.
 
-The code can be found [on GitHub](https://github.com/aurorascharff/next15-filterlist).
+The code can be found [on GitHub](https://github.com/aurorascharff/next15-filterlist/tree/filter-provider).
 
 ## Switching to Nuqs
 
