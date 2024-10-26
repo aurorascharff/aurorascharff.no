@@ -412,30 +412,24 @@ export default function CategoryFilter({ categoriesPromise }: Props) {
   const [isPending, startTransition] = useTransition();
 
   return (
-    <div data-pending={isPending ? '' : undefined} className="flex flex-wrap gap-2">
-      {Object.values(categoriesMap).map(category => {
-        return (
-          <ToggleButton
-            onClick={() => {
-              const categoryId = category.id.toString();
-              const newCategories = categories.includes(categoryId)
-                ? categories.filter(id => {
-                    return id !== categoryId;
-                  })
-                : [...categories, categoryId];
-              startTransition(() => {
-                updateFilters({
-                  category: newCategories,
-                });
-              });
-            }}
-            key={category.id}
-            active={categories.includes(category.id.toString())}
-          >
-            {category.name}
-          </ToggleButton>
-        );
-      })}
+    <div data-pending={isPending ? '' : undefined}>
+      <ToggleGroup
+        toggleKey="category"
+        options={Object.values(categoriesMap).map(category => {
+          return {
+            label: category.name,
+            value: category.id.toString(),
+          };
+        })}
+        selectedValues={categories}
+        onToggle={newCategories => {
+          startTransition(() => {
+            updateFilters({
+              category: newCategories,
+            });
+          });
+        }}
+      />
     </div>
   );
 }
