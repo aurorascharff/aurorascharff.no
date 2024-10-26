@@ -266,6 +266,8 @@ And then use the `group-has` pseudo class to show a pulse animation on the table
 
 Credit to Sam Selikoff with hos post on [buildui](https://buildui.com/posts/instant-search-params-with-react-server-components) for this awesome pattern.
 
+A working example can be found [on Vercel](next15-filterlist.vercel.app) and the code can be found [on GitHub](https://github.com/aurorascharff/next15-filterlist).
+
 ## Coordinating the Search and Filter
 
 We still have a problem. When we search, then click a category, the search is still thrown away (and vice versa). We need to coordinate the search and filter state.
@@ -446,7 +448,7 @@ After implementing the above changes, the app is working as expected. The search
 
 Don't forget that you can apply the same pattern to other filters, like pagination and sorting.
 
-A working example can be found [on Vercel](next15-filterlist.vercel.app) and the code can be found [on GitHub](https://github.com/aurorascharff/next15-filterlist).
+The code can be found [on GitHub](https://github.com/aurorascharff/next15-filterlist).
 
 ## Switching to Nuqs
 
