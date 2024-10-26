@@ -443,11 +443,7 @@ export default function CategoryFilter({ categoriesPromise }: Props) {
 
 Note that I have added an additional `useTransition` hook to track the pending state of each filtering. This is because we don't want to show the spinner when the categories are being updated, and vice versa.
 
-## The Result
-
 After implementing the above changes, the app is working as expected. The search and filter are instantly responsive, and they do not override each other when multiple filters are applied.
-
-Don't forget that you can apply the same pattern to other filters, like pagination and sorting.
 
 The code can be found [on GitHub](https://github.com/aurorascharff/next15-filterlist/tree/filter-provider).
 
@@ -515,6 +511,8 @@ export default function Search() {
 ```
 
 With `shallow: false`, the search params trigger the page to reload with the result, and we can use the `startTransition` function to track the pending state of the routing.
+
+Don't forget that you can apply the same pattern to other filters, like pagination and sorting.
 
 The code for the Nuqs implementation can be found [here](https://github.com/aurorascharff/next15-filterlist/tree/filter-nuqs).
 
