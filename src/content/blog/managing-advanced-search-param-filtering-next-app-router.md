@@ -23,7 +23,7 @@ It is a a common request to put this state in the URL because the current state 
 
 However, when working with React Server Components and other new features and patterns in the Next.js App Router, it can be hard to manage this state smoothly. In this blog post, we will explore how to implement advanced search param filtering in the Next.js App Router, utilizing React 19 features like `useOptimistic()`.
 
-## The goal
+## The Goal
 
 Here is what we want to achieve:
 
@@ -132,7 +132,7 @@ It all comes down to the way the Next.js router works. Pay attention to the URL 
 
 ![Slow filters example](@assets/slowfilters.gif)
 
-We click a category, but the URL does not update until the await on the `page.tsx` doing the data fetching is resolved. This is because the router is waiting for the page to be rendered before it updates the URL. Since we are relying on the URL to be updated instantly, our implementation logic breaks.
+We click a category, but the URL does not update until the await on the `page.tsx` doing the data fetching is resolved. This is because the router is waiting for the page to be finish rendering on the server before it updates the URL. Since we are relying on the URL to be updated instantly, our implementation logic breaks.
 
 ## Tracking the Pending State of the Search
 
