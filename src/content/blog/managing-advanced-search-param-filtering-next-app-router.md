@@ -86,32 +86,27 @@ export default function CategoryFilter({ categoriesPromise }: Props) {
   const selectedCategories = searchParams.getAll('category');
 
   return (
-    <div className="flex flex-wrap gap-2">
-      {Object.values(categoriesMap).map(category => {
-        return (
-          <ToggleButton
-            onClick={() => {
-              const categoryId = category.id.toString();
-              const newCategories = selectedCategories.includes(categoryId)
-                ? selectedCategories.filter(id => {
-                    return id !== categoryId;
-                  })
-                : [...selectedCategories, categoryId];
-
-              const params = new URLSearchParams(searchParams);
-              params.delete('category');
-              newCategories.forEach(id => {
-                return params.append('category', id);
-              });
-              router.push(`?${params.toString()}`);
-            }}
-            key={category.id}
-            active={selectedCategories.includes(category.id.toString())}
-          >
-            {category.name}
-          </ToggleButton>
-        );
-      })}
+    <div>
+      <ToggleGroup
+        toggleKey="category"
+        options={Object.values(categoriesMap).map(category => {
+          return {
+            label: category.name,
+            value: category.id.toString(),
+          };
+        })}
+        selectedValues={selectedCategories}
+        onToggle={newCategories => {
+          const params = new URLSearchParams(searchParams);
+          params.delete('category');
+          newCategories.forEach(category => {
+            return params.append('category', category);
+          });
+          router.push(`?${params.toString()}`, {
+            scroll: false,
+          });
+        }}
+      />
     </div>
   );
 }
@@ -172,69 +167,32 @@ This one is pretty simple. We are already using an uncontrolled input and we can
 
 ## Fixing the Category Filter
 
-This one is a bit harder. The filter is controlled by the URL, but we need to instantly update the toggled state of the button. You could try and add your own `useState()` and `useEffect()` to track the toggled state, but that would be a lot of work and it would be hard to keep in sync with the URL.
-
-Instead, we can use the new React 19 hook `useOptimistic()`. The way it works, is it takes in a state to show when no action is pending, which can be our "true" state in the URL. Then, it returns an trigger function and a optimistic state. The optimistic state is the state that is shown when the action is pending. When the action is resolved, the optimistic state is replaced with the true state.
+Let's beging by tracking the pending state of the filtering. We can use the same `useTransition` hook around the push to the router. Then, we can put a data-pending attribute on the component to track the pending state.
 
 ```tsx
 // CategoryFilter.tsx
-
-  const [optimisticCategories, setOptimisticCategories] = useOptimistic(searchParams.getAll('category'));
-
-  return (
-    <div className="flex flex-wrap gap-2">
-      {Object.values(categoriesMap).map(category => {
-        return (
-          <ToggleButton
-            onClick={() => {
-              const categoryId = category.id.toString();
-              const newCategories = optimisticCategories.includes(categoryId)
-                ? optimisticCategories.filter(id => {
-                    return id !== categoryId;
-                  })
-                : [...optimisticCategories, categoryId];
-
-              const params = new URLSearchParams(searchParams);
-              params.delete('category');
-              newCategories.forEach(id => {
-                return params.append('category', id);
-              });
-              setOptimisticCategories(newCategories);
-              router.push(`?${params.toString()}`);
-            }}
-            key={category.id}
-            active={optimisticCategories.includes(category.id.toString())}
-          >
-            {category.name}
-          </ToggleButton>
-        );
-      })}
-    </div>
-  );
-```
-
-This is pretty nice. We can instantly update the state of the button, and then update the URL in the background. And when clicking multiple filters, the transition batches them together, avoiding race conditions.
-
-However, we don't know that the result of the filter is still pending. We can use the same `useTransition` hook to return the pending state of the navigation. Then, we can put a data-pending attribute on the component to track the pending state.
-
-```tsx
-// CategoryFilter.tsx
-
+  ...
   const [isPending, startTransition] = useTransition();
   const [optimisticCategories, setOptimisticCategories] = useOptimistic(searchParams.getAll('category'));
 
   return (
-    <div data-pending={isPending ? '' : undefined} className="flex flex-wrap gap-2">
-      {Object.values(categoriesMap).map(category => {
-        return (
-          <ToggleButton
-            onClick={() => {
-              ...
-              startTransition(() => {
-                setOptimisticCategories(newCategories);
-                router.push(`?${params.toString()}`);
-              });
-            }}
+    <div data-pending={isPending ? '' : undefined}>
+      <ToggleGroup
+        toggleKey="category"
+        options={Object.values(categoriesMap).map(category => {
+          return {
+            label: category.name,
+            value: category.id.toString(),
+          };
+        })}
+        selectedValues={optimisticCategories}
+        onToggle={newCategories => {
+          ...
+          startTransition(() => {
+            router.push(`?${params.toString()}`, {
+              scroll: false,
+            });
+          });
 ```
 
 Next, we can use this data-pending attribute to update the UI using CSS. We can put a class `group` on a parent div:
@@ -263,6 +221,49 @@ And then use the `group-has` pseudo class to show a pulse animation on the table
         <thead>
         ...
 ```
+
+However, we also want the category filter clicks to be instantly responsive.
+
+This one is a bit harder. The filter is controlled by the URL, but we need to instantly update the toggled state of the button. You could try and add your own `useState()` and `useEffect()` to track the toggled state, but that would be a lot of work and it would be hard to keep in sync with the URL.
+
+Instead, we can use the new React 19 hook `useOptimistic()`. The way it works, is it takes in a state to show nothing is pending, which can be our "true" state in the URL. Then, it returns an trigger function and a optimistic state. The hook creates a temporary optimistic state. When the transition is completed, the optimistic state is thrown away and replaced with the "true" state.
+
+```tsx
+// CategoryFilter.tsx
+  ...
+  const [isPending, startTransition] = useTransition();
+  const [optimisticCategories, setOptimisticCategories] = useOptimistic(searchParams.getAll('category'));
+
+  return (
+    <div data-pending={isPending ? '' : undefined}>
+      <ToggleGroup
+        toggleKey="category"
+        options={Object.values(categoriesMap).map(category => {
+          return {
+            label: category.name,
+            value: category.id.toString(),
+          };
+        })}
+        selectedValues={optimisticCategories}
+        onToggle={newCategories => {
+          const params = new URLSearchParams(searchParams);
+          params.delete('category');
+          newCategories.forEach(category => {
+            return params.append('category', category);
+          });
+          startTransition(() => {
+            setOptimisticCategories(newCategories);
+            router.push(`?${params.toString()}`, {
+              scroll: false,
+            });
+          });
+        }}
+      />
+    </div>
+  );
+```
+
+This is pretty nice. We can instantly update the state of the button, and then update the URL in the background. And when clicking multiple filters, the transition batches them together, avoiding race conditions.
 
 Credit to Sam Selikoff with hos post on [buildui](https://buildui.com/posts/instant-search-params-with-react-server-components) for this awesome pattern.
 
