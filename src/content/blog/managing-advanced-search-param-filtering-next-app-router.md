@@ -514,6 +514,8 @@ With `shallow: false`, the search params trigger the page to reload with the res
 
 Don't forget that you can apply the same pattern to other filters, like pagination and sorting.
 
+Note: seems the filtering flickers a little - I'm suspecting this is related to a current [bug with transitions](https://github.com/vercel/next.js/issues/70977). I will update this post when the bug is fixed.
+
 The code for the Nuqs implementation can be found [here](https://github.com/aurorascharff/next15-filterlist/tree/filter-nuqs).
 
 ## Conclusion
