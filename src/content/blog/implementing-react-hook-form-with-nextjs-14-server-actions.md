@@ -155,7 +155,7 @@ export default function ReactHookForm() {
 }
 ```
 
-## Adding client-side validation
+## Adding Client-side Validation
 
 To give the form interactive validation and utilize the `onChange` mode, let's add client-side validation with Zod. Import the Zod resolver and add it to the `useForm()` hook. In addition, we will need the `errors` from the React Hook Form state.
 
@@ -257,7 +257,7 @@ It doesn't do much yet. It simply creates a joke in the database and revalidates
 
 Note the `"use server` directive at the top of the file. This is what makes it a Server Action, allowing us to call it from the client. It's like a hidden API endpoint. Note also the `revalidatePath()` function. This is a new function in Next.js App Router that allows us to revalidate a page by path or tag. It will update all parts of the page that have changed after the Server Action has been called.
 
-## Adding server-side validation
+## Adding Server-side Validation
 
 We can also use Zod to server-side validate the data. This is important because we don't want to trust the client. Let's also handle the case of our Prisma query failing.
 
@@ -292,7 +292,7 @@ export async function createJoke(data: JokeSchemaType) {
 
 And that's it. A fully functional form with client-side and server-side validation!
 
-## Adding optimistic UI
+## Adding Optimistic UI
 
 We can also add optimistic UI to our form. This will make the form feel more responsive and interactive. We will be using the new `useOptimistic()` hook to do this.
 

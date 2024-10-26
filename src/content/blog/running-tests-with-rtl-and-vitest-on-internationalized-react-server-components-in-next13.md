@@ -179,7 +179,7 @@ vi.mock('./HelloWorld.tsx', () => {', () => {
 });
 ```
 
-### Updated method
+### Updated Method
 
 Another, better solution is to follow the [recommended workaround](https://github.com/testing-library/react-testing-library/issues/1209#issuecomment-1569813305) By NickMcCurdy which includes using React Canary and testing with Suspense and async test-calls.
 
@@ -218,7 +218,7 @@ export function suspenseRender(children: JSX.Element) {
 }
 ```
 
-## Note on testing React 19 hooks
+## Note on Testing React 19 Hooks
 
 If you are using React 19 hooks such as `useFormStatus` and `useOptimistic` in your components, you may run into issues. For RTL to work correctly in Next.js, you need to make sure RTL is using React 19 RC. Follow the same steps as above to check the React version in your tests.
 
@@ -226,7 +226,7 @@ With it installed, all the new hooks can be tested as expected.
 
 When suspending a component using the `use` API, using a Suspense and `await` with `findBy` can be used again to wait for the component to be resolved before running tests.
 
-## Testing internationalized React Server Components
+## Testing Internationalized React Server Components
 
 Next-international provides methods for getting the current locale and setting the locale. It also provides `useI18n()` (for client components) and `getI18n()` (async method for server components) functions and hooks that can be used to translate text in your app.
 

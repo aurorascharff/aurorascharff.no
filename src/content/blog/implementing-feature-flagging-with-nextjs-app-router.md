@@ -22,7 +22,7 @@ In this blog post, I will show you how to implement a simple version of feature 
 
 ## Table of contents
 
-## Setting environment variables
+## Setting Environment Variables
 
 We want to turn specific features on or off using the environment variables. Let's pretend we have three experimental features, TEMPLATE, MESSAGES, and FORWARDING. We want to be able to turn these features on or off using environment variables.
 
@@ -37,7 +37,7 @@ FEATURE_FORWARDING=0
 
 These environment variables will be available in your Next.js application through `process.env`. They can be set in your App Service or other deployment environments. Any feature that does not have an environment variable set to "1" will be turned off by default.
 
-## Creating a feature schema with Yup and exporting the environment variables
+## Creating a Feature Schema with Yup and Exporting the Environment Variables
 
 We will create a feature schema using [Yup](https://www.npmjs.com/package/yup) to validate the environment variables. You could also use Zod with its equivalent methods. This will make sure we don't expose any other environment variables than the ones we want to use for feature flagging.
 
@@ -64,7 +64,7 @@ export const featureEnv = featureSchema.validateSync({
 
 Now we can use our `featureEnv` object to access the environment variables in our application.
 
-## Toggling features in Server Components
+## Toggling Features in Server Components
 
 We can now use the environment variables to toggle features in our server components. Let's create a function to simplify this:
 
@@ -105,7 +105,7 @@ export default async function Page() {
 
 We can now turn on or off a feature in our App Service or relevant deployment environment by changing the environment variables. On page refresh, the feature will be toggled on or off.
 
-## Toggling features in Client Components
+## Toggling Features in Client Components
 
 Since we are on the client, we can't access the environment variables directly. But, we still want the same flexibility of live turning on/off features. The initial solution here could be to pass down the feature flags as props to the client components. However, this is not ideal because we might have to pass down the feature flags through multiple the components in the component tree.
 
@@ -175,7 +175,7 @@ export default function Messages() {
   const isEnabled = useFeature('FEATURE_MESSAGES');
 ```
 
-## Example: Controlling available sidebar routes with feature flags
+## Example: Controlling Available Sidebar Routes with Feature Flags
 
 Let's say we have a sidebar with features we want to toggle on or off. We can assign the name of the feature per sidebar item:
 

@@ -25,7 +25,7 @@ The final result can be found [on GithHub](https://github.com/aurorascharff/next
 
 ## Table of contents
 
-## The starting point
+## The Starting Point
 
 We have a simple form that allows us to edit a contact. The form is a React component that receives a `contact` prop, which is the contact we want to edit. The form has fields for the contact's first name, last name, twitter, notes, and an avatar URL.
 
@@ -61,7 +61,7 @@ export default function ContactForm({ contact }: { contact: Contact }) {
         ...
 ```
 
-## Submitting the form with an action
+## Submitting the Form with an Action
 
 We want to submit the form to our database using an action with the upgraded React 19 `action` property. This property can now be bound to a function, ƒor example a Server Function. It will receive the form data as a `FormData` object.
 
@@ -117,7 +117,7 @@ export default function ContactForm({ contact }: { contact: Contact }) {
 
 And this should nicely update the contact in the database when the form is submitted and redirect to the contact page.
 
-## Adding server-side validation
+## Adding Server-side Validation
 
 We want to add some validation to the form. The form here actually doesn't require any fields to be filled. However we want to validate the avatar URL because the image won't load if it's not a valid URL or if its not from a valid domain. We also want to validate that the twitter handle starts with an `@`.
 
@@ -172,7 +172,7 @@ export async function updateContact(contactId: string, formData: FormData) {
 }
 ```
 
-## Displaying the returned errors
+## Displaying the Returned Errors
 
 Now we need to display the errors in the form. We can use the `useActionState` hook for that. The hook will create a state based on the result of the action.
 
@@ -242,7 +242,7 @@ export async function updateContact(contactId: string, _prevState: State, formDa
 
 Everything should now work as expected. The form will display errors if there are any, and the contact will be updated in the database if there are no errors.
 
-## Handling form resets
+## Handling Form Resets
 
 We notice that when we submit the form, but it fails due to errors, the form resets. This is because in React 19, when using uncontrolled inputs and the `action` property, the form will reset on submission. This can be good because it mimics the MPA form submission behavior.
 
@@ -340,11 +340,11 @@ We called `useActionState` directly with a Server Function, and passed the retur
 
 This is a great example of Progressive Enhancement, where we enhance the form with JavaScript, but it still works without it. This blog post did not cover additional loading states and interactions, but these can be added to further enhance the form.
 
-## Note on the `onSubmit` event
+## Note on the `onSubmit` Event
 
 The added benefit of using the `action` property is that the `onSubmit` event can be used to provide additional functionality, like client-only optimistic updates on top of the no-js base case. See [example here](https://github.com/aurorascharff/next14-message-box/blob/optimistic/components/message-box/MessageInput.tsx).
 
-## Reach Hook Form as an alternative
+## Reach Hook Form as an Alternative
 
 If you are not a fan of `useActionState`, you can use Reach Hook Form as an alternative. It is a great library for form validation and handling, and uses controlled inputs to manage a controlled form state for you.
 
