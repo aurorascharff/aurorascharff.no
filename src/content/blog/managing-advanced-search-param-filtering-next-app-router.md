@@ -167,7 +167,7 @@ This one is pretty simple. We are already using an uncontrolled input and we can
 
 ## Fixing the Category Filter
 
-Let's beging by tracking the pending state of the filtering. We can use the same `useTransition` hook around the push to the router. Then, we can put a data-pending attribute on the component to track the pending state.
+Next, lets track the pending state of the filtering. We can use the same `useTransition` hook around the push to the router. It is not suitable to put a spinner here, but we can put a data-pending attribute on a parent div and bind it to the pending state.
 
 ```tsx
 // CategoryFilter.tsx
@@ -195,7 +195,7 @@ Let's beging by tracking the pending state of the filtering. We can use the same
           });
 ```
 
-Next, we can use this data-pending attribute to update the UI using CSS. We can put a class `group` on a parent div:
+Next, we can use this data-pending attribute to update the UI using CSS. We can put a class `group` on a parent div in the root layout:
 
 ```tsx
 // layout.tsx
