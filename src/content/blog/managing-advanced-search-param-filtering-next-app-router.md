@@ -453,7 +453,7 @@ While this solution is nice, it's probably not a good idea to write your own ser
 
 I implemented the features using [Nuqs](https://nuqs.47ng.com/), and the implementation is pretty simple.
 
-We simply need a `NuqsAdaper` in our root layout:
+We simply need a `NuqsAdapter` in our root layout:
 
 ```tsx
     <html lang="en">
