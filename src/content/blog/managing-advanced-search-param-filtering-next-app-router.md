@@ -510,7 +510,7 @@ export default function Search() {
   );
 ```
 
-With `shallow: false`, the search params trigger the page to reload with the result, and we can use the `startTransition` function to track the pending state of the navigation.
+The way Nuqs is implemented, the search params are actually pushed to the URL instantly. To trigger the page to reload with the result, we set the option `shallow: false`. Then, we can use the `startTransition` function to track the pending state of the navigation and pass it to the Nuqs hook.
 
 Note: it seems the filtering flickers a little when settling - maybe this is related to a current [bug with transitions](https://github.com/vercel/next.js/issues/70977). The same bug is also present when clicking filters or searching - they are supposed to be batched together and create only one push to the history stack.
 
