@@ -263,7 +263,7 @@ Instead, we can use the new React 19 hook `useOptimistic()`. The way it works, i
   );
 ```
 
-This is pretty nice. We can instantly update the state of the button, and then update the URL in the background. And when clicking multiple filters, the transition batches them together, avoiding race conditions.
+This is pretty nice. We can instantly update the state of the button, and then update the URL in the background.
 
 Credit to Sam Selikoff with hos post on [buildui](https://buildui.com/posts/instant-search-params-with-react-server-components) for this awesome pattern.
 
