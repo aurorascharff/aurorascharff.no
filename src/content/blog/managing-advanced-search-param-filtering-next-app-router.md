@@ -512,7 +512,7 @@ export default function Search() {
 
 With `shallow: false`, the search params trigger the page to reload with the result, and we can use the `startTransition` function to track the pending state of the navigation.
 
-Note: it seems the filtering flickers a little when settling - maybe this is related to a current [bug with transitions](https://github.com/vercel/next.js/issues/70977). The same bug is also present when clicking filters or searching - they should be batched together.
+Note: it seems the filtering flickers a little when settling - maybe this is related to a current [bug with transitions](https://github.com/vercel/next.js/issues/70977). The same bug is also present when clicking filters or searching - they are supposed to be batched together and create only one push to the history stack.
 
 I will update this post when the bug is fixed.
 
