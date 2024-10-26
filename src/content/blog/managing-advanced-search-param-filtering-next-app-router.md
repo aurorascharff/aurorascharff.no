@@ -520,6 +520,8 @@ The code for the Nuqs implementation can be found [here](https://github.com/auro
 
 In this blog post, we explored how to implement advanced search param filtering in the Next.js App Router. We learned how to track the pending state of the search with `useTransition()`, implement a responsive category filter with `useOptimistic()`, and coordinate the search and filter state with a React Context provider. Finally, we switched to using Nuqs for a more robust solution.
 
+You can also watch my [talk at Next.js conf](TODO) for a more in-depth explanation of the patterns used in this post. It does not cover coordinating the search and filter state.
+
 Don't forget that you can apply the same pattern to other filters, like pagination and sorting.
 
 I hope this post has been helpful to you. Please let me know if you have any questions or comments, and follow me on [Twitter](https://twitter.com/aurorascharff) for more updates. Happy coding! 🚀
