@@ -27,7 +27,7 @@ However, when working with React Server Components and other new features and pa
 
 Here is what we want to achieve:
 
-![Multiple filter example](@assets/filters2.gif)
+![Multiple filter example](@assets/filters.gif)
 
 The filters should be instantly responsive, and they should not override each other when multiple filters are applied.
 
