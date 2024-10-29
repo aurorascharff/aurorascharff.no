@@ -119,7 +119,7 @@ This is a logical implementation for a search and filter component, coding from 
 - There is no way to know that the onChange for the search has been triggered, because the app is not searching instantly.
 - After we click a category, its takes time for the toggle button to become active.
 - The category filtering is super buggy, and it is not working as expected. When we click multiple filters, the filters are not applied correctly.
-- When searching, then clicking a category, the search is not thrown away (and vice versa).
+- When searching, then clicking a category, the search is thrown away (and vice versa).
 
 ## The Reason for the Issues
 
@@ -195,7 +195,7 @@ Next, lets track the pending state of the filtering. We can use the same `useTra
           });
 ```
 
-Next, we can use this data-pending attribute to update the UI using CSS. We can put a class `group` on a parent div in the root layout:
+  Then, we can use this data-pending attribute to update the UI using CSS. We can put a class `group` on a parent div in the root layout:
 
 ```tsx
 // layout.tsx
@@ -443,7 +443,7 @@ The code can be found [on GitHub](https://github.com/aurorascharff/next15-filter
 
 ## Switching to Nuqs
 
-While this solution is nice, it's probably not a good idea to write your own serialized state manager (as [stated by Tanner Linsley](https://www.youtube.com/watch?v=VlCxEjxprKg)). Instead, let's use a library that does this for us.
+While this solution is nice, it's probably not a good idea to write your own serialized state manager (as [stated by Tanner Linsley](https://www.youtube.com/watch?v=VlCxEjxprKg)) in his talk on Tanstack Router. Instead, let's use a library that does this for us.
 
 I implemented the features using [Nuqs](https://nuqs.47ng.com/), and the implementation is pretty simple.
 
@@ -505,10 +505,6 @@ export default function Search() {
 ```
 
 The way Nuqs is implemented, the search params are actually pushed to the URL instantly. To trigger the page to reload with the result, we set the option `shallow: false`. Then, we can use the `startTransition` function to track the pending state of the navigation and pass it to the Nuqs hook.
-
-Note: it seems the filtering flickers a little when settling - maybe this is related to a current [bug with transitions](https://github.com/vercel/next.js/issues/70977). The same bug is also present when clicking filters or searching - they are supposed to be batched together and create only one push to the history stack.
-
-I will update this post when the bug is fixed.
 
 The code for the Nuqs implementation can be found [here](https://github.com/aurorascharff/next15-filterlist/tree/filter-nuqs).
 
