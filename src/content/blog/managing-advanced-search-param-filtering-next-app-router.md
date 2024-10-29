@@ -4,7 +4,7 @@ pubDatetime: 2024-10-24T10:30:00Z
 title: Managing Advanced Search Param Filtering in the Next.js App Router
 slug: managing-advanced-search-param-filtering-next-app-router
 featured: true
-draft: true
+draft: false
 tags:
   - React Server Components
   - Next.js
@@ -226,7 +226,7 @@ However, we also want the category filter clicks to be instantly responsive.
 
 This one is a bit harder. The filter is controlled by the URL, but we need to instantly update the toggled state of the button. You could try and add your own `useState()` and `useEffect()` to track the toggled state, but that would be a lot of work and it would be hard to keep in sync with the URL.
 
-Instead, we can use the new React 19 hook `useOptimistic()`. The way it works, is it takes in a state to show nothing is pending, which can be our "true" state in the URL. Then, it returns an trigger function and a optimistic state. The hook creates a temporary optimistic state. When the transition is completed, the optimistic state is thrown away and replaced with the "true" state.
+Instead, we can use the new React 19 hook `useOptimistic()`. The way it works, is it takes in a state to show nothing is pending, which can be our "true" state in the URL. Then, it returns an trigger function and a optimistic state. The hook creates a temporary optimistic state on the client. When the transition is completed, the optimistic state is thrown away and replaced with the "true" state.
 
 ```tsx
 // CategoryFilter.tsx
@@ -267,7 +267,7 @@ This is pretty nice. We can instantly update the state of the button, and then u
 
 Credit to Sam Selikoff with hos post on [buildui](https://buildui.com/posts/instant-search-params-with-react-server-components) for this awesome pattern.
 
-A working example can be found [on Vercel](next15-filterlist.vercel.app) and the code can be found [on GitHub](https://github.com/aurorascharff/next15-filterlist).
+A working example can be found [on Vercel](https://next15-filterlist.vercel.app/todo) and the code can be found [on GitHub](https://github.com/aurorascharff/next15-filterlist).
 
 ## Coordinating the Search and Filter
 
@@ -443,9 +443,9 @@ The code can be found [on GitHub](https://github.com/aurorascharff/next15-filter
 
 ## Switching to Nuqs
 
-While this solution is nice, it's probably not a good idea to write your own serialized state manager (as [stated by Tanner Linsley](https://www.youtube.com/watch?v=VlCxEjxprKg)) in his talk on Tanstack Router. Instead, let's use a library that does this for us.
+While this solution is nice, it's probably not a good idea to write your own serialized state manager (as stated by Tanner Linsley in [his recent talk on Tanstack Router](https://www.youtube.com/watch?v=VlCxEjxprKg)). Instead, let's use a library that does this for us.
 
-I implemented the features using [Nuqs](https://nuqs.47ng.com/), and the implementation is pretty simple.
+[Nuqs](https://nuqs.47ng.com/) is a library that provides a simple way to manage search params in React. I implemented the features using it, and the implementation is pretty simple.
 
 We simply need a `NuqsAdapter` in our root layout:
 
@@ -474,6 +474,43 @@ export const searchParamsCache = createSearchParamsCache(searchParams);
 Then, we can use the `useQueryState` hook to get and update the search params in any component:
 
 ```tsx
+// Search.tsx
+
+export default function Search() {
+  const params = useParams();
+  const [isPending, startTransition] = useTransition();
+  const [q, setQ] = useQueryState(
+    'q',
+    searchParams.q.withOptions({
+      shallow: false,
+      startTransition,
+    }),
+  );
+
+  return (
+    <form className="relative flex w-full flex-col gap-1 sm:w-fit">
+      <label className="font-semibold uppercase" htmlFor="search">
+        Search
+      </label>
+      <input
+        autoComplete="off"
+        id="search"
+        onChange={e => {
+          setQ(e.target.value);
+        }}
+        defaultValue={q}
+        className="w-full pl-10 sm:w-96"
+        name="q"
+        placeholder="Search in task title or description..."
+        type="search"
+      />
+      <SearchStatus searching={isPending} />
+    </Form>
+  );
+}
+```
+
+```tsx
 // CategoryFilter.tsx
 
 export default function CategoryFilter({ categoriesPromise }: Props) {
@@ -486,25 +523,28 @@ export default function CategoryFilter({ categoriesPromise }: Props) {
       startTransition,
     }),
   );
-```
 
-```tsx
-// Search.tsx
-
-export default function Search() {
-  const params = useParams();
-  const activeTab = params.tab as TaskStatus;
-  const [isPending, startTransition] = useTransition();
-  const [q, setQ] = useQueryState(
-    'q',
-    searchParams.q.withOptions({
-      shallow: false,
-      startTransition,
-    }),
+  return (
+    <div data-pending={isPending ? '' : undefined}>
+      <ToggleGroup
+        toggleKey="category"
+        options={Object.values(categoriesMap).map(category => {
+          return {
+            label: category.name,
+            value: category.id.toString(),
+          };
+        })}
+        selectedValues={categories}
+        onToggle={newCategories => {
+          setCategories(newCategories);
+        }}
+      />
+    </div>
   );
+}
 ```
 
-The way Nuqs is implemented, the search params are actually pushed to the URL instantly. To trigger the page to reload with the result, we set the option `shallow: false`. Then, we can use the `startTransition` function to track the pending state of the navigation and pass it to the Nuqs hook.
+The way Nuqs is implemented, the search params are actually pushed to the URL instantly. To trigger the page to reload with the result, we set the option `shallow: false`. Then, we can use the `startTransition` function to track the pending state of the navigation and pass it to the Nuqs hook, as use it to display pending state as we did before.
 
 The code for the Nuqs implementation can be found [here](https://github.com/aurorascharff/next15-filterlist/tree/filter-nuqs).
 
@@ -512,7 +552,7 @@ The code for the Nuqs implementation can be found [here](https://github.com/auro
 
 In this blog post, we explored how to implement advanced search param filtering in the Next.js App Router. We learned how to track the pending state of the search with `useTransition()`, implement a responsive category filter with `useOptimistic()`, and coordinate the search and filter state with a React Context provider. Finally, we switched to using Nuqs for a more robust solution.
 
-You can also watch my [talk at Next.js conf](https://www.youtube.com/watch?v=WLHHzsqGSVQ&t=9143s) for a more in-depth explanation of the patterns used in this post. It covers everything until the point where we are coordinating the search and filter state.
+You can also watch my [talk at Next.js Conf](https://www.youtube.com/watch?v=CvAySC5ex9c) for a more in-depth explanation of the patterns used in this post. It covers everything until the point where we are coordinating the search and filter state.
 
 Don't forget that you can apply the same pattern to other filters, like pagination and sorting.
 
