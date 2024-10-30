@@ -476,7 +476,7 @@ export const searchParamsCache = createSearchParamsCache(searchParams);
 
 Then, we can use the `useQueryState` hook to get and update the search params in any component.
 
-The way Nuqs is implemented, the search params are actually pushed to the URL instantly. To trigger the page to reload with the result, we set the option `shallow: false`.
+The way nuqs is implemented, the search params are actually pushed to the URL instantly. To trigger the page to reload with the result, we set the option `shallow: false`.
 
 Finally, we can pass the `startTransition` to the `useQueryState` options, and use the pending state of the transitions to display user feedback as we did before:
 
