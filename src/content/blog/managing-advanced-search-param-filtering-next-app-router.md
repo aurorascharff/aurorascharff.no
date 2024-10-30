@@ -551,7 +551,7 @@ export default function CategoryFilter({ categoriesPromise }: Props) {
 }
 ```
 
-The result is really nice! Notice the difference from the provider-example - here the searchparams are instantly updated in the URL, but the page is reloaded with the result as before.
+The result is really nice! Notice the difference from the provider example - here the search params are instantly updated in the URL and not after the navigation. Then the page is reloaded with the result as before.
 
 ![Nuqs filters example](@assets/filters4.gif)
 
