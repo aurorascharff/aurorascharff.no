@@ -4,7 +4,7 @@ pubDatetime: 2024-10-24T10:30:00Z
 title: Managing Advanced Search Param Filtering in the Next.js App Router
 slug: managing-advanced-search-param-filtering-next-app-router
 featured: true
-draft: true
+draft: false
 tags:
   - React Server Components
   - Next.js
@@ -19,17 +19,13 @@ description: When working with React Server Components and other new features an
 
 Let's say we want to have some kind of advanced filtering functionality in our Next.js app. We want to be able to filter a list of items based on multiple criteria. For example, we might have a list of tasks and we want to filter them by category and name. We could also be wanting pagination, sorting, and other features.
 
-It is a a common request to put this state in the URL because the current state of the app can be shareable and reloadable. But, it can be hard to coordinate state in the url with component state with for example useEffect. Instead, its better to use the URL as a single source of truth - essentially lifting the state up, which is a well known pattern in React.
+It is a a common request to put this state in the URL because the current state of the app can be shareable, bookmarkable and reloadable. But, it can be hard to coordinate state in the url with component state with for example useEffect. Instead, its better to use the URL as a single source of truth - essentially lifting the state up, which is a well known pattern in React.
 
 However, when working with React Server Components and other new features and patterns in the Next.js App Router, it can be hard to manage this state smoothly. In this blog post, we will explore how to implement advanced search param filtering in the Next.js App Router, utilizing React 19 features like `useOptimistic()`, and finally trying out the library Nuqs.
 
 ## The Goal
 
-Here is what we want to achieve:
-
-![Multiple filter example](@assets/filters.gif)
-
-The filters should be instantly responsive, and they should not override each other when multiple filters are applied.
+The filters should provide instant user feedback, and they should not override each other when multiple filters are applied.
 
 ## The First Attempt
 
@@ -102,9 +98,7 @@ export default function CategoryFilter({ categoriesPromise }: Props) {
           newCategories.forEach(category => {
             return params.append('category', category);
           });
-          router.push(`?${params.toString()}`, {
-            scroll: false,
-          });
+          router.push(`?${params.toString()}`);
         }}
       />
     </div>
@@ -112,22 +106,22 @@ export default function CategoryFilter({ categoriesPromise }: Props) {
 }
 ```
 
-They are pushing the search and filter state to the URL, and then in a separate `page.tsx` component we are using the filters to query the database and display the results in a table.
+They are pushing the search and filter state to the URL, and then in a separate `page.tsx` server component we are using the filters to query the database directly and display the results in a table.
 
 This is a logical implementation for a search and filter component, coding from a SPA perspective. However, the app is not working as expected. There are a few issues:
 
 - There is no way to know that the onChange for the search has been triggered, because the app is not searching instantly.
 - After we click a category, its takes time for the toggle button to become active.
-- The category filtering is super buggy, and it is not working as expected. When we click multiple filters, the filters are not applied correctly.
-- When searching, then clicking a category, the search is thrown away (and vice versa).
+- The category filtering is not working as expected. When we click multiple filters quickly, only the last clicked category is applied.
+- When searching, then clicking a category before it's completed, the search is thrown away (and vice versa).
 
 ## The Reason for the Issues
 
 It all comes down to the way the Next.js router works. Pay attention to the URL in this example:
 
-![Slow filters example](@assets/slowfilters.gif)
+![Slow filters example](@assets/filters.gif)
 
-We click a category, but the URL does not update until the await on the `page.tsx` doing the data fetching is resolved. This is because the router is waiting for the page to be finish rendering on the server before it updates the URL. Since we are relying on the URL to be updated instantly, our implementation logic breaks.
+We click a category, but the URL does not update until the await in the `page.tsx` doing the data fetching is resolved. The router is waiting for the server components to finish rendering on the server before it updates the URL. Since we are relying on the URL to be updated instantly, our implementation logic breaks.
 
 ## Tracking the Pending State of the Search
 
@@ -189,13 +183,11 @@ Next, lets track the pending state of the filtering. We can use the same `useTra
         onToggle={newCategories => {
           ...
           startTransition(() => {
-            router.push(`?${params.toString()}`, {
-              scroll: false,
-            });
+            router.push(`?${params.toString()}`);
           });
 ```
 
-  Then, we can use this data-pending attribute to update the UI using CSS. We can put a class `group` on a parent div in the root layout:
+Then, we can use this data-pending attribute to update the UI using CSS. We can put a class `group` on a parent div in the root layout:
 
 ```tsx
 // layout.tsx
@@ -210,7 +202,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         ...
 ```
 
-And then use the `group-has` pseudo class to show a pulse animation on the table in the `page.tsx` when the filter is pending.
+And then use the `group-has` pseudo class to show a pulsing animation on the table in the `page.tsx` when the filter is pending.
 
 ```tsx
 // page.tsx
@@ -222,7 +214,7 @@ And then use the `group-has` pseudo class to show a pulse animation on the table
         ...
 ```
 
-However, we also want the category filter clicks to be instantly responsive.
+However, we also want the category filter buttons to be instantly responsive.
 
 This one is a bit harder. The filter is controlled by the URL, but we need to instantly update the toggled state of the button. You could try and add your own `useState()` and `useEffect()` to track the toggled state, but that would be a lot of work and it would be hard to keep in sync with the URL.
 
@@ -253,9 +245,7 @@ Instead, we can use the new React 19 hook `useOptimistic()`. The way it works, i
           });
           startTransition(() => {
             setOptimisticCategories(newCategories);
-            router.push(`?${params.toString()}`, {
-              scroll: false,
-            });
+            router.push(`?${params.toString()}`);
           });
         }}
       />
@@ -263,19 +253,21 @@ Instead, we can use the new React 19 hook `useOptimistic()`. The way it works, i
   );
 ```
 
-This is pretty nice. We can instantly update the state of the button, and then update the URL in the background.
+This is pretty nice. We can instantly update the state of the button, and wait for the new page to load with the generated server components and the URL to update in the background.
 
+![Multiple filter example](@assets/filters2.gif)
+ 
 Credit to Sam Selikoff with hos post on [buildui](https://buildui.com/posts/instant-search-params-with-react-server-components) for this awesome pattern.
 
 A working example can be found [on Vercel](https://next15-filterlist.vercel.app/todo) and the code can be found [on GitHub](https://github.com/aurorascharff/next15-filterlist).
 
 ## Coordinating the Search and Filter
 
-We still have a problem. When we search, then click a category, the search is still thrown away (and vice versa). We need to coordinate the search and filter state.
+We still have a problem. When we search, then click a category before it's settled, the search is thrown away (and vice versa). We need to coordinate the search and filter state.
 
 To do that, we need to get them into the same transition and the same optimistic state. We could put the filters in the same component, or create a parent component, but to make it flexible and maintain composition, we should make a provider using React Context.
 
-First, we can define a Filter type and a context to hold and update the filter state:
+First, we define a schema for the search params, which we can use parse the search params from the URL. Then, we can define a Filter type from the schema and a context to hold and update the filter state. Now we also have type safety when updating and parsing the search params!
 
 ```tsx
 // FilterProvider.tsx
@@ -320,7 +312,7 @@ export default function FilterProvider({ children }: { children: React.ReactNode
   );
 ```
 
-Then, we can define an `updateFilters` function to update the filters, which uses a transition to correctly update the URL and the optimistic state, and return a pending state.
+Then, we can define an `updateFilters` function to update the filters, which uses a transition to correctly update the URL and the optimistic state, and track the pending state.
 
 ```tsx
   function updateFilters(updates: Partial<typeof optimisticFilters>) {
@@ -342,7 +334,7 @@ Then, we can define an `updateFilters` function to update the filters, which use
 
     startTransition(() => {
       setOptimisticFilters(updates || {});
-      router.push(`?${newSearchParams}`, { scroll: false });
+      router.push(`?${newSearchParams}`);
     });
   }
 ```
@@ -439,17 +431,26 @@ Note that I have added an additional `useTransition` hook to track the pending s
 
 After implementing the above changes, the app is working as expected. The search and filter are instantly responsive, and they do not override each other when multiple filters are applied.
 
+![Multiple filter example](@assets/filters3.gif)
+
 The code can be found [on GitHub](https://github.com/aurorascharff/next15-filterlist/tree/filter-provider).
 
 ## Switching to Nuqs
 
 While this solution is nice, it's probably not a good idea to write your own serialized state manager (as stated by Tanner Linsley in [his recent talk on Tanstack Router](https://www.youtube.com/watch?v=VlCxEjxprKg)). Instead, let's use a library that does this for us.
 
-[Nuqs](https://nuqs.47ng.com/) is a library that provides a simple way to manage search params in React. I implemented the features using it, and the implementation is pretty simple.
+[Nuqs](https://nuqs.47ng.com/) is a library that provides a type-safe way to manage search params as state in React. I implemented the same features using it, and the implementation is pretty simple.
 
-We simply need a `NuqsAdapter` in our root layout:
+We need a `NuqsAdapter` for Next.js in our root layout:
 
 ```tsx
+// layout.tsx
+
+import { NuqsAdapter } from 'nuqs/adapters/next/app';
+...
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  ...
+  return (
     <html lang="en">
       <body className={cn(GeistSans.className, 'flex flex-col px-4 py-6 sm:px-16 sm:py-16 xl:px-48 2xl:px-96')}>
         <NuqsAdapter>
@@ -462,6 +463,8 @@ We simply need a `NuqsAdapter` in our root layout:
 And a global search param type:
 
 ```tsx
+// searchParams.ts
+
 import { parseAsString, createSearchParamsCache, parseAsArrayOf } from 'nuqs/server';
 
 export const searchParams = {
@@ -471,7 +474,11 @@ export const searchParams = {
 export const searchParamsCache = createSearchParamsCache(searchParams);
 ```
 
-Then, we can use the `useQueryState` hook to get and update the search params in any component:
+Then, we can use the `useQueryState` hook to get and update the search params in any component.
+
+The way Nuqs is implemented, the search params are actually pushed to the URL instantly. To trigger the page to reload with the result, we set the option `shallow: false`.
+
+Then, we can pass the `startTransition` to the `useQueryState` options, and use the pending state of the transitions to display user feedback as we did before:
 
 ```tsx
 // Search.tsx
@@ -544,7 +551,9 @@ export default function CategoryFilter({ categoriesPromise }: Props) {
 }
 ```
 
-The way Nuqs is implemented, the search params are actually pushed to the URL instantly. To trigger the page to reload with the result, we set the option `shallow: false`. Then, we can use the `startTransition` function to track the pending state of the navigation and pass it to the Nuqs hook, as use it to display pending state as we did before.
+The result is really nice! Notice the difference from the provider-example - here the searchparams are instantly updated in the URL, but the page is reloaded with the result as before.
+
+![Nuqs filters example](@assets/filters4.gif)
 
 The code for the Nuqs implementation can be found [here](https://github.com/aurorascharff/next15-filterlist/tree/filter-nuqs).
 
@@ -552,7 +561,7 @@ The code for the Nuqs implementation can be found [here](https://github.com/auro
 
 In this blog post, we explored how to implement advanced search param filtering in the Next.js App Router. We learned how to track the pending state of the search with `useTransition()`, implement a responsive category filter with `useOptimistic()`, and coordinate the search and filter state with a React Context provider. Finally, we switched to using Nuqs for a more robust solution.
 
-You can also watch my [talk at Next.js Conf](https://www.youtube.com/watch?v=CvAySC5ex9c) for a more in-depth explanation of the patterns used in this post. It covers everything until the point where we are coordinating the search and filter state.
+You can also watch my [talk at Next.js Conf](https://www.youtube.com/watch?v=CvAySC5ex9c) for a more in-depth explanation of many of the patterns used in this post. It covers everything until the point where we are coordinating the search and filter state.
 
 Don't forget that you can apply the same pattern to other filters, like pagination and sorting.
 
