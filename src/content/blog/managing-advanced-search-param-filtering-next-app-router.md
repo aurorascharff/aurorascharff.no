@@ -10,18 +10,18 @@ tags:
   - Next.js
   - App Router
   - React 19
-  - Nuqs
+  - nuqs
   - useOptimistic
   - Search Params
   - Filtering
-description: When working with React Server Components and other new features and patterns in the Next.js App Router, it can be hard to manage advanced search param filtering. In this blog post, we will explore how to implement advanced search param filtering in the Next.js App Router, utilizing React 19 features like useOptimistic and the library Nuqs.
+description: When working with React Server Components and other new features and patterns in the Next.js App Router, it can be hard to manage advanced search param filtering. In this blog post, we will explore how to implement advanced search param filtering in the Next.js App Router, utilizing React 19 features like useOptimistic and the library nuqs.
 ---
 
 Let's say we want to have some kind of advanced filtering functionality in our Next.js app. For example, we might have a list of tasks and we want to filter them by category and name. We could also be wanting pagination, sorting, and other features.
 
 It is a a common request to put this state in the URL because the current state of the app can be shareable, bookmarkable and reloadable. But, it can be hard to coordinate state in the url with component state with for example useEffect. Instead, its better to use the URL as a single source of truth - essentially lifting the state up, which is a well known pattern in React.
 
-However, when working with React Server Components and other new features and patterns in the Next.js App Router, it can be hard to manage this state smoothly. In this blog post, we will explore how to implement advanced search param filtering in the Next.js App Router, utilizing React 19 features like `useOptimistic()`, and finally switching to the library [Nuqs](https://nuqs.47ng.com/).
+However, when working with React Server Components and other new features and patterns in the Next.js App Router, it can be hard to manage this state smoothly. In this blog post, we will explore how to implement advanced search param filtering in the Next.js App Router, utilizing React 19 features like `useOptimistic()`, and finally switching to the library [nuqs](https://nuqs.47ng.com/).
 
 ## The Goal
 
@@ -435,7 +435,7 @@ After implementing the above changes, the app is working as expected. The search
 
 The code can be found [on GitHub](https://github.com/aurorascharff/next15-filterlist/tree/filter-provider).
 
-## Switching to Nuqs
+## Switching to nuqs
 
 While this solution is nice, it's probably not a good idea to write your own serialized state manager (as stated by Tanner Linsley in [his recent talk on Tanstack Router](https://www.youtube.com/watch?v=VlCxEjxprKg)). Instead, let's use a library that does this for us.
 
@@ -555,11 +555,11 @@ The result is really nice! Notice the difference from the provider-example - her
 
 ![Nuqs filters example](@assets/filters4.gif)
 
-The code for the Nuqs implementation can be found [here](https://github.com/aurorascharff/next15-filterlist/tree/filter-nuqs).
+The code for the nuqs implementation can be found [here](https://github.com/aurorascharff/next15-filterlist/tree/filter-nuqs).
 
 ## Conclusion
 
-In this blog post, we explored how to implement advanced search param filtering in the Next.js App Router. We learned how to track the pending state of the search with `useTransition()`, implement a responsive category filter with `useOptimistic()`, and coordinate the search and filter state with a React Context provider. Finally, we switched to using Nuqs for a more robust solution.
+In this blog post, we explored how to implement advanced search param filtering in the Next.js App Router. We learned how to track the pending state of the search with `useTransition()`, implement a responsive category filter with `useOptimistic()`, and coordinate the search and filter state with a React Context provider. Finally, we switched to using nuqs for a more robust solution.
 
 You can also watch my [talk at Next.js Conf](https://www.youtube.com/watch?v=CvAySC5ex9c) for a more in-depth explanation of many of the patterns used in this post. It covers everything until the point where we are coordinating the search and filter state.
 
