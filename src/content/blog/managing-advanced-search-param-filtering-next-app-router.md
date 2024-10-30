@@ -142,9 +142,9 @@ This one is pretty simple. We are already using an uncontrolled input and we can
       <input
         id="search"
         onChange={e => {
+          const newSearchParams = new URLSearchParams(searchParams.toString());
+          newSearchParams.set('q', e.target.value);
           startTransition(() => {
-            const newSearchParams = new URLSearchParams(searchParams.toString());
-            newSearchParams.set('q', e.target.value);
             router.push(`?${newSearchParams.toString()}`);
           });
         }}
