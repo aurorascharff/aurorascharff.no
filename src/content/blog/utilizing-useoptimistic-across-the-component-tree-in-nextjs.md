@@ -185,7 +185,7 @@ Using the action property, the function is automatically wrapped in `startTransi
 "use client";
 
 const formRef = useRef();
-const { addOptimisticJoke } = useJokesContext();
+const { addOptimisticJoke } = useJokes();
 
 const createJokeAction = (formData: FormData) => {
   addOptimisticJoke(data);
