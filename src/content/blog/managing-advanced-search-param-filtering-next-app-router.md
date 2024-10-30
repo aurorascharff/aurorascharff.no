@@ -267,7 +267,7 @@ We still have a problem. When we search, then click a category before it's settl
 
 To do that, we need to get them into the same transition and the same optimistic state. We could put the filters in the same component, or create a parent component, but to make it flexible and maintain composition, we should make a provider using React Context.
 
-First, we define a schema for the search params, which we can use parse the search params from the URL. Then, we can define a Filter type from the schema and a context to hold and update the filter state. Now we also have type safety when updating and parsing the search params!
+First, we define a schema for the search params, which we can use parse the search params from the URL. Then, we can define a `Filter` type from the schema and a context to hold and update the filter state. Now we also have type safety when updating and parsing the search params!
 
 ```tsx
 // FilterProvider.tsx
