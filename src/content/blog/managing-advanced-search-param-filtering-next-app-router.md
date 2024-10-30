@@ -161,7 +161,7 @@ This one is pretty simple. We are already using an uncontrolled input and we can
 
 ## Fixing the Category Filter
 
-Next, lets track the pending state of the filtering. We can use the same `useTransition` hook around the push to the router. It is not suitable to put a spinner here, but we can put a data-pending attribute the wrapper div and bind it to the pending state.
+Next, lets track the pending state of the filtering. We can use the same `useTransition` hook around the push to the router. It is not suitable to put a spinner here, but we can put a data-pending attribute on the wrapper div and bind it to the pending state.
 
 ```tsx
 // CategoryFilter.tsx
