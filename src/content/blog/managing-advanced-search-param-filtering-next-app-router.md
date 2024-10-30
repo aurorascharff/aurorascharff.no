@@ -17,7 +17,7 @@ tags:
 description: When working with React Server Components and other new features and patterns in the Next.js App Router, it can be hard to manage advanced search param filtering. In this blog post, we will explore how to implement advanced search param filtering in the Next.js App Router, utilizing React 19 features like useOptimistic and the library Nuqs.
 ---
 
-Let's say we want to have some kind of advanced filtering functionality in our Next.js app. We want to be able to filter a list of items based on multiple criteria. For example, we might have a list of tasks and we want to filter them by category and name. We could also be wanting pagination, sorting, and other features.
+Let's say we want to have some kind of advanced filtering functionality in our Next.js app. For example, we might have a list of tasks and we want to filter them by category and name. We could also be wanting pagination, sorting, and other features.
 
 It is a a common request to put this state in the URL because the current state of the app can be shareable, bookmarkable and reloadable. But, it can be hard to coordinate state in the url with component state with for example useEffect. Instead, its better to use the URL as a single source of truth - essentially lifting the state up, which is a well known pattern in React.
 
