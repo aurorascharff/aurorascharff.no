@@ -9,7 +9,7 @@ I hold a bachelor's degree in Robotics and Intelligent Systems, with a solid fou
 
 Recently, I've been focusing on web development and staying updated on everything happening in the field. Currently, I'm working on projects using React Server Components and the Next.js App Router.
 
-After working for a couple of years at a financial technology startup, I'm continuing to develop as a consultant at Inmeta. I enjoy solving problems, learning new things, and sharing knowledge through workshops, technical blog posts, social media, demo applications, and supporting fellow developers. I also regularly present internationally at recognized conferences to contribute to the global developer community.
+After working for a couple of years at a financial technology startup, I'm continuing to develop as a consultant at Inmeta. I enjoy solving problems, learning new things, and sharing knowledge through workshops, technical blog posts, social media, demo applications, and supporting fellow developers. I also regularly present internationally at recognized conferences.
 
 <div>
   <img src="/assets/dev-girl.svg" class="sm:w-1/2 mx-auto" alt="coding dev illustration">
