@@ -1,5 +1,5 @@
 ---
-author: Aurora Walberg Scharff
+author: Aurora Scharff
 pubDatetime: 2023-12-30T15:22:00Z
 title: Implementing React Hook Form with Next.js 14 and Server Actions
 slug: implementing-react-hook-form-with-nextjs-14-server-actions
@@ -12,7 +12,7 @@ tags:
   - Forms
   - App Router
   - Prisma
-  - Server Actions
+  - Server Functions
 description: React Hook Form is a popular library for building interactive forms in React. In this blog post, I'll explain how to use React Hook Form with Next.js 14 and Server Actions.
 ---
 
