@@ -292,6 +292,8 @@ Now, when you access the app, the app icons will be generated based on the envir
 
 ![Multiple apps example](@assets/pwa-icons.jpg)
 
+Beautiful!
+
 ## Conclusion
 
 In this blog post, I showed you how to dynamically generate PWA app icons in the Next.js App Router using NextPWA. This approach allows you to differentiate between different environments by changing the app icon, making it easier for both you and users to identify which environment they are in.
