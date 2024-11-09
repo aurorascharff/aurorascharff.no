@@ -222,7 +222,7 @@ NEXT_PUBLIC_ENVIRONMENT=dev
 
 We can read this variable inside the API route and generate the `manifest.json` with the correct icon based on the environment.
 
-The icon-images, i.e `/images/pwa/512_dev`, are inside the `public/` directory. By naming the files with the environment, we can easily differentiate between them without writing a lot of code:
+The icon-images, i.e `/images/pwa/512_dev.png`, are inside the `public/` directory. By naming the files with the environment, we can easily differentiate between them without writing a lot of code:
 
 ```ts
 // app/api/manifest/route.ts
