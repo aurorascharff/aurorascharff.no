@@ -17,7 +17,7 @@ tags:
   - useTransition
   - Progressive Enhancement
   - Prisma
-description: Remix Contacts is Remix's official tutorial. In this post, we'll rebuild it in Next.js 14 using React Server Components, Server Actions, Transitions and Prisma, and compare the two approaches.
+description: Remix Contacts is Remix's official tutorial. In this blog post, we'll rebuild it in Next.js 14 using React Server Components, Server Actions, Transitions and Prisma, and compare the two approaches.
 ---
 
 ## Table of contents
