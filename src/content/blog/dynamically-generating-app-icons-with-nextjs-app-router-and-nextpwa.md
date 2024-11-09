@@ -31,7 +31,7 @@ We are also offering the application as a PWA, so we need to generate the app ic
 
 The library we will be using to set it up the PWA is [next-pwa](https://github.com/shadowwalker/next-pwa). Next-pwa is a plugin for Next.js that allows you to add PWA support to your app with ease.
 
-To get started, we need to it up in our Next.js project. These steps follow a pretty standard process, but I'll walk you through them here.
+To get started, we need to set it up in our Next.js project. These steps follow a pretty standard process, but I'll walk you through them here.
 
 ### Installation
 
