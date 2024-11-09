@@ -306,7 +306,7 @@ It's up to you and the requirements of your project what you want to do here.
 
 Now, when you access the app and download it, the app icons will be generated based on the environment. Here is an example of how it could look like for the different environments:
 
-![Multiple apps example](@assets/pwa-icons.jpg)
+![Multiple apps example](@assets/pwa-icons.jpeg)
 
 Beautiful!
 
