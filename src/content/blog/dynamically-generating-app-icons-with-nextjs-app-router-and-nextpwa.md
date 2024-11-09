@@ -271,7 +271,7 @@ Tailor the generation of the `manifest.json` to your app's needs. For example, i
 import { getEnvironmentLabel } from '@/utils/getEnvironmentLabel';
 
 export async function GET() {
-  const environmentLabel = getEnvironmentLabel('short');
+  const environmentLabel = getEnvironmentLabel();
   const iconSrc512 = `/images/pwa/512_${environmentLabel}.png`;
   const iconSrc192 = `/images/pwa/192_${environmentLabel}.png`;
 ```
@@ -282,16 +282,16 @@ It can look something like this:
 // utils/getEnvironmentLabel.ts
 import { env } from '@/../env.mjs';
 
-export type EnvironmentLabel = 'DEV' | 'INTERNAL TEST' | 'IT' | 'TEST' | '';
+export type EnvironmentLabel = 'DEV' | 'INTERNAL TEST' | 'TEST' | '';
 
-export function getEnvironmentLabel(type: 'short' | 'full' = 'full'): EnvironmentLabel {
-  const environment = env.NEXT_PUBLIC_ENVIRONMENT;
+export function getEnvironmentLabel(): EnvironmentLabel {
+  const environment = serverEnv.NEXT_PUBLIC_ENVIRONMENT;
 
   let environmentLabel: EnvironmentLabel = '';
   if (environment === 'dev') {
     environmentLabel = 'DEV';
   } else if (environment === 'test') {
-    environmentLabel = type === 'short' ? 'IT' : 'INTERNAL TEST';
+    environmentLabel = 'INTERNAL TEST';
   } else if (environment === 'staging') {
     environmentLabel = 'TEST';
   }
