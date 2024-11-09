@@ -266,6 +266,7 @@ Notice I am also generating the `short_name` based on the environment.
 Tailor the generation of the `manifest.json` to your app's needs. For example, in my actual project, I have a helper function to get a environment label based on the environment:
 
 ```ts
+// utils/getEnvironmentLabel.ts
 import { env } from '@/../env.mjs';
 
 export type EnvironmentLabel = 'DEV' | 'INTERNAL TEST' | 'IT' | 'TEST' | '';
