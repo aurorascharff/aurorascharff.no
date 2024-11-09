@@ -120,9 +120,9 @@ That should be all you need to set up next-pwa in your Next.js project! If you'r
 
 ## Testing Locally with HTTPS
 
-When working with PWAs, it's nice to be able to test the app locally. However, to test the PWA features, you need to run your app over HTTPS.
+When working with PWAs, it's nice to be able to test the app locally. However, to test the PWA features, you need to run your the Next.js app over HTTPS.
 
-Refer to the [Next.js documentation](https://nextjs.org/docs/app/api-reference/cli/next#using-https-during-development) on how to run with HTTPS in your Next.js project.
+The [Next.js documentation](https://nextjs.org/docs/app/api-reference/cli/next#using-https-during-development) contains information on how to run with HTTPS.
 
 In addition, [this article on PWAs from the Next.js docs](https://nextjs.org/docs/app/building-your-application/configuring/progressive-web-apps#7-testing-locally) explains why and how to run with HTTPs when working with PWAs. It also contains some important security aspects to consider!
 
