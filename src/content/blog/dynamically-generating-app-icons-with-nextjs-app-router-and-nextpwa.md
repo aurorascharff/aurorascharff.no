@@ -263,7 +263,20 @@ export async function GET() {
 
 Notice I am also generating the `short_name` based on the environment.
 
-Tailor the generation of the `manifest.json` to your app's needs. For example, in my actual project, I have a helper function to get a environment label based on the environment:
+Tailor the generation of the `manifest.json` to your app's needs. For example, in my actual project, I have a helper function to get the environment label based on the environment:
+
+```ts
+// app/api/manifest/route.ts
+
+import { getEnvironmentLabel } from '@/utils/getEnvironmentLabel';
+
+export async function GET() {
+  const environmentLabel = getEnvironmentLabel('short');
+  const iconSrc512 = `/images/pwa/512_${environmentLabel}.png`;
+  const iconSrc192 = `/images/pwa/192_${environmentLabel}.png`;
+```
+
+It can look something like this:
 
 ```ts
 // utils/getEnvironmentLabel.ts
@@ -287,20 +300,11 @@ export function getEnvironmentLabel(type: 'short' | 'full' = 'full'): Environmen
 }
 ```
 
-```ts
-// app/api/manifest/route.ts
-
-import { getEnvironmentLabel } from '@/utils/getEnvironmentLabel';
-
-export async function GET() {
-  const environmentLabel = getEnvironmentLabel('short');
-  const iconSrc512 = `/images/pwa/512_${environmentLabel}.png`;
-  const iconSrc192 = `/images/pwa/192_${environmentLabel}.png`;
-```
+It's up to you and the requirements of your project what you want to do here.
 
 ## Result
 
-Now, when you access the app, the app icons will be generated based on the environment. Here is an example of how the app icons could look like for the different environments:
+Now, when you access the app and download it, the app icons will be generated based on the environment. Here is an example of how it could look like for the different environments:
 
 ![Multiple apps example](@assets/pwa-icons.jpg)
 
