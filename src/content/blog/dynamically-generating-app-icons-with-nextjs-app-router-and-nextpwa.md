@@ -211,7 +211,7 @@ And we can just delete the original `public/manifest.json` file.
 
 The last step is to generate the app icons based on the environment.
 
-We assume that there is an `.env` file in the root of our project with the following environment variables, which are available in the deployed environment:
+We assume that there is an `.env` file in the root of our project with the following environment variables, which are also available in the deployed environment:
 
 ```env
 // .env
