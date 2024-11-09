@@ -124,7 +124,7 @@ When working with PWAs, it's nice to be able to test the app locally. However, t
 
 The [Next.js documentation](https://nextjs.org/docs/app/api-reference/cli/next#using-https-during-development) contains information on how to run with HTTPS.
 
-In addition, [this article on PWAs from the Next.js docs](https://nextjs.org/docs/app/building-your-application/configuring/progressive-web-apps#7-testing-locally) explains why and how to run with HTTPs when working with PWAs. It also contains some important security aspects to consider!
+In addition, [this article on PWAs from the Next.js docs](https://nextjs.org/docs/app/building-your-application/configuring/progressive-web-apps#7-testing-locally) explains why and how to run with HTTPs when working with PWAs. It also contains some important security aspects to consider, and other useful information.
 
 Basically, you can run your app with HTTPS with the following command:
 
@@ -222,7 +222,7 @@ NEXT_PUBLIC_ENVIRONMENT=dev
 
 We can read this variable inside the API route and generate the `manifest.json` with the correct icon based on the environment.
 
-The icon-images, i.e `/images/pwa/512_dev`, are inside the `public` directory. By naming the files with the environment, we can easily differentiate between them without writing a lot of code:
+The icon-images, i.e `/images/pwa/512_dev`, are inside the `public/` directory. By naming the files with the environment, we can easily differentiate between them without writing a lot of code:
 
 ```ts
 // app/api/manifest/route.ts
