@@ -59,6 +59,8 @@ const withPWA = require('next-pwa')({
 const nextConfig: NextConfig = {
   // Your Next.js config
 };
+
+module.exports = withPWA(nextConfig);
 ```
 
 Configure this to your app's needs, such as the `dest`, `disable`, `register`, and `skipWaiting` properties. Refer to the [next-pwa documentation](https://github.com/shadowwalker/next-pwa).
