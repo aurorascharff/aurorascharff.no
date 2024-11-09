@@ -3,7 +3,7 @@ author: Aurora Scharff
 pubDatetime: 2024-02-24T15:22:00Z
 title: Utilizing useOptimistic() Across the Component Tree in Next.js
 slug: utilizing-useoptimistic-across-the-component-tree-in-nextjs
-featured: true
+featured: false
 draft: false
 tags:
   - React Server Components
