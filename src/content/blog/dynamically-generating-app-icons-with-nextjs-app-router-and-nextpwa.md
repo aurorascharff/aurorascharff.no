@@ -286,6 +286,17 @@ export function getEnvironmentLabel(type: 'short' | 'full' = 'full'): Environmen
 }
 ```
 
+```ts
+// app/api/manifest/route.ts
+
+import { getEnvironmentLabel } from '@/utils/getEnvironmentLabel';
+
+export async function GET() {
+  const environmentLabel = getEnvironmentLabel('short');
+  const iconSrc512 = `/images/pwa/512_${environmentLabel}.png`;
+  const iconSrc192 = `/images/pwa/192_${environmentLabel}.png`;
+```
+
 ## Result
 
 Now, when you access the app, the app icons will be generated based on the environment. Here is an example of how the app icons could look like for the different environments:
