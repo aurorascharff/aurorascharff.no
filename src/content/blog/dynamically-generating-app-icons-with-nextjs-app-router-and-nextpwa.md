@@ -234,7 +234,7 @@ export async function GET() {
 
   const manifest = {
     name: 'My App',
-    short_name: `${environment} My App`,
+    short_name: `My App`,
     start_url: '/',
     display: 'standalone',
     background_color: '#ffffff',
@@ -260,8 +260,6 @@ export async function GET() {
   });
 }
 ```
-
-Notice I am also generating the `short_name` based on the environment.
 
 Tailor the generation of the `manifest.json` to your app's needs. For example, in my actual project, I have a helper function to get the environment label based on the environment:
 
