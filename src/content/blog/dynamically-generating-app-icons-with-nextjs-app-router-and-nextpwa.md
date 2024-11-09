@@ -296,6 +296,6 @@ Beautiful!
 
 ## Conclusion
 
-In this blog post, I showed you how to dynamically generate PWA app icons in the Next.js App Router using NextPWA. This approach allows you to differentiate between different environments by changing the app icon, making it easier for both you and users to identify which environment they are in.
+In this blog post, I showed you how to dynamically generate PWA app icons in the Next.js App Router using next-pwa. This approach allows you to differentiate between different environments by changing the app icon, making it easier for both you and users to identify which environment they are in.
 
 Please let me know if you have any questions or comments, and follow me on [Twitter](https://twitter.com/aurorascharff) for more updates. Happy coding! 🚀
