@@ -150,7 +150,7 @@ Now, let's move on to dynamically generating the app icons based on the environm
 
 We need to access the environment variables to determine which app icon to use. A way to do this in Next.js is by creating an API route. This API route can read an environment variable and return the appropriate JSON response for the manifest.
 
-For the App Router, we can create an API route in the `app/api` directory with a folder containing a `route.ts`. Let's create a `manifest/` directory with a `route.ts` file:
+For the App Router, we can create an API route in the `app/api` directory with a folder containing a `route.ts` file. Let's create a `manifest/` directory with a `route.ts` file:
 
 ```ts
 // app/api/manifest/route.ts
