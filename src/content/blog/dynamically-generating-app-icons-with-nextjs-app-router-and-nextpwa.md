@@ -243,14 +243,14 @@ export default function manifest(): MetadataRoute.Manifest {
 }
 ```
 
-And then link to the `manifest.ts` file in the `app/layout.tsx` file:
+And then link to the generated `manifest.json` file in the `app/layout.tsx` file again, like before:
 
 ```tsx
 // app/layout.tsx
 
 export const metadata: Metadata = {
     description: 'The best app ever',
-    manifest: '/manifest.ts',
+    manifest: '/manifest.json',
     title: `My App`,
 };
 
