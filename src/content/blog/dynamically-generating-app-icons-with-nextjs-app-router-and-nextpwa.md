@@ -146,7 +146,7 @@ You can also create a command in your `package.json` to easily run it again in t
 
 Now, let's move on to dynamically generating the app icons based on the environment.
 
-## Dynamically Generating the manifest.json
+## Dynamically Generating the manifest.json with an API route
 
 We need to access the environment variables to determine which app icon to use. A way to do this in Next.js is by creating an API route. This API route can read an environment variable and return the appropriate JSON response for the manifest.
 
@@ -207,6 +207,67 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
 And we can just delete the original `public/manifest.json` file.
 
+## Dynamically Generating the manifest.json with manifest.ts
+
+Another way to generate the `manifest.json` dynamically is by creating a `manifest.ts` file in the `app/` directory. This file can read the environment variable and return the appropriate manifest object, the same was as the API route could.
+
+I discovered this in the [Next.js docs](https://nextjs.org/docs/app/api-reference/file-conventions/metadata/manifest) after writing the previous section, and I think it's a better approach. It´s probably what I should have done in the first place.
+
+We create a `manifest.ts` file in the `app/` directory:
+
+```ts
+// app/manifest.ts
+
+export default function manifest(): MetadataRoute.Manifest {
+  const environmentLabel = getEnvironmentLabel();
+  const iconSrc512 = `/images/pwa/512_${environmentLabel}.png`;
+  const iconSrc192 = `/images/pwa/192_${environmentLabel}.png`;
+
+  return {
+    name: 'My App',
+    short_name: `My App`,
+    start_url: '/',
+    display: 'standalone',
+    background_color: '#ffffff',
+    theme_color: '#000000',
+    icons: [
+      {
+        src: '/images/pwa/192.png',
+        sizes: '192x192',
+        type: 'image/png',
+      },
+      {
+        src: '/images/pwa/512.png',
+        sizes: '512x512',
+        type: 'image/png',
+      },
+    ],
+  };
+}
+```
+
+And then link to the `manifest.ts` file in the `app/layout.tsx` file:
+
+```tsx
+// app/layout.tsx
+
+export const metadata: Metadata = {
+    description: 'The best app ever',
+    manifest: '/manifest.ts',
+    title: `My App`,
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body className={inter.className}>{children}</body>
+    </html>
+  );
+}
+```
+
+And delete the API route.
+
 ## Generating App Icons Based on the Environment
 
 The last step is to generate the app icons based on the environment.
@@ -220,19 +281,21 @@ NEXT_PUBLIC_ENVIRONMENT=dev
 // other envvars
 ```
 
-We can read this variable inside the API route and generate the `manifest.json` with the correct icon based on the environment.
+We can read this variable inside the `manifest.ts` to generate the correct icon based on the environment.
 
 The icon-images, i.e `/images/pwa/512_dev.png`, are inside the `public/` directory. By naming the files with the environment, we can easily differentiate between them without writing a lot of code:
 
 ```ts
-// app/api/manifest/route.ts
+// app/manifest.ts
 
-export async function GET() {
+import type { MetadataRoute } from 'next';
+
+export default function manifest(): MetadataRoute.Manifest {
   const environment = process.env.NEXT_PUBLIC_ENVIRONMENT;
   const iconSrc512 = `/images/pwa/512_${environment}.png`;
   const iconSrc192 = `/images/pwa/192_${environment}.png`;
 
-  const manifest = {
+  return {
     name: 'My App',
     short_name: `My App`,
     start_url: '/',
@@ -252,12 +315,6 @@ export async function GET() {
       },
     ],
   };
-
-  return new Response(JSON.stringify(manifest), {
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
 }
 ```
 
@@ -298,7 +355,7 @@ export function getEnvironmentLabel(): EnvironmentLabel {
 }
 ```
 
-It's up to you and the requirements of your project what you want to do here.
+It's up to you and the requirements of your project what you want to do here. You can do other things than just generate icons as well.
 
 ## Result
 
