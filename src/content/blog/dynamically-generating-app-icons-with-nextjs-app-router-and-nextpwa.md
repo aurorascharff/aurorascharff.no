@@ -207,7 +207,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
 And we can just delete the original `public/manifest.json` file.
 
-## Dynamically Generating the manifest.json with manifest.ts
+## Dynamically Generating the webmanifest with manifest.ts
 
 Currently verifying that this approach works. Will update this section soon.
 <!-- Another way to generate the `manifest.json` dynamically is by creating a `manifest.ts` file in the `app/` directory. This file can read the environment variable and return the appropriate manifest object, the same was as the API route could.
