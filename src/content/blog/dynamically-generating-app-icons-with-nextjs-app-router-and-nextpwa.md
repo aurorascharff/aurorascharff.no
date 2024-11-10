@@ -65,9 +65,9 @@ module.exports = withPWA(nextConfig);
 
 Configure this to your app's needs, such as the `dest`, `disable`, `register`, and `skipWaiting` properties. Refer to the [next-pwa documentation](https://github.com/shadowwalker/next-pwa).
 
-### Adding the manifest.json
+### Creating the manifest.json
 
-Then, add the PWA manifest to your `public/manifest.json` file:
+The next step is to create the PWA manifest to in a `public/manifest.json` file:
 
 ```json
 {
@@ -94,7 +94,7 @@ Then, add the PWA manifest to your `public/manifest.json` file:
 
 Remember to configure this to your app's needs, such as the `name`, `short_name`, `start_url`, `background_color`, `theme_color`, and `icons` and `screenshots` properties.
 
-### Linking the manifest.json to the App
+### Linking the manifest.json
 
 Lastly, link the `manifest.json` file to your app by adding it to the metadata of the root layout component:
 
@@ -209,9 +209,7 @@ And we can just delete the original `public/manifest.json` file.
 
 ## Dynamically Generating the manifest.json with manifest.ts
 
-Currently verifying that this approach works. Will update this section soon.
-
-<!-- Another way to generate the `manifest.json` dynamically is by creating a `manifest.ts` file in the `app/` directory. This file can read the environment variable and return the appropriate manifest object, the same was as the API route could.
+Another way to generate webmanifest dynamically is by creating a `manifest.ts` file in the `app/` directory. This file can read the environment variable and return the appropriate manifest object, the same was as the API route could.
 
 I discovered this in the [Next.js docs](https://nextjs.org/docs/app/api-reference/file-conventions/metadata/manifest) after writing the previous section, and I think it's a better approach. It´s probably what I should have done in the first place.
 
@@ -245,14 +243,14 @@ export default function manifest(): MetadataRoute.Manifest {
 }
 ```
 
-And then link to the generated `manifest.json` file in the `app/layout.tsx` file again, like before:
+This generates a `manifest.webmanifest` file that we can link to in the `app/layout.tsx` file:
 
 ```tsx
 // app/layout.tsx
 
 export const metadata: Metadata = {
     description: 'The best app ever',
-    manifest: '/manifest.json',
+    manifest: '/manifest.webmanifest',
     title: `My App`,
 };
 
@@ -265,7 +263,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 }
 ```
 
-And delete the API route. -->
+And we can also delete the API route.
 
 ## Generating App Icons Based on the Environment
 
@@ -280,19 +278,20 @@ NEXT_PUBLIC_ENVIRONMENT=dev
 // other envvars
 ```
 
-We can read this variable inside the `manifest` API route to generate the correct icon based on the environment.
+We can read this variable inside the `manifest.ts` to generate the correct icon based on the environment.
 
 The icon-images, i.e `/images/pwa/512_dev.png`, are inside the `public/` directory. By naming the files with the environment, we can easily differentiate between them without writing a lot of code:
 
 ```ts
-// app/api/manifest/route.ts
+// app/manifest.ts
+import type { MetadataRoute } from 'next';
 
-export async function GET() {
+export default function manifest(): MetadataRoute.Manifest {
   const environment = process.env.NEXT_PUBLIC_ENVIRONMENT;
   const iconSrc512 = `/images/pwa/512_${environment}.png`;
   const iconSrc192 = `/images/pwa/192_${environment}.png`;
 
-  const manifest = {
+  return {
     name: 'My App',
     short_name: `My App`,
     start_url: '/',
@@ -312,25 +311,20 @@ export async function GET() {
       },
     ],
   };
-
-  return new Response(JSON.stringify(manifest), {
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
 }
 ```
 
 Tailor the generation of the `manifest.json` to your app's needs. For example, you can have a helper function to get the environment label based on the environment:
 
 ```ts
-// app/api/manifest/route.ts
+// app/manifest.ts
 import { getEnvironmentLabel } from '@/utils/getEnvironmentLabel';
 
-export async function GET() {
+export default function manifest(): MetadataRoute.Manifest {
   const environmentLabel = getEnvironmentLabel();
   const iconSrc512 = `/images/pwa/512_${environmentLabel}.png`;
   const iconSrc192 = `/images/pwa/192_${environmentLabel}.png`;
+  ...
 ```
 
 It can look something like this:
@@ -354,7 +348,7 @@ export function getEnvironmentLabel(): EnvironmentLabel {
 }
 ```
 
-It's up to you and the requirements of your project what you want to do here. You can do other things than just generate icons as well.
+It's up to you and the requirements of your project what you want to do here. You can do other dynamic things other than just generating icons as well.
 
 ## Result
 
