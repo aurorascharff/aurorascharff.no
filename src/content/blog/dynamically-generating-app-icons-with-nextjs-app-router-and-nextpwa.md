@@ -217,6 +217,7 @@ We create a `manifest.ts` file in the `app/` directory:
 
 ```ts
 // app/manifest.ts
+import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
