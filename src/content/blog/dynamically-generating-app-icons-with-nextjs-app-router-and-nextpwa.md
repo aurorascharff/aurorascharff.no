@@ -314,7 +314,7 @@ export default function manifest(): MetadataRoute.Manifest {
 }
 ```
 
-Tailor the generation of the `manifest.json` to your app's needs. For example, in my actual project, I have a helper function to get the environment label based on the environment:
+Tailor the generation of the `manifest.json` to your app's needs. For example, you can have a helper function to get the environment label based on the environment:
 
 ```ts
 // app/manifest.ts
