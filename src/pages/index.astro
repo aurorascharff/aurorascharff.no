@@ -6,6 +6,7 @@ import Footer from "@components/Footer.astro";
 import LinkButton from "@components/LinkButton.astro";
 import Hr from "@components/Hr.astro";
 import Card from "@components/Card";
+import BuyMeACoffee from "@components/BuyMeACoffee";
 import Socials from "@components/Socials.astro";
 import getSortedPosts from "@utils/getSortedPosts";
 import { SOCIALS } from "@config";
@@ -48,6 +49,10 @@ const socialCount = SOCIALS.filter(social => social.active).length;
         something useful here. These days, I mostly work with React and Next.js,
         so expect content related to those technologies.
       </p>
+      <div class="flex flex-row items-center gap-4">
+        If you would like to support my work, you can
+        <BuyMeACoffee client:load />
+      </div>
       {
         // only display if at least one social link is enabled
         socialCount > 0 && (
