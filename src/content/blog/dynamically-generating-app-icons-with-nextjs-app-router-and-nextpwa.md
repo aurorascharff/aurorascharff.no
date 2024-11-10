@@ -332,7 +332,7 @@ It can look something like this:
 // utils/getEnvironmentLabel.ts
 import { env } from '@/../env.mjs';
 
-export type EnvironmentLabel = 'DEV' | 'INTERN TEST' | 'TEST' | '';
+type EnvironmentLabel = 'DEV' | 'INTERN TEST' | 'TEST' | '';
 
 export function getEnvironmentLabel(): EnvironmentLabel {
   const environment = serverEnv.NEXT_PUBLIC_ENVIRONMENT;
