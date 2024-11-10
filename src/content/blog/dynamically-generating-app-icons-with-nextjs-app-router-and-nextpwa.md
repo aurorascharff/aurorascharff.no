@@ -332,21 +332,18 @@ It can look something like this:
 // utils/getEnvironmentLabel.ts
 import { env } from '@/../env.mjs';
 
-export type EnvironmentLabel = 'DEV' | 'INTERNAL TEST' | 'TEST' | '';
+export type EnvironmentLabel = 'DEV' | 'INTERN TEST' | 'TEST' | '';
 
 export function getEnvironmentLabel(): EnvironmentLabel {
   const environment = serverEnv.NEXT_PUBLIC_ENVIRONMENT;
 
-  let environmentLabel: EnvironmentLabel = '';
-  if (environment === 'dev') {
-    environmentLabel = 'DEV';
-  } else if (environment === 'test') {
-    environmentLabel = 'INTERNAL TEST';
-  } else if (environment === 'staging') {
-    environmentLabel = 'TEST';
-  }
+  const environmentMap: Record<string, EnvironmentLabel> = {
+    dev: 'DEV',
+    staging: 'TEST',
+    test: 'INTERN TEST',
+  };
 
-  return environmentLabel;
+  return environmentMap[environment as EnvironmentLabel] || '';
 }
 ```
 
