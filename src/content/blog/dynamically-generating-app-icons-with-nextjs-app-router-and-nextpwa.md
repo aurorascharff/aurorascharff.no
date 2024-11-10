@@ -351,7 +351,7 @@ It's up to you and the requirements of your project what you want to do here. Yo
 
 ## Result
 
-Now, when you access the app on each environment URL and download it, the app icons will different. It can look something like this:
+Now, when you access the app on each environment URL and download it, the app icons will be different. It can look something like this:
 
 ![Multiple apps example](@assets/pwa-icons.jpeg)
 
