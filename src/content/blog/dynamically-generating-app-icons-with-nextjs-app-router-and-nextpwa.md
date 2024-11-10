@@ -316,11 +316,10 @@ export default function manifest(): MetadataRoute.Manifest {
 Tailor the generation of the `manifest.json` to your app's needs. For example, in my actual project, I have a helper function to get the environment label based on the environment:
 
 ```ts
-// app/api/manifest/route.ts
-
+// app/manifest.ts
 import { getEnvironmentLabel } from '@/utils/getEnvironmentLabel';
 
-export async function GET() {
+export default function manifest(): MetadataRoute.Manifest {
   const environmentLabel = getEnvironmentLabel();
   const iconSrc512 = `/images/pwa/512_${environmentLabel}.png`;
   const iconSrc192 = `/images/pwa/192_${environmentLabel}.png`;
