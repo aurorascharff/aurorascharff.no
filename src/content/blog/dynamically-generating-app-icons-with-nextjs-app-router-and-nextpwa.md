@@ -12,7 +12,7 @@ tags:
   - next-pwa
   - Progressive Web Apps
   - PWA
-description: Progressive Web Apps (PWAs) are a great way to enhance the user experience of your web application. In this blog post, I will show you how to dynamically generate PWA app icons in the Next.js App Router using NextPWA.
+description: Progressive Web Apps (PWAs) are a great way to enhance the user experience of your web application. In this blog post, I will show you how to dynamically generate PWA app icons in the Next.js App Router using next-pwa.
 ---
 
 Progressive Web Apps (PWAs) are a great way to enhance the user experience of your web application. They provide a more app-like experience by allowing users to install the app on their device and access it offline.
