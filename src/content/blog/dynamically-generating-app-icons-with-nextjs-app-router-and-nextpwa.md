@@ -219,10 +219,6 @@ We create a `manifest.ts` file in the `app/` directory:
 // app/manifest.ts
 
 export default function manifest(): MetadataRoute.Manifest {
-  const environment = process.env.NEXT_PUBLIC_ENVIRONMENT;
-  const iconSrc512 = `/images/pwa/512_${environment}.png`;
-  const iconSrc192 = `/images/pwa/192_${environment}.png`;
-
   return {
     name: 'My App',
     short_name: `My App`,
