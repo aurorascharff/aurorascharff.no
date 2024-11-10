@@ -335,7 +335,7 @@ import { env } from '@/../env.mjs';
 type EnvironmentLabel = 'DEV' | 'INTERN TEST' | 'TEST' | '';
 
 export function getEnvironmentLabel(): EnvironmentLabel {
-  const environment = serverEnv.NEXT_PUBLIC_ENVIRONMENT;
+  const environment = env.NEXT_PUBLIC_ENVIRONMENT;
 
   const environmentMap: Record<string, EnvironmentLabel> = {
     dev: 'DEV',
