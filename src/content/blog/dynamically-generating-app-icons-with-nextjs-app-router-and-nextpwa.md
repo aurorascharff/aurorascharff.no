@@ -219,9 +219,9 @@ We create a `manifest.ts` file in the `app/` directory:
 // app/manifest.ts
 
 export default function manifest(): MetadataRoute.Manifest {
-  const environmentLabel = getEnvironmentLabel();
-  const iconSrc512 = `/images/pwa/512_${environmentLabel}.png`;
-  const iconSrc192 = `/images/pwa/192_${environmentLabel}.png`;
+  const environment = process.env.NEXT_PUBLIC_ENVIRONMENT;
+  const iconSrc512 = `/images/pwa/512_${environment}.png`;
+  const iconSrc192 = `/images/pwa/192_${environment}.png`;
 
   return {
     name: 'My App',
@@ -287,7 +287,6 @@ The icon-images, i.e `/images/pwa/512_dev.png`, are inside the `public/` directo
 
 ```ts
 // app/manifest.ts
-
 import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
