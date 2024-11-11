@@ -8,6 +8,7 @@ import type { CollectionEntry } from "astro:content";
 import { slugifyStr } from "@utils/slugify";
 import ShareLinks from "@components/ShareLinks.astro";
 import { SITE } from "@config";
+import BuyMeACoffee from "@components/BuyMeACoffee";
 
 export interface Props {
   post: CollectionEntry<"blog">;
@@ -99,6 +100,10 @@ const layoutProps = {
       <ShareLinks />
     </div>
   </main>
+  <div class="mb-8 flex flex-row items-center justify-center gap-4">
+    If you would like to support my work, you can
+    <BuyMeACoffee client:load />
+  </div>
   <Footer />
 </Layout>
 
