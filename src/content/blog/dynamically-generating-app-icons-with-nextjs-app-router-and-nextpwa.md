@@ -209,10 +209,11 @@ And we can just delete the original `public/manifest.json` file.
 
 ## Dynamically Generating the webmanifest with manifest.ts
 
-Currently verifying that this approach works. Will update this section soon.
-<!-- Another way to generate the `manifest.json` dynamically is by creating a `manifest.ts` file in the `app/` directory. This file can read the environment variable and return the appropriate manifest object, the same was as the API route could.
+*NB! Currently verifying that this approach works together with next-pwa. Will update this section soon. If you don't need next-pwa, you can definitely use this approach.*
 
-I discovered this in the [Next.js docs](https://nextjs.org/docs/app/api-reference/file-conventions/metadata/manifest) after writing the previous section, and I think it's a better approach. It´s probably what I should have done in the first place.
+Another way to generate the `manifest.json` dynamically is by creating a `manifest.ts` file in the `app/` directory. This file can read the environment variable and return the appropriate manifest object, the same was as the API route could.
+
+I discovered this in the [Next.js docs](https://nextjs.org/docs/app/api-reference/file-conventions/metadata/manifest) after writing the previous section.
 
 We create a `manifest.ts` file in the `app/` directory:
 
@@ -244,7 +245,11 @@ export default function manifest(): MetadataRoute.Manifest {
 }
 ```
 
-This generates a `manifest.webmanifest` file that we can link to in the `app/layout.tsx` file:
+This generates a `manifest.webmanifest` file that is added to the head of the HTML document.
+
+*TODO*: try linking it to the `app/layout.tsx` file and see if it works with next-pwa.
+
+<!-- This generates a `manifest.webmanifest` file that we can link to in the `app/layout.tsx` file:
 
 ```tsx
 // app/layout.tsx
