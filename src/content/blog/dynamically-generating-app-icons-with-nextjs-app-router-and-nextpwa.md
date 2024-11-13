@@ -245,7 +245,7 @@ export default function manifest(): MetadataRoute.Manifest {
 }
 ```
 
-This generates a `manifest.webmanifest` file that is added to the head of the HTML document.
+This generates a `manifest.webmanifest` file that is added to the head of the HTML document. It can also access the environment variables, so we can decide which icon to use based on the environment.
 
 *TODO*: try linking it to the `app/layout.tsx` file and see if it works with next-pwa.
 
