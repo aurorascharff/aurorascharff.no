@@ -2,7 +2,7 @@
 author: Aurora Scharff
 pubDatetime: 2023-09-10T15:22:00Z
 title: Running Tests with RTL and Vitest on Async and Internationalized React Server Components in Next.js App Router
-slug: running-tests-with-rtl-and-vitest-on-internationalized-react-server-components-in-next13
+slug: running-tests-with-rtl-and-vitest-on-internationalized-react-server-components-in-nextjs-app-router
 featured: false
 draft: false
 tags:
