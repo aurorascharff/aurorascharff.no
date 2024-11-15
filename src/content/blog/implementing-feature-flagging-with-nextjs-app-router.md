@@ -3,7 +3,7 @@ author: Aurora Scharff
 pubDatetime: 2024-09-17T09:30:00Z
 title: Implementing Feature Flagging with the Next.js App Router
 slug: implementing-feature-flagging-with-nextjs-app-router
-featured: false
+featured: true
 draft: false
 tags:
   - React Server Components
