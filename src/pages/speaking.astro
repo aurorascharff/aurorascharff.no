@@ -12,7 +12,9 @@ import Hr from "@components/Hr.astro";
 const events = await getCollection("speaking");
 const sortedEvents = getSortedEvents(events);
 const pastEvents = sortedEvents.filter(event => event.data.completed);
-const upcomingEvents = sortedEvents.filter(event => !event.data.completed);
+const upcomingEvents = sortedEvents
+  .filter(event => !event.data.completed)
+  .reverse();
 ---
 
 <Layout title={`Speaking | ${SITE.title}`}>
@@ -24,7 +26,7 @@ const upcomingEvents = sortedEvents.filter(event => !event.data.completed);
         {upcomingEvents.map(({ data }) => <Event frontmatter={data} />)}
       </ul>
     </div>
-    <Hr noPadding/>
+    <Hr noPadding />
     <div id="featured">
       <h2>Previous</h2>
       <ul>
