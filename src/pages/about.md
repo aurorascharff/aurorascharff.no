@@ -13,6 +13,6 @@ After working for a couple of years at a financial technology startup, I'm conti
 
 If you have any questions, feel free to reach out to me on Twitter or LinkedIn.
 
-<div>
-  <img src="/assets/dev-girl.svg" class="sm:w-1/2 mx-auto" alt="coding dev illustration">
+<div className="bg-[#FCE2DF]">
+  <img src="/assets/main.jpeg" class="sm:w-1/2 mx-auto" alt="coding dev illustration">
 </div>
