@@ -256,10 +256,12 @@ Instead, we can use the new React 19 hook `useOptimistic()`. The way it works, i
 This is pretty nice. We can instantly update the state of the button, and wait for the new page to load with the generated server components and the URL to update in the background.
 
 ![Multiple filter example](@assets/filters2.gif)
- 
+
 Credit to Sam Selikoff with hos post on [buildui](https://buildui.com/posts/instant-search-params-with-react-server-components) for this awesome pattern.
 
 A working example can be found [on Vercel](https://next15-filterlist.vercel.app/todo) and the code can be found [on GitHub](https://github.com/aurorascharff/next15-filterlist).
+
+NB! Database might be sleeping, give it a minute after the initial application error.
 
 ## Coordinating the Search and Filter
 
