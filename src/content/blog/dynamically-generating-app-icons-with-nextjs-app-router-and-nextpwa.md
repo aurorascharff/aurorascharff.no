@@ -369,6 +369,41 @@ Now, when you access the app on each environment URL and download it, the app ic
 
 Beautiful!
 
+## Caching the manifest.json
+
+To avoid re-fetching the manifest.json on every page load, you define caching behavior for it in the `next.config.ts` (or `next.config.js`) file:
+
+```ts
+// next.config.ts
+import type { NextConfig } from 'next';
+
+const withPWA = require('next-pwa')({
+  dest: 'public',
+  disable: process.env.NODE_ENV === 'development',
+  register: true,
+  skipWaiting: true,
+});
+
+const nextConfig: NextConfig = {
+  // Your Next.js config
+  headers: async () => {
+  return [
+    {
+      // Cache the manifest file (default: public, max-age=0, must-revalidate)
+      headers: [
+        {
+          key: 'cache-control',
+          value: 'public, max-age=3600',
+        },
+      ],
+      source: '/no/api/manifest',
+    }
+  ];
+};
+
+module.exports = withPWA(nextConfig);
+```
+
 ## Conclusion
 
 In this blog post, I showed you how to dynamically generate PWA app icons in the Next.js App Router with API routes and next-pwa. This approach allows you to differentiate between different environments by changing the app icon, making it easier for both you and users to identify which environment they are in.
