@@ -3,7 +3,7 @@ author: Aurora Scharff
 pubDatetime: 2024-11-08T08:00:00Z
 title: Dynamically Generating PWA App Icons in the Next.js App Router
 slug: dynamically-generating-app-icons-with-nextjs-app-router-and-nextpwa
-featured: true
+featured: false
 draft: false
 tags:
   - React Server Components
