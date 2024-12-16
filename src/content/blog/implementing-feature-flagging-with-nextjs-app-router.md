@@ -16,7 +16,7 @@ description: Feature flagging is a technique that allows you to enable or disabl
 
 When working with the Next.js App Router in a real project, you might want to implement feature flagging. Feature flagging is a technique that allows you to enable or disable features in your application without deploying new code. This can be useful for testing new features, rolling out features gradually, or fixing bugs.
 
-Vercel recently released their own [feature flagging solution](https://vercel.com/blog/toolbar-feature-flags). However, you might want to implement your own feature flagging solution for various reasons. In my case, I am not using Vercel for deployment, and I just want a basic feature flagging solution through my App Service on Azure.
+Vercel recently released their own [feature flagging solution](https://vercel.com/blog/toolbar-feature-flags). However, you might want to implement your own feature flagging solution for various reasons. In my case, I am not using Vercel for deployment, and I just want a basic feature flagging solution through my App Service on Azure. It also works with ie. Docker deployment though Azure AKS or equivalent service.
 
 In this blog post, I will show you how to implement a simple version of feature flagging with the Next.js App Router. I am no expert in feature flagging, so I would love to hear your feedback on this approach. It works well for my use case, but I am sure there are better ways to do it.
 
