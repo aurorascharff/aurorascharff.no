@@ -9,7 +9,7 @@ I hold a bachelor's degree in Robotics and Intelligent Systems, with a solid fou
 
 Recently, I've been focusing on web development and staying updated on everything happening in the field. Currently, I'm working on projects using React Server Components and the Next.js App Router.
 
-After working for a couple of years at a financial technology startup, I'm continuing to develop as a consultant at Inmeta. I enjoy solving problems, learning new things, and sharing knowledge through workshops, technical blog posts, social media, demo applications, and supporting fellow developers. I also regularly present internationally at recognized conferences.
+After working for a couple of years at a financial technology startup, I'm continuing to develop as a consultant at Crayon Consulting. I enjoy solving problems, learning new things, and sharing knowledge through workshops, technical blog posts, social media, demo applications, and supporting fellow developers. I also regularly present internationally at recognized conferences.
 
 If you have any questions, feel free to reach out to me on Twitter or LinkedIn.
 
