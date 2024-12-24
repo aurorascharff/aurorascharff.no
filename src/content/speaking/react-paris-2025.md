@@ -1,8 +1,8 @@
 ---
 organizer: React Paris 2025
 date: 2025-03-20T08:00:00Z
-name: "Talk: TBD"
+name: "Talk: React Server Components: Elevating Speed, Interactivity, and User Experience"
 completed: false
 websiteLink: "https://react.paris"
-description: "Learn how React Server Components can improve form functionality, with insights on benefits like faster load times and streamlined server-side processing. Discover practical strategies for integrating RSC into forms to enhance user experience and simplify front-end complexities."
+description: "React Server Components improve web app performance by rendering components on the server and streaming them to the client in real time. This session will demonstrate their benefits, including increased speed and responsiveness, through real-world examples. You'll learn to use asynchronous components and modern React features to optimize load times and enhance user experience."
 ---
