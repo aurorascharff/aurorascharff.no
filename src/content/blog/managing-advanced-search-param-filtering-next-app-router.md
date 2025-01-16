@@ -167,7 +167,7 @@ Next, lets track the pending state of the filtering. We can use the same `useTra
 // CategoryFilter.tsx
   ...
   const [isPending, startTransition] = useTransition();
-  const [optimisticCategories, setOptimisticCategories] = useOptimistic(searchParams.getAll('category'));
+  const selectedCategories = searchParams.getAll('category');
 
   return (
     <div data-pending={isPending ? '' : undefined}>
@@ -179,7 +179,7 @@ Next, lets track the pending state of the filtering. We can use the same `useTra
             value: category.id.toString(),
           };
         })}
-        selectedValues={optimisticCategories}
+        selectedValues={selectedCategories}
         onToggle={newCategories => {
           ...
           startTransition(() => {
