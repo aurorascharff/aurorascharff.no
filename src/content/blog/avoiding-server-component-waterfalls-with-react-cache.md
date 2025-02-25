@@ -9,6 +9,7 @@ tags:
   - React Server Components
   - Next.js
   - App Router
+  - React 19
   - cache
   - performance
 description: In this blog post, I will show you how to use the React cache() API in the Next.js App Router with React Server Components to optimize performance and avoid server component waterfalls.
@@ -181,7 +182,13 @@ Now, the `Comments` component can reuse the preloaded data already triggered by 
 
 The code for example can be found [on Github](https://github.com/aurorascharff/next15-cache-preload), and is deployed on [Vercel](https://next15-cache-preload.vercel.app)!
 
-## Notes on UX and DX
+## Additional notes
+
+When to use it?
+Where to run it?
+Hidden coupling when refactoring, prefetching, loader pattern tansatck and rrv7, tweets.
+TODO BILDER, style bedre
+Is it called a server waterfall?
 
 ## Conclusion
 
