@@ -21,7 +21,7 @@ The `cache()` API is a new feature released in React 19. In this blog post, we w
 
 ## The React Cache API
 
-The React 19 `cache()` API allows you to cache the result of a data fetch or commutation. It's meant to be used with React Server Components. It enables per-render caching/memoization for data fetches, primarily to reduce data coupling when fetching the same data across multiple components. Check out the [documentation](https://react.dev/reference/react/cache) for more information!
+The React 19 `cache()` API allows you to cache the result of a data fetch or commutation. It's meant to be used with React Server Components. It enables per-render caching/memoization for data fetches, primarily useful to reduce data coupling when fetching the same data across multiple components. Check out the [documentation](https://react.dev/reference/react/cache) for more information!
 
 A classic example could be something like a `getUser` function:
 
