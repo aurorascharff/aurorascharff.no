@@ -33,7 +33,7 @@ const getUser = cache(async (userId: string) => {
 
 It's likely you are calling `getUser` in multiple server components. By using `cache()`, you can avoid fetching the same data multiple times, and rather share the return value. Any time you are fetching the same data in multiple components, you should consider using the `cache()` API. Without it, we would have to hoist data fetching to a higher component to avoid duplicate work. But, that would break composition and introduce coupling between components. Which is why the `cache()` API is so powerful.
 
-Another typical example in Next.js could be when creating dynamic metadata for a page, fetching data inside their `generateMetadata` function.
+Another typical example in Next.js could be when creating dynamic metadata for a page, fetching data inside it's `generateMetadata` function. You would want to use `cache()` to avoid fetching the same data multiple times for that page.
 
 However, the `cache()` API can also be used to avoid be used to preload data. Let's see how we can use it to avoid server component waterfalls.
 
