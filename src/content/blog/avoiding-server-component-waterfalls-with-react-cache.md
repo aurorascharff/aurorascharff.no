@@ -11,10 +11,10 @@ tags:
   - App Router
   - cache
   - performance
-description: In this blog post, I will show you how to use cache() to optimize performance and avoid server component waterfalls with React Server Components in the Next.js App Router.
+description: In this blog post, I will show you how to use the React cache() API in the Next.js App Router with React Server Components to optimize performance and avoid server component waterfalls.
 ---
 
-Released with React 19, the `cache()` API is a new feature that allows you to cache the result of a data fetch or commutation. It's meant to be used with React Server Component, but has not gotten that much attention. In this blog post, I will show you how to use `cache()` to preload data to optimize performance, avoiding server component waterfalls.
+Released with React 19, the `cache()` API is a new feature that allows you to cache the result of a data fetch or commutation. It's meant to be used with React Server Components, but has not gotten that much attention. In this blog post, I will show you how to use the `cache()` API in the Next.js App Router to preload data, optimizing performance and avoiding server component waterfalls.
 
 ## Table of contents
 
