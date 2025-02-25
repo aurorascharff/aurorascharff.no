@@ -91,7 +91,6 @@ export default async function Messages() {
   ) : null;
 ```
 
-
 ```tsx
 export default async function Page() {
   const messagesIsEnabled = await getFeature('FEATURE_MESSAGES');

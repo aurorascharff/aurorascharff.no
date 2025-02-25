@@ -230,4 +230,4 @@ Some additional notes on the value of the useOptimistic hook as stated by a [red
 
 In this blog post, I've shown you how to use useOptimistic across the component tree in Next.js. By passing server-fetched data to a provider and using the `useOptimistic()` hook inside it, we can use it across layouts and pages, we don't have to pass any props, and the simplicity of useOptimistic "merging" the client and server state is retained.
 
-I hope this post has been helpful in understanding the useOptimistic hook and it's limiations. Please let me know if you have any questions or comments, and follow me on [Twitter](https://twitter.com/aurorascharff) for more updates. Happy coding! 🚀
+I hope this post has been helpful in understanding the useOptimistic hook and it's limitations. Please let me know if you have any questions or comments, and follow me on [Twitter](https://twitter.com/aurorascharff) for more updates. Happy coding! 🚀
