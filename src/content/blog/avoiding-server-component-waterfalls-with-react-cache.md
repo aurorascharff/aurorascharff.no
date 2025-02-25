@@ -14,9 +14,27 @@ tags:
 description: In this blog post, I will show you how to use the React cache() API in the Next.js App Router with React Server Components to optimize performance and avoid server component waterfalls.
 ---
 
-Released with React 19, the `cache()` API is a new feature that allows you to cache the result of a data fetch or commutation. It's meant to be used with React Server Components, but has not gotten that much attention. In this blog post, I will show you how to use the `cache()` API in the Next.js App Router to preload data, optimizing performance and avoiding server component waterfalls.
+The `cache()` API is a new feature released in React 19. In this blog post, we will explore it, and see how it can be used to preload data, optimizing performance and avoiding server component waterfalls.
 
 ## Table of contents
+
+## The React Cache API
+
+The React 19 `cache()` API allows you to cache the result of a data fetch or commutation. It's meant to be used with React Server Components. It enables per-render caching/memoization for data fetches, primarily to reduce data coupling when fetching the same data across multiple components. Check out the [documentation](https://react.dev/reference/react/cache) for more information!
+
+A classic example could be something like a `getUser` function:
+
+```tsx
+const getUser = cache(async (userId: string) => {
+  const response = await db.getUser(userId);
+});
+```
+
+It's likely you are calling `getUser` in multiple server components. By using `cache()`, you can avoid fetching the same data multiple times, and rather share the return value. Any time you are fetching the same data in multiple components, you should consider using the `cache()` API. Without it, we would have to hoist data fetching to a higher component to avoid duplicate work. But, that would break composition and introduce coupling between components. Which is why the `cache()` API is so powerful.
+
+Another typical example in Next.js could be when creating dynamic metadata for a page, fetching data inside their `generateMetadata` function.
+
+However, the `cache()` API can also be used to avoid be used to preload data. Let's see how we can use it to avoid server component waterfalls.
 
 ## The Use Case
 
@@ -77,22 +95,6 @@ async function Comments({ postId }: { postId: string }) {
 Both `Posts` and `Comments` are server components, and they are both fetching their own data. This is nice, because each component is responsible for both its data and its UI, maintaining composition. However, the comments can not start fetching it's data before `Post` is done running the await to fetch its data, even though `Comments` does not depend on data fetched by the `Posts` component. It's "locked" inside the `Posts` component, leading to a server waterfall.
 
 Frameworks like React Router v7 and TanStack start solve this problem with loaders, ensuring all data is fetched based on the route. However, in Next.js, we don't have this automatic optimization.
-
-## The React Cache API
-
-The React `cache()` API is a new feature in React 19. It allows you to cache the result of a data fetch or commutation. It's meant to be used for server components, but has not gotten that much attention. The [React docs](https://react.dev/reference/react/cache) contain great examples on how to use it.
-
-Typically, it's used to enable per-render caching/memoization for data fetches across server components. A classic example could be something like a `getUser` function:
-
-```tsx
-const getUser = cache(async (userId: string) => {
-  const response = await db.getUser(userId);
-});
-```
-
-It's likely you are calling `getUser` in multiple server components. By using `cache()`, you can avoid fetching the same data multiple times, and rather share the return value, improving performance. The `cache()` API also allows us to keep the data fetching inside the components.Without this API, we have to hoist data fetching to a higher component to achieve the same performance, breaking composition.
-
-However, the `cache()` API can also be used to avoid be used to preload data. Let's see how we can use it to avoid server component waterfalls.
 
 ## The Solution
 
@@ -176,6 +178,10 @@ export default async function PostPage({ params }: { params: Promise<{ postId: s
 ```
 
 Now, the `Comments` component can reuse the preloaded data already triggered by the `PostsPage` component. In our example, since both promises are resolved after 1 second, the `Comments` component will render immediately after the `Post` component, skipping the waterfall.
+
+The code for example can be found [on Github](https://github.com/aurorascharff/next15-cache-preload), and is deployed on [Vercel](https://next15-cache-preload.vercel.app)!
+
+## Notes on UX and DX
 
 ## Conclusion
 
