@@ -1,6 +1,6 @@
 ---
 author: Aurora Scharff
-pubDatetime: 2025-02-26T15:22:00Z
+pubDatetime: 2025-02-25T15:22:00Z
 title: Avoiding Server Component Fetching Waterfalls with React Cache
 slug: avoiding-server-component-waterfalls-with-react-cache
 featured: false
