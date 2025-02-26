@@ -1,6 +1,6 @@
 ---
 layout: ../layouts/Content.astro
-title: "React 19 Cheatsheet"
+title: "React 19 Cheatsheet (WIP)"
 ---
 
 <div className="grid place-content-center">
