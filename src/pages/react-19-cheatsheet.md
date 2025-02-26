@@ -6,7 +6,7 @@ ogImage: "react-19-cheatsheet-og.png"
 
 <div className="grid place-content-center">
   <iframe
-        src="https://link.excalidraw.com/readonly/CSYYVWwqoHslPeBzuKlz?darkMode=true"
+        src="https://link.excalidraw.com/readonly/CSYYVWwqoHslPeBzuKlz"
         width="1500px%"
         height="1000px"
         style="border: none;">
