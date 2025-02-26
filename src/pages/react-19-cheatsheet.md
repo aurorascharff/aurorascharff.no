@@ -6,7 +6,7 @@ ogImage: "react-19-cheatsheet-og.png"
 
 <div className="grid place-content-center">
       <h2 className="mb-10 text-center"> Also available as
-      <a href="https://aurorascharff.no/react-19-cheatsheet.png" className="hover:underline" target="_blank" >PNG</a>
+      <a href="https://aurorascharff.no/react-19-cheatsheet.png" className="hover:underline decoration-wavy" target="_blank" >PNG</a>
       </h2>
       <iframe
             src="https://link.excalidraw.com/readonly/CSYYVWwqoHslPeBzuKlz"
