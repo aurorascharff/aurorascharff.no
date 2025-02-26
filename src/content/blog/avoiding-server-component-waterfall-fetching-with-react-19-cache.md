@@ -206,4 +206,4 @@ In this blog post, I've shown you how to use React `cache()` to reduce data coup
 
 Thanks to Robin Wieruch and Sem Selikoff for insightful discussions [on X](https://x.com/samselikoff/status/1894394514036375668)!
 
-I hope this post has been helpful in understanding the cache API and its uses. Please let me know if you have any questions or comments, and follow me on [Twitter](https://twitter.com/aurorascharff) for more updates. Happy coding! 🚀
+I hope this post has been helpful in understanding the `cache()` API and its uses. Please let me know if you have any questions or comments, and follow me on [Twitter](https://twitter.com/aurorascharff) for more updates. Happy coding! 🚀
