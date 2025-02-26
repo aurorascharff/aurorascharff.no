@@ -8,13 +8,17 @@ export interface Props {
   frontmatter: {
     title: string;
     description?: string;
+    ogImage?: string;
   };
 }
 
 const { frontmatter } = Astro.props;
 ---
 
-<Layout title={`${frontmatter.title} | ${SITE.title}`}>
+<Layout
+  title={`${frontmatter.title} | ${SITE.title}`}
+  ogImage={frontmatter.ogImage}
+>
   <Header />
   <main id="main-content">
     <section id="about" class="prose mb-12 max-w-3xl prose-img:border-0">

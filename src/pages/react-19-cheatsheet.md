@@ -1,6 +1,7 @@
 ---
 layout: ../layouts/Content.astro
 title: "React 19 Cheatsheet (WIP)"
+ogImage: "@assets/react-19-cheatsheet.png"
 ---
 
 <div className="grid place-content-center">
@@ -10,4 +11,5 @@ title: "React 19 Cheatsheet (WIP)"
         height="1000px"
         style="border: none;">
   </iframe>
+      <meta property="og:image" content
 </div>
