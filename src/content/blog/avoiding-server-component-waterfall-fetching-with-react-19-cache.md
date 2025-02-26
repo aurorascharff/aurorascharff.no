@@ -1,8 +1,8 @@
 ---
 author: Aurora Scharff
 pubDatetime: 2025-02-25T15:22:00Z
-title: Avoiding Server Component Fetching Waterfalls with React 19 cache()
-slug: avoiding-server-component-waterfalls-with-react-19-cache
+title: Avoiding Server Component Waterfall Fetching with React 19 cache()
+slug: avoiding-server-component-waterfall-fetching-with-react-19-cache
 featured: false
 draft: false
 tags:
@@ -12,10 +12,10 @@ tags:
   - React 19
   - cache
   - performance
-description: In this blog post, I will show you how to use the React 19 cache() API in the Next.js App to optimize performance and avoid fetching waterfalls when using React Server Components.
+description: In this blog post, I will show you how to use the React 19 cache() API in the Next.js App to optimize performance and avoid fetch waterfalls when using React Server Components.
 ---
 
-The `cache()` API is a new feature released in React 19. In this blog post, we will explore it in the Next.js App Router, and see how it can be used to reduce data coupling and preload data, optimizing performance and avoiding fetching waterfalls when using React Server Components.
+The `cache()` API is a new feature released in React 19. In this blog post, we will explore it in the Next.js App Router, and see how it can be used to reduce data coupling and preload data, optimizing performance and avoiding waterfall fetching when using React Server Components.
 
 ## Table of contents
 
@@ -37,7 +37,7 @@ Any time you are fetching the same data in multiple components, you should consi
 
 Another typical example in Next.js could be when creating dynamic metadata for a page, fetching data inside its `generateMetadata` function. You would want to use `cache()` around the data fetching function to avoid fetching the same data multiple times for that page.
 
-However, the `cache()` API can also be used to preload data with the [preload pattern](https://nextjs.org/docs/app/building-your-application/data-fetching/fetching#preloading-data). Let's see how we can use it to avoid server fetching waterfalls occurring.
+However, the `cache()` API can also be used to preload data with the [preload pattern](https://nextjs.org/docs/app/building-your-application/data-fetching/fetching#preloading-data). Let's see how we can use it to avoid server fetch waterfalls occurring.
 
 ## The Use Case
 
@@ -95,7 +95,7 @@ async function Comments({ postId }: { postId: string }) {
 }
 ```
 
-Both `Post` and `Comments` are server components, and they are both fetching their own data asynchronously. This is nice, because each component is responsible for both its data and its UI, maintaining composition. However, the `Comments` component cannot start fetching its data before `Post` is done running the await to fetch its data, even though `Comments` does not depend on data fetched by the `Post` component. It's blocked inside the `Post` component, leading to a fetching waterfall.
+Both `Post` and `Comments` are server components, and they are both fetching their own data asynchronously. This is nice, because each component is responsible for both its data and its UI, maintaining composition. However, the `Comments` component cannot start fetching its data before `Post` is done running the await to fetch its data, even though `Comments` does not depend on data fetched by the `Post` component. It's blocked inside the `Post` component, leading to a fetch waterfall.
 
 Frameworks like React Router v7 and TanStack Start solve this problem with the loader pattern, ensuring all necessary data can be fetched and preloaded for the for route. However, in Next.js, we don't have this automatic optimization.
 
@@ -202,7 +202,7 @@ Another thing to note is that when using the `fetch()` API in Next.js, the data 
 
 ## Conclusion
 
-In this blog post, I've shown you how to use React `cache()` to reduce data coupling and preload data, optimizing performance and avoiding fetching waterfalls.
+In this blog post, I've shown you how to use React `cache()` to reduce data coupling and preload data, optimizing performance and avoiding waterfall fetching.
 
 Thanks to Robin Wieruch and Sem Selikoff for insightful discussions [on X](https://x.com/samselikoff/status/1894394514036375668)!
 
