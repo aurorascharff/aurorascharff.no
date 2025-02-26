@@ -1,7 +1,7 @@
 ---
 layout: ../layouts/Content.astro
 title: "React 19 Cheatsheet (WIP)"
-ogImage: "react-19-cheatsheet.png"
+ogImage: "react-19-cheatsheet-og.png"
 ---
 
 <div className="grid place-content-center">
