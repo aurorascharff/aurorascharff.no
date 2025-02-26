@@ -97,7 +97,7 @@ async function Comments({ postId }: { postId: string }) {
 
 Both `Post` and `Comments` are server components, and they are both fetching their own data asynchronously. This is nice, because each component is responsible for both its data and its UI, maintaining composition. However, the `Comments` component cannot start fetching its data before `Post` is done running the await to fetch its data, even though `Comments` does not depend on data fetched by the `Post` component. It's blocked inside the `Post` component, leading to a fetching waterfall.
 
-Frameworks like React Router v7 and TanStack Start solve this problem with loaders and preloading of loaders, ensuring all necessary data is fetched based on the route. However, in Next.js, we don't have this automatic optimization.
+Frameworks like React Router v7 and TanStack Start solve this problem with the loader pattern, ensuring all necessary data can be fetched and preloaded for the for route. However, in Next.js, we don't have this automatic optimization.
 
 ## The Solution
 
