@@ -1,8 +1,8 @@
 ---
 author: Aurora Scharff
 pubDatetime: 2025-02-25T15:22:00Z
-title: Avoiding Server Component Fetching Waterfalls with React Cache
-slug: avoiding-server-component-waterfalls-with-react-cache
+title: Avoiding Server Component Fetching Waterfalls with React 19 cache()
+slug: avoiding-server-component-waterfalls-with-react-19-cache
 featured: false
 draft: false
 tags:
@@ -12,16 +12,16 @@ tags:
   - React 19
   - cache
   - performance
-description: In this blog post, I will show you how to use the React cache() API in the Next.js App to optimize performance and avoid fetching waterfalls when using React Server Components.
+description: In this blog post, I will show you how to use the React 19 cache() API in the Next.js App to optimize performance and avoid fetching waterfalls when using React Server Components.
 ---
 
-The `cache()` API is a new feature released in React 19. In this blog post, we will explore it in the Next.js App Router, and see how it can be used to reduce data coupling and preload data, optimizing performance and avoiding fetching waterfalls when using React Server Components.
+The React 19 `cache()` API is a new feature released in React 19. In this blog post, we will explore it in the Next.js App Router, and see how it can be used to reduce data coupling and preload data, optimizing performance and avoiding fetching waterfalls when using React Server Components.
 
 ## Table of contents
 
-## The React Cache API
+## The React 19 Cache API
 
-The React 19 `cache()` API allows you to cache the result of a data fetch or computation. It's meant to be used with React Server Components. It enables per-render caching/memoization for data fetches, primarily useful to reduce data coupling when fetching the same data across multiple components. Check out the [documentation](https://react.dev/reference/react/cache) for more information!
+The `cache()` API allows you to cache the result of a data fetch or computation. It's meant to be used with React Server Components. It enables per-render caching/memoization for data fetches, primarily useful to reduce data coupling when fetching the same data across multiple components. Check out the [documentation](https://react.dev/reference/react/cache) for more information!
 
 A classic example could be something like a `getUser` function:
 
