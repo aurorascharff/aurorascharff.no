@@ -197,8 +197,8 @@ Another thing to note is that when using the `fetch()` API in Next.js, the data 
 - The `cache()` API allows you to cache the result of a data fetch or computation, enabling per-render caching/memoization for data fetches.
 - The `cache()` API can be used to reduce data coupling and maintain component composition.
 - Any time you are fetching the same data in multiple components, you should consider using the `cache()` API, unless your data fetching is already using the `fetch()` API.
-- The `cache()` API can aslo be used to preload data, allowing a deeper component to reuse the preloaded data and avoid triggering a waterfall of data fetching, increasing performance. Remember not to await the preloading function.
-- It's important to carefully consider where and when to implement preloading pattern to avoid unnecessary complexity in your component hierarchy.
+- The `cache()` API can also be used to preload data, allowing deepers components to reuse the preloaded data and avoid triggering a waterfall of data fetching, increasing performance. Remember not to await the preloading function.
+- It's important to carefully consider where and when to implement the preloading pattern to avoid unnecessary complexity in your component hierarchy.
 
 ## Conclusion
 
