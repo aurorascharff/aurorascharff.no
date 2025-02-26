@@ -182,7 +182,7 @@ It's important to not await the promise, or else it will block rendering of the 
 
 Now, the `Comments` component can reuse the preloaded data already triggered by the `PostPage` component. In our example, since both promises are resolved after 1 second, the `Comments` component will render immediately after the `Post` component, skipping the waterfall!
 
-The code for example can be found [on Github](https://github.com/aurorascharff/next15-cache-preload), and is deployed on [Vercel](https://next15-cache-preload.vercel.app)!
+The code example can be found [on Github](https://github.com/aurorascharff/next15-cache-preload), and is deployed on [Vercel](https://next15-cache-preload.vercel.app)!
 
 ## Additional notes
 
