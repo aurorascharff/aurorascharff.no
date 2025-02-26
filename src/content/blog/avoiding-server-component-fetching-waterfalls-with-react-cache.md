@@ -31,7 +31,9 @@ const getUser = cache(async (userId: string) => {
 });
 ```
 
-It's likely you are calling `getUser` in multiple server components. By using `cache()`, you can avoid fetching the same data multiple times, and rather share the return value. Any time you are fetching the same data in multiple components, you should consider using the `cache()` API. Local fetching let's you keep things uncoupled, and `cache()` let's you not care whether two leaf components need the same data. Without it, we would have to hoist data fetching to a higher component to avoid duplicate work. But, that would break composition and introduce coupling between components. Which is why the `cache()` API is so powerful.
+It's likely you are calling `getUser` in multiple server components. By using `cache()`, you can avoid fetching the same data multiple times, and rather share the return value.
+
+Any time you are fetching the same data in multiple components, you should consider using the `cache()` API. Local fetching let's you keep things uncoupled, and `cache()` let's you not care whether two leaf components need the same data. Without it, we would have to hoist data fetching to a higher component to avoid duplicate work. But, that would break composition and introduce coupling between components. Which is why the `cache()` API is so powerful.
 
 Another typical example in Next.js could be when creating dynamic metadata for a page, fetching data inside its `generateMetadata` function. You would want to use `cache()` around the data fetching function to avoid fetching the same data multiple times for that page.
 
@@ -133,9 +135,11 @@ const getComments = async (postId: string) => {
 };
 ```
 
-When running our app, we will first see the Suspense fallback for the `Post` component, and then the `Comments` component will start fetching its data, showing its own Suspense fallback. It will take 1 second to render the `Post` component, and another second to render the `Comments` component. This is because the `Comments` component is waiting for the `Post` component to finish fetching its data.
+When running our app, we will first see the Suspense fallback for the `Post` component, and then the `Comments` component will start fetching its data, showing its own Suspense fallback. It will take 1 second to render the `Post` component, and another 1 second to render the `Comments` component.
 
-Let's use the `cache()` API to preload the data for the `Comments` component. Let's wrap `getComments` in a `cache()` call:
+Let's use the `cache()` API to preload the data for the `Comments` component.
+
+We can wrap `getComments` in a `cache()` call:
 
 ```tsx
 // When using cache(), the return value can be cached/memoized per render across multiple server components
@@ -154,7 +158,7 @@ const getComments = cache(async (postId: string) => {
 });
 ```
 
-Now, we can trigger the data fetch in a higher up component, in this case the `PostsPage`. It could be any component where the necessary arguments for the data fetch are available. However, to avoid blocking our `PostsPage` component, we should not await the promise:
+Now, we can trigger the data fetch in a higher up component, in this case the `PostsPage`. It could be any component where the necessary arguments for the data fetch are available.
 
 ```tsx
 export default async function PostPage({ params }: { params: Promise<{ postId: string }> }) {
@@ -174,7 +178,9 @@ export default async function PostPage({ params }: { params: Promise<{ postId: s
 }
 ```
 
-Now, the `Comments` component can reuse the preloaded data already triggered by the `PostPage` component. In our example, since both promises are resolved after 1 second, the `Comments` component will render immediately after the `Post` component, skipping the waterfall.
+It's important to not await the promise, or else it will block rendering of the `PostsPage`.
+
+Now, the `Comments` component can reuse the preloaded data already triggered by the `PostPage` component. In our example, since both promises are resolved after 1 second, the `Comments` component will render immediately after the `Post` component, skipping the waterfall!
 
 The code for example can be found [on Github](https://github.com/aurorascharff/next15-cache-preload), and is deployed on [Vercel](https://next15-cache-preload.vercel.app)!
 
@@ -184,18 +190,20 @@ When adding the preload pattern, it's worth noting the hidden data coupling that
 
 Therefore, it's worth thinking about when you add the preloading pattern. Rather than adding it prematurely everywhere, use it to solve a specific performance problem. And keep it in mind when refactoring - if you are refactoring a component that uses the preloading pattern, make sure to check if the preloading is still necessary.
 
-Another thing to note, is that when using `fetch()` API in Next.js, the data is already cached/memoized per render. So, if you are using `fetch()` API to fetch the same data in multiple components or to preload data, you don't need to use the `cache()` API. The `cache()` API is primarily useful when you are fetching data using a custom data fetching function or a database.
+Another thing to note is that when using the `fetch()` API in Next.js, the data is already cached/memoized per render. So, if you are using the `fetch()` API to fetch the same data in multiple components or to preload data, you don't need to wrap with `cache()`. The `cache()` API is primarily useful when you are fetching through a database, or running some other custom data fetching function or computation.
 
 ## Key Takeaways
 
-- The `cache()` API allows you to cache the result of a data fetch or commutation, enabling per-render caching/memoization for data fetches.
-- The `cache()` API is a powerful tool for optimizing performance and maintaining composition by avoiding data coupling.
+- The `cache()` API allows you to cache the result of a data fetch or computation, enabling per-render caching/memoization for data fetches.
+- The `cache()` API can be used to reduce data coupling and maintain component composition.
 - Any time you are fetching the same data in multiple components, you should consider using the `cache()` API, unless your data fetching is already using the `fetch()` API.
-- The `cache()` API can be used to preload data, allowing a deeper component to reuse the preloaded data and avoid triggering a waterfall of data fetching, increasing performance. Remember not to await the preloading function.
+- The `cache()` API can aslo be used to preload data, allowing a deeper component to reuse the preloaded data and avoid triggering a waterfall of data fetching, increasing performance. Remember not to await the preloading function.
 - It's important to carefully consider where and when to implement preloading pattern to avoid unnecessary complexity in your component hierarchy.
 
 ## Conclusion
 
 In this blog post, I've shown you how to use React `cache()` to reduce data coupling and preload data, optimizing performance and avoiding fetching waterfalls.
+
+Thanks to Robin Wieruch and Sem Selikoff for insightful discussions [on X](https://x.com/samselikoff/status/1894394514036375668)!
 
 I hope this post has been helpful in understanding the cache API and its uses. Please let me know if you have any questions or comments, and follow me on [Twitter](https://twitter.com/aurorascharff) for more updates. Happy coding! 🚀
