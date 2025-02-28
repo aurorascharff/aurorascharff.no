@@ -204,6 +204,6 @@ Another thing to note is that when using the `fetch()` API in Next.js, the data 
 
 In this blog post, I've shown you how to use React `cache()` to reduce data coupling and preload data, optimizing performance and avoiding waterfall fetching.
 
-Thanks to Robin Wieruch and Sem Selikoff for insightful discussions [on X](https://x.com/samselikoff/status/1894394514036375668)!
+Thanks to Robin Wieruch and Sam Selikoff for insightful discussions [on X](https://x.com/samselikoff/status/1894394514036375668)!
 
 I hope this post has been helpful in understanding the `cache()` API and its uses. Please let me know if you have any questions or comments, and follow me on [Twitter](https://twitter.com/aurorascharff) for more updates. Happy coding! 🚀
