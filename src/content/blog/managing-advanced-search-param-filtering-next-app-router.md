@@ -567,4 +567,4 @@ You can also watch my [talk at Next.js Conf](https://www.youtube.com/watch?v=CvA
 
 Don't forget that you can apply the same pattern to other filters, like pagination and sorting.
 
-I hope this post has been helpful to you. Please let me know if you have any questions or comments, and follow me on [Twitter](https://twitter.com/aurorascharff) for more updates. Happy coding! 🚀
+I hope this post has been helpful to you. Please let me know if you have any questions or comments, and follow me on [X](https://x.com/aurorascharff) for more updates. Happy coding! 🚀
