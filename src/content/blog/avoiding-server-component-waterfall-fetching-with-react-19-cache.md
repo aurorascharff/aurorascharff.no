@@ -99,6 +99,28 @@ Both `Post` and `Comments` are server components, and they are both fetching the
 
 Frameworks like React Router v7 and TanStack Start solve this problem with the loader pattern, ensuring all necessary data can be fetched and preloaded for the for route. However, in Next.js, we don't have this automatic optimization.
 
+## The Naive Approach
+
+Let's start by solving the waterfall problem by using hoisting the data fetching up to the `Posts` components and using `Promise.all()` to fetch comments and post data in parallel.
+
+```tsx
+async function Post({ postId }: { postId: string }) {
+  const [post, comments] = await Promise.all([getPost(postId), getComments(postId)]);
+
+  return (
+    <div className="rounded border-2 border-blue-500 p-4">
+      <h2>Title: {post?.title}</h2>
+      Post comments:
+      <Comments comments={comments} />
+    </div>
+  );
+}
+```
+
+This is a common approach, and it works well. However, it does introduce some data coupling, as the `PostsPage` component now has to know about both data fetching functions. If we later decide to remove the `Comments` component, we would have to remember to also remove the data fetching for it in the `Post` component. In addition, if the comments are slower than the posts, the `Post` component will still be blocked until the comments are fetched.
+
+Another potential issue is that if you end up hoisting up to a layout, you could be blocking your entire page from rendering while waiting for the data inside `Promise.all()` to be fetched.
+
 ## The Solution
 
 Since the `cache()` API allows us to cache the result of a data fetch, we can use it to preload data for the `Comments` component. Let's say our data fetching functions look like this:
@@ -197,7 +219,7 @@ Another thing to note is that when using the `fetch()` API in Next.js, the data 
 - The `cache()` API allows you to cache the result of a data fetch or computation, enabling per-render caching/memoization for data fetches.
 - The `cache()` API can be used to reduce data coupling and maintain component composition.
 - Any time you are fetching the same data in multiple components, you should consider using the `cache()` API, unless your data fetching is already using the `fetch()` API.
-- The `cache()` API can also be used to preload data, allowing deepers components to reuse the preloaded data and avoid triggering a waterfall of data fetching, increasing performance. Remember not to await the preloading function.
+- The `cache()` API can also be used to preload data, allowing deeper components to reuse the preloaded data and avoid triggering a waterfall of data fetching, increasing performance. Remember not to await the preloading function.
 - It's important to carefully consider where and when to implement the preloading pattern to avoid unnecessary complexity in your component hierarchy.
 
 ## Conclusion
