@@ -101,7 +101,7 @@ Frameworks like React Router v7 and TanStack Start solve this problem with the l
 
 ## The Naive Approach
 
-Let's start by solving the waterfall problem by using hoisting the data fetching up to the `Posts` components and using `Promise.all()` to fetch comments and post data in parallel.
+Let's start by solving the waterfall problem by using hoisting the data fetching up to the `Posts` components and using `Promise.all()` to fetch comments and posts in parallel.
 
 ```tsx
 async function Post({ postId }: { postId: string }) {
