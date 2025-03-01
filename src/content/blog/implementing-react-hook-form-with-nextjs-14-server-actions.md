@@ -401,4 +401,4 @@ Working examples of this code can as mentioned be found [here](https://github.co
 
 In this blog post, I walked you through how to use React Hook Form with Server Actions to make an interactive and user-friendly form.
 
-I hope this post has been helpful. Please let me know if you have any questions or comments, and follow me on [Twitter](https://twitter.com/aurorascharff) for more updates. Happy coding! 🚀
+I hope this post has been helpful. Please let me know if you have any questions or comments, and follow me on [X](https://x.com/aurorascharff) for more updates. Happy coding! 🚀

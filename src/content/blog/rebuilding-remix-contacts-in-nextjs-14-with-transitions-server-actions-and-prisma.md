@@ -921,4 +921,4 @@ Neutrals
 
 In this blog post, I've rebuilt the Remix Contacts tutorial in Next.js 14 using React Server Components and Server Actions, and compared the two approaches. I've found that the Next.js approach is more flexible and allows for more customization and composition, but is more complex and requires more boilerplate code. The Remix approach is more straightforward and easier to learn and understand, and progressively enhances better.
 
-I hope this post has been helpful in understanding the differences between the two approaches and how to implement them in your own projects. Please let me know if you have any questions or comments, and follow me on [Twitter](https://twitter.com/aurorascharff) for more updates. Happy coding! 🚀
+I hope this post has been helpful in understanding the differences between the two approaches and how to implement them in your own projects. Please let me know if you have any questions or comments, and follow me on [X](https://x.com/aurorascharff) for more updates. Happy coding! 🚀

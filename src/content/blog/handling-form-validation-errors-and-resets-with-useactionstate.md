@@ -354,4 +354,4 @@ I have an example of that in a [separate branch](https://github.com/aurorascharf
 
 In this blog post, we've seen how to use the `useActionState` hook to create a validated form. We've also seen how to handle form resets with it. The final result can be found [on GithHub](https://github.com/aurorascharff/next15-remix-contacts-rebuild-v2/blob/main/app/contacts/%5BcontactId%5D/edit/_components/ContactForm.tsx) and tried out [on Vercel](https://next15-remix-contacts-rebuild-v2.vercel.app/). Again, just give the app a minute if it initially throws an application error - the database is sleeping.
 
-I hope this post has been helpful. Please let me know if you have any questions or comments, and follow me on [Twitter](https://twitter.com/aurorascharff) for more updates. Happy coding! 🚀
+I hope this post has been helpful. Please let me know if you have any questions or comments, and follow me on [X](https://x.com/aurorascharff) for more updates. Happy coding! 🚀

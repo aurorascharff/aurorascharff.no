@@ -318,4 +318,4 @@ See the app and the full code where I have implemented the patterns mentioned in
 
 In this blog post, we created a reusable SubmitButton with `useFormStatus`. We also saw how we can create progressively enhanced forms and buttons that work even if JavaScript is disabled or the page isn't hydrated. This is a powerful pattern that can be used in any SSR React 19 application.
 
-Please let me know if you have any questions or comments, and follow me on [Twitter](https://twitter.com/aurorascharff) for more updates. Happy coding! 🚀
+Please let me know if you have any questions or comments, and follow me on [X](https://x.com/aurorascharff) for more updates. Happy coding! 🚀

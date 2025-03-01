@@ -275,4 +275,4 @@ And our sidebar will always show items that don't have a feature flag.
 
 In this blog post, I showed you how to implement simple feature flagging with the Next.js App Router. We used environment variables to toggle features in both server and client components.
 
-I hope this post has been helpful. Please let me know if you have any questions or comments, and follow me on [Twitter](https://twitter.com/aurorascharff) for more updates. Happy coding! 🚀
+I hope this post has been helpful. Please let me know if you have any questions or comments, and follow me on [X](https://x.com/aurorascharff) for more updates. Happy coding! 🚀
