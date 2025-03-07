@@ -344,9 +344,9 @@ This is a great example of Progressive Enhancement, where we enhance the form wi
 
 The added benefit of using the `action` property is that the `onSubmit` event can be used to provide additional functionality, like client-only optimistic updates on top of the no-js base case. See [example here](https://github.com/aurorascharff/next14-message-box/blob/optimistic/components/message-box/MessageInput.tsx).
 
-## Reach Hook Form as an Alternative
+## React Hook Form as an Alternative
 
-If you are not a fan of `useActionState`, you can use Reach Hook Form as an alternative. It is a great library for form validation and handling, and can use controlled inputs to manage a form state for you.
+If you are not a fan of `useActionState`, you can use React Hook Form as an alternative. It is a great library for form validation and handling, and can use controlled inputs to manage a form state for you.
 
 I have an example of that in a [separate branch](https://github.com/aurorascharff/next15-remix-contacts-rebuild-v2/blob/react-hook-form/app/contacts/%5BcontactId%5D/edit/_components/ContactForm.tsx).
 
