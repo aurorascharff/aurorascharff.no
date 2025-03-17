@@ -1,6 +1,6 @@
 ---
 layout: ../layouts/Content.astro
-title: "React 19 Cheatsheet (WIP)"
+title: "React 19 Cheatsheet"
 ogImage: "react-19-cheatsheet.png"
 ---
 
