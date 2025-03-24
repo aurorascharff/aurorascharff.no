@@ -28,7 +28,7 @@ export default function Event({ frontmatter }: Props) {
             className="inline-block text-lg font-medium text-skin-accent decoration-dashed underline-offset-4 hover:underline focus-visible:no-underline focus-visible:underline-offset-0"
           >
             <h2 className="inline">{name}</h2>
-            {link.includes("youtube") && (
+            {(link.includes("youtube") || link.includes("youtu.be")) && (
               <span className="ml-2 inline-block pt-[2px]">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
