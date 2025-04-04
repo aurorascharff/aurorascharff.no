@@ -169,7 +169,7 @@ Now, we can use the `isNavPending` state to display a loading indicator while th
 </div>
 ```
 
-Now, the user will get feedback about their interaction with the select, and won't think that the select is not working.
+Now, the user will get feedback about their interaction with the select, and won't think that it is not working.
 
 However, the select is still not updating immediately.
 
