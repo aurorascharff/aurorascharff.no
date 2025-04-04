@@ -116,7 +116,9 @@ It can be used by passing searchParams from the router:
 />
 ```
 
-Since we are in the Next.js App Router, when we push to the router with a delay, the value of the select is not updated until the `router.push()` is completed and the search params are updated. This leads to a bad user experience, as the user has to wait for the router push to complete before they see the new value in the select. They might get confused and think that the select is not working.
+Since we are in the Next.js App Router, when we push to the router with a delay, the value of the select is not updated until the `router.push()` is completed and the search params are updated.
+
+This leads to a bad user experience, as the user has to wait for the router push to complete before they see the new value in the select. They might get confused and think that the select is not working.
 
 ## Tracking the Pending State with Actions
 
@@ -125,7 +127,7 @@ Let's track the state of the push to the router by creating an Action with the `
 We wrap our push to the router in the `startNavTransition()` function, which will track the pending state of that transition. This will allow us to know when the transition is in progress and when it is completed.
 
 ```tsx
-    const [isNavPending, startNavTransition] =useTransition();
+    const [isNavPending, startNavTransition] = useTransition();
 
     const handleChange = async (
       event: React.ChangeEvent<HTMLSelectElement>
