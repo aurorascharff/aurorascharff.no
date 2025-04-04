@@ -53,7 +53,7 @@ export interface RouterSelectProps {
 }
 
 export const RouterSelect = React.forwardRef<HTMLSelectElement, RouterSelectProps>(
-  function Select({ name, label, value, options, setValueAction, ...props },
+  function Select({ name, label, value, options, ...props },
     ref
   ) {
 
