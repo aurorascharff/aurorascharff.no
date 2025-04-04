@@ -52,8 +52,8 @@ export interface RouterSelectProps {
   options: Array<{ value: string; label: string }>;
 }
 
-export const RouterSelect = React.forwardRef<HTMLSelectElement, SelectProps>(
-  function Select({ name, label, value, options, setValueAction, className, ...props },
+export const RouterSelect = React.forwardRef<HTMLSelectElement, RouterSelectProps>(
+  function Select({ name, label, value, options, setValueAction, ...props },
     ref
   ) {
 
@@ -282,12 +282,11 @@ export interface RouterSelectProps {
   value?: string | string[];
   options: Array<{ value: string; label: string }>;
   setValueAction?: (value: string) => void;
-  className?: string;
 }
 
 export const RouterSelect = React.forwardRef<HTMLSelectElement, RouterSelectProps>(
   function Select(
-    { name, label, value, options, setValueAction, className, ...props },
+    { name, label, value, options, setValueAction, ...props },
     ref
   ) {
     const router = useRouter();
