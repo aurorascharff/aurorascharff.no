@@ -12,7 +12,7 @@ tags:
   - Next.js
   - App Router
   - useTransition
-description: In this blog post, we will explore how to build reusable components with React 19 Actions, track transition states, use optimistic updates, and expose action properties for custom logic. We will also discuss the importance of naming actions and how to maintain reusability while allowing for custom logic in parent components.
+description: In this blog post, we will explore how to build reusable components with React 19 Actions, track transition states, use optimistic updates, and expose action properties for custom logic. 
 ---
 
 ## Table of contents
