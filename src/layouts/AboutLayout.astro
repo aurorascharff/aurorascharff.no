@@ -25,7 +25,9 @@ const { frontmatter } = Astro.props;
       <slot />
     </section>
   </main>
-  <div class="mb-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
+  <div
+    class="mb-8 flex flex-col items-center justify-center gap-4 text-center sm:flex-row sm:text-start"
+  >
     If you would like to support my work, you can
     <BuyMeACoffee client:load />
   </div>
