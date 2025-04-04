@@ -346,9 +346,9 @@ Check out this [StackBlitz](https://stackblitz.com/edit/bspkkmgm-cqbbodao?file=a
 
 When we are building more complex reusable components, we might run into constraints forcing us to move logic like optimistic updates to the parent.
 
-In my case, I was playing around with this [Ariakit example](https://ariakit.org/examples/select-next-router), where the generation of the select display value has to be done outside the reusable component. That means that we cannot call `useOptimistic` inside the reusable component itself. To solve it, I can expose a `setValueAction` prop, and then use `useOptimistic()` in the parent component to update the state immediately.
+In my case, I was playing around with this [Ariakit example](https://ariakit.org/examples/select-next-router), where the generation of the display value has to be done outside the reusable select component. That means that we cannot call `useOptimistic` inside the reusable select itself. To solve it, we can expose a `setValueAction` prop, and then use `useOptimistic()` in the parent component to update the state immediately.
 
-Which our approach, we can maintain reusability and still allow for any custom Action logic in the parent component.
+Which this approach, we can maintain reusability and still allow for any custom Action logic in the parent component.
 
 ## Key Takeaways
 
