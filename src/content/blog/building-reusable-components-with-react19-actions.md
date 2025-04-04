@@ -37,7 +37,7 @@ const updateNameAction = () => {
 
 In addition, errors thrown by functions called inside the hook version of `startTransition()` will be caught and can be handled with error boundaries.
 
-Actions are an alternative to regular event handling, and therefore, should be named accordingly. If not, it will be unclear to the user of that function what sort of behavior they should be expecting.
+Action functions are an alternative to regular event handling, and therefore, should be named accordingly. If not, it will be unclear to the user of that function what sort of behavior they should be expecting.
 
 ## The Use Case
 
