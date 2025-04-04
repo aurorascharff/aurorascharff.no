@@ -274,9 +274,11 @@ return (
 
 We know that this state update will occur immediately.
 
-## Final Behavior
+Here is a demo of this final behavior:
 
-The final select implementation could look like this:
+![Router select example](@assets/routerselect.gif)
+
+And, code for what the final select implementation could look like:
 
 ```tsx
 'use client';
@@ -337,10 +339,6 @@ export const RouterSelect = React.forwardRef<HTMLSelectElement, RouterSelectProp
   }
 );
 ```
-
-And here is a demo of this final behavior:
-
-![Router select example](@assets/routerselect.gif)
 
 Check out this [StackBlitz](https://stackblitz.com/edit/bspkkmgm-cqbbodao?file=app%2Fpage.tsx,app%2Factions-reusable-router-select%2Frouter-select.tsx) for a working example.
 
