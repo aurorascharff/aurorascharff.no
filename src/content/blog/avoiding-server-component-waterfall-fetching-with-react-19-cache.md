@@ -3,7 +3,7 @@ author: Aurora Scharff
 pubDatetime: 2025-02-25T15:22:00Z
 title: Avoiding Server Component Waterfall Fetching with React 19 cache()
 slug: avoiding-server-component-waterfall-fetching-with-react-19-cache
-featured: false
+featured: true
 draft: false
 tags:
   - React Server Components
