@@ -152,6 +152,7 @@ Now, we can use the `isNavPending` state to display a loading indicator while th
     ref={ref}
     id={name}
     name={name}
+    aria-busy={isNavPending}
     value={value}
     onChange={handleChange}
     {...props}
