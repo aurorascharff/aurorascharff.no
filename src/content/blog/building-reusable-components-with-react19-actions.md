@@ -140,7 +140,7 @@ We wrap our push to the router in the `startNavTransition()` function, which wil
     };
 ```
 
-Now, we can use the `isNavPending` state to display a loading indicator while the transition is in progress, or add accessibility attributes like `aria-busy`.
+Now, we can use the `isNavPending` state to display a loading indicator while the transition is in progress, and add accessibility attributes like `aria-busy`.
 
 ```tsx
 <div>
