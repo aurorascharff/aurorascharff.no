@@ -124,7 +124,7 @@ This leads to a bad user experience, as the user has to wait for the router push
 
 Let's track the state of the push to the router by creating an Action with the `useTransition()` hook.
 
-We wrap our push to the router in the `startNavTransition()` function, which will track the pending state of that transition. This will allow us to know when the transition is in progress and when it is completed.
+We wrap our push to the router in the returned `startNavTransition()` function, which will track the pending state of that transition. This will allow us to know when the transition is in progress and when it is completed.
 
 ```tsx
     const [isNavPending, startNavTransition] = useTransition();
