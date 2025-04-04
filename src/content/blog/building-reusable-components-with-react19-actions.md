@@ -39,7 +39,7 @@ In addition, errors thrown by functions called inside the hook version of `start
 
 Action functions are an alternative to regular event handling, and therefore, should be named accordingly. If not, it will be unclear to the user of that function what sort of behavior they should be expecting.
 
-## The Use Case
+## The Use Case: RouterSelect Component
 
 Let's say we want to build a reusable select component that will set params in the URL with the values of the select. It could look something like this:
 
