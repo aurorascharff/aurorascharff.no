@@ -197,7 +197,7 @@ Now, our select is updating immediately, and the user will see the new value in 
 
 Let's say, as a user of `RouterSelect`, we want to execute additional logic when the select changes. For example, we might want to update some other state in the parent component or trigger a side effect. We can expose a function that will run on select change.
 
-Referring to the [React docs](https://react.dev/reference/react/useTransition#exposing-action-props-from-components), we can expose a action property to the parent component. Again, since we are exposing an Action, we should name it accordingly, so the user of the component knows what to expect.
+Referring to the [React docs](https://react.dev/reference/react/useTransition#exposing-action-props-from-components), we can expose an `action` property to the parent component. Again, since we are exposing an Action, we should name it accordingly, so the user of the component knows what to expect.
 
 It could look like this:
 
