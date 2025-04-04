@@ -21,7 +21,7 @@ React 19 Actions simplify handling pending states, errors, optimistic updates, a
 
 ## React 19 Actions
 
-Per the updated [React docs](https://react.dev/reference/react/useTransition#starttransition), Actions are functions called inside transitions. Transitions can update state and (optionally) perform side effects, and the work will be done in the background without blocking user interactions on the page. All Actions inside a transition will be batched, and the component will re-render only once when the transition is completed.
+Per the updated [React docs](https://react.dev/reference/react/useTransition#starttransition), Actions are functions called inside transitions. Transitions can update state and perform side effects, and the work will be done in the background without blocking user interactions on the page. All Actions inside a transition will be batched, and the component will re-render only once when the transition is completed.
 
 Actions are useful for handling pending states, errors, optimistic updates and sequential requests automatically. They are also created when using the `<form action={}` property on a React 19 form, and when passing a function to `useActionState()`. For a summary of these APIs, refer to my [React 19 Cheatsheet](https://aurorascharff.no/react-19-cheatsheet.png) or the docs.
 
