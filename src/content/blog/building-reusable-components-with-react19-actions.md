@@ -247,7 +247,9 @@ const [message, setMessage] = useState('');
 
 return (
   <>
-    {message}
+    <div>
+      Message: {message} <br />
+    </div>
     <RouterSelect
       setValueAction={(value) => {
         setMessage(`You selected ${value}`);
@@ -264,7 +266,10 @@ const [optimisticMessage, setOptimisticMessage] = useOptimistic(message);
 
 return (
   <>
-    {message}
+    <div>
+      Message: {message} <br />
+      Optimistic message: {optimisticMessage}
+    </div>
     <RouterSelect
       setValueAction={(value) => {
         setOptimisticMessage(`You selected ${value}`);
