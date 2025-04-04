@@ -15,7 +15,7 @@ tags:
 description: In this blog post, we will explore how to build reusable components with React 19 Actions, track transition states, use optimistic updates, and expose action properties for custom logic. 
 ---
 
-React 19 Actions simplify handling pending states, errors, optimistic updates, and sequential requests. In this post, we’ll explore building reusable components with React 19 Actions in the Next.js App Router. By further leveraging `useOptimistic()`, we can provide immediate user feedback, and maintain reusability while enabling custom logic in parent components.
+React 19 Actions simplify handling pending states, errors, optimistic updates, and sequential requests. In this post, we’ll explore building reusable components with React 19 Actions in the Next.js App Router.
 
 ## Table of contents
 
