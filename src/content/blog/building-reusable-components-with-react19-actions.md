@@ -15,6 +15,8 @@ tags:
 description: In this blog post, we will explore how to build reusable components with React 19 Actions, track transition states, use optimistic updates, and expose action properties for custom logic. 
 ---
 
+React 19 Actions are a new feature that allow us to handle pending states, errors, optimistic updates and sequential requests automatically. In this post, we will explore building reusable components with React 19 Actions.
+
 ## Table of contents
 
 ## React 19 Actions
