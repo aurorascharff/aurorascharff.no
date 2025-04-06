@@ -351,7 +351,7 @@ export default function ReactHookForm({ jokes }: { jokes: Joke[] }) {
     handleSubmit,
     register,
     reset,
-    formState: { errors, isSubmitting, isValid },
+    formState: { errors, isValid },
   } = useForm<JokeSchemaType>({
     mode: 'onChange',
     resolver: zodResolver(JokeSchema),
@@ -383,8 +383,8 @@ export default function ReactHookForm({ jokes }: { jokes: Joke[] }) {
           <textarea {...register('content')} id="content" name="content" />
           {errors?.content && <p className="text-red">{errors?.content?.message}</p>}
         </div>
-        <button className="self-end" disabled={isSubmitting || !isValid} type="submit">
-          {isSubmitting ? 'Adding...' : 'Add'}
+        <button className="self-end" disabled={!isValid} type="submit">
+          Add
         </button>
       </form>
       <JokesList jokes={optimisticJokes} />
@@ -395,7 +395,7 @@ export default function ReactHookForm({ jokes }: { jokes: Joke[] }) {
 
 Of course, add your own styling and make it look nice, and possibly generalize the rollback when you have multiple fields.
 
-Working examples of this code can as mentioned be found [here](https://github.com/aurorascharff/next15-remix-jokes-rebuild/blob/main/app/demo/forms/_components/ReactHookForm.tsx) and [here](https://github.com/aurorascharff/next15-remix-contacts-rebuild-v2/blob/react-hook-form/app/contacts/%5BcontactId%5D/edit/_components/ContactForm.tsx).
+Working examples of this code can as mentioned be found [here, with optimistic update](https://github.com/aurorascharff/next15-remix-jokes-rebuild/blob/main/app/(demo)/forms/react-hook/_components/ReactHookForm.tsx) and [here, without optimistic update](https://github.com/aurorascharff/next15-remix-contacts-rebuild-v2/blob/react-hook-form/app/contacts/%5BcontactId%5D/edit/_components/ContactForm.tsx).
 
 ## Conclusion
 
