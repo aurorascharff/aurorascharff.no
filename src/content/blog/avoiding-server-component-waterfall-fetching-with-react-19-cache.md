@@ -182,6 +182,8 @@ const getComments = cache(async (postId: string) => {
 
 Now, we can trigger the data fetch in a higher up component, in this case the `PostsPage`. It could be any component where the necessary arguments for the data fetch are available.
 
+For example in the `PostsPage`:
+
 ```tsx
 export default async function PostPage({ params }: { params: Promise<{ postId: string }> }) {
   const { postId } = await params;
@@ -200,6 +202,27 @@ export default async function PostPage({ params }: { params: Promise<{ postId: s
 }
 ```
 
+Or the `Post` component:
+
+```tsx
+export async function Post({ postId }: { postId: string }) {
+  // Prefetch the comments, but don't await the promise, so it doesn't block rendering
+  getComments(postId);
+  const post = await getPost(postId);
+
+  // The suspense boundary around <Comments> will not be visible, because the await has already completed
+  return (
+    <div className="rounded border-2 border-blue-500 p-4">
+      <h2>Title: {post?.title}</h2>
+      Post comments:
+      <Suspense fallback={<div>Loading comments...</div>}>
+        <Comments postId={postId} />
+      </Suspense>
+    </div>
+  );
+}
+```
+
 It's important to not await the promise, or else it will block rendering of the `PostsPage`.
 
 Now, the `Comments` component can reuse the preloaded data already triggered by the `PostPage` component. In our example, since both promises are resolved after 1 second, the `Comments` component will render immediately after the `Post` component, skipping the waterfall!
@@ -210,7 +233,53 @@ The code example can be found [on Github](https://github.com/aurorascharff/next1
 
 When adding the preload pattern, it's worth noting the hidden data coupling that can occur when refactoring. If you are using the `cache()` API to preload data, and later decide to refactor the component tree and delete a deep child, you might end up with an unused preloading data fetch. This is because the data fetch is not directly coupled to the component that uses it. Worst case, you might end up with a preloading data fetch that is never used.
 
-Therefore, it's worth thinking about when you add the preloading pattern. Rather than adding it prematurely everywhere, use it to solve a specific performance problem. And keep it in mind when refactoring - if you are refactoring a component that uses the preloading pattern, make sure to check if the preloading is still necessary.
+### A solution to this hidden coupling
+
+As noted in the [Next.js docs](https://nextjs.org/docs/app/building-your-application/data-fetching/fetching#preloading-data), a good practice is to export a copy of your data fetching function from the component that needs the prefetch, and name it something like `preloadComments`. It could look like this:
+
+```tsx
+export const preloadComments = (id: string) => {
+  void getComments(id);
+};
+
+export async function Comments({ postId }: { postId: string }) {
+  const comments = await getComments(postId);
+
+  return (
+    <div className="rounded border-2 border-slate-500 p-4">
+      <h2>Comments</h2>
+      <ul>
+        {comments.map(comment => {
+          return <li key={comment.id}>{comment.body}</li>;
+        })}
+      </ul>
+    </div>
+  );
+}
+```
+
+Then we could replace `getComments` with the new preloading function to the `PostsPage` component:
+
+```tsx
+export async function Post({ postId }: { postId: string }) {
+  preloadComments(postId);
+  const post = await getPost(postId);
+
+  return (
+    <div className="rounded border-2 border-blue-500 p-4">
+      <h2>Title: {post?.title}</h2>
+      Post comments:
+      <Suspense fallback={<div>Loading comments...</div>}>
+        <Comments postId={postId} />
+      </Suspense>
+    </div>
+  );
+}
+```
+
+When refactoring, it will be clear that it's a prefetching function for the `Comments` component.
+
+Either way, it's worth thinking about when you add the preloading pattern. Rather than adding it prematurely everywhere, use it to solve a specific performance problem. And keep it in mind when refactoring - if you are refactoring a component that uses the preloading pattern, make sure to check if the preloading is still necessary.
 
 Another thing to note is that when using the `fetch()` API in Next.js, the data is already cached/memoized per render. So, if you are using the `fetch()` API to fetch the same data in multiple components or to preload data, you don't need to wrap with `cache()`. The `cache()` API is primarily useful when you are fetching through a database, or running some other custom data fetching function or computation.
 
