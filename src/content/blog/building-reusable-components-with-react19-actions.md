@@ -236,6 +236,30 @@ const handleChange = async (
 };
 ```
 
+Let's also accept async functions. That allows the action callback to be either synchronous or asynchronous without requiring an additional startTransition to wrap the await in the action.
+
+```tsx
+export interface RouterSelectProps {
+  ...// other props
+  setValueAction?: (value: string) => void | Promise<void>;
+}
+```
+
+And then just await the action to complete before pushing to the router:
+
+```tsx
+const handleChange = async (
+  event: React.ChangeEvent<HTMLSelectElement>
+) => {
+  const newValue = event.target.value;
+  startNavTransition(async () => {
+    setOptimisticValue(newValue);
+    await setValueAction?.(newValue);
+    ... // Push to router
+  });
+};
+```
+
 ## Using the Action Property in a Parent Component
 
 Now, we can execute state updates through the `setValueAction` prop, and because of the naming, we know what behavior we will get.
@@ -294,7 +318,7 @@ export interface RouterSelectProps {
   label?: string;
   value?: string | string[];
   options: Array<{ value: string; label: string }>;
-  setValueAction?: (value: string) => void;
+  setValueAction?: (value: string) => void | Promise<void>;
 }
 
 export const RouterSelect = React.forwardRef<HTMLSelectElement, RouterSelectProps>(
@@ -312,7 +336,7 @@ export const RouterSelect = React.forwardRef<HTMLSelectElement, RouterSelectProp
       const newValue = event.target.value;
       startNavTransition(async () => {
         setOptimisticValue(newValue);
-        setValueAction?.(newValue);
+        await setValueAction?.(newValue);
         const url = new URL(window.location.href);
         url.searchParams.set(name, newValue);
 
