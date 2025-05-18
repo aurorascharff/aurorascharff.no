@@ -1,6 +1,6 @@
 ---
 organizer: Frontend Nation 2025
-date: 2024-06-04T08:00:00Z
+date: 2025-06-04T08:00:00Z
 name: "Talk: Building Interactive, Async UI with React 19 and Ariakit"
 completed: false
 websiteLink: "https://frontendnation.com/"
