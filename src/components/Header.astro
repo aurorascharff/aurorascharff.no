@@ -129,6 +129,39 @@ const { activeNav } = Astro.props;
   </div>
 </header>
 
+<!-- React Certification Side Banners -->
+<div class="react-side-banner react-side-banner-left">
+  <a
+    href="https://certificates.dev/react"
+    target="_blank"
+    rel="noopener noreferrer"
+    class="side-banner-link"
+    title="View React Certification"
+  >
+    <img
+      src="/assets/banner.png"
+      alt="React Certification Banner - View Certificate"
+      class="side-banner-image"
+    />
+  </a>
+</div>
+
+<div class="react-side-banner react-side-banner-right">
+  <a
+    href="https://certificates.dev/react"
+    target="_blank"
+    rel="noopener noreferrer"
+    class="side-banner-link"
+    title="View React Certification"
+  >
+    <img
+      src="/assets/banner.png"
+      alt="React Certification Banner - View Certificate"
+      class="side-banner-image"
+    />
+  </a>
+</div>
+
 <style>
   #skip-to-content {
     @apply absolute -top-full left-16 z-50 bg-skin-accent px-3 py-2 text-skin-inverted transition-all focus:top-4;
@@ -199,6 +232,50 @@ const { activeNav } = Astro.props;
   }
   .menu-icon.is-active .close {
     @apply opacity-100;
+  }
+
+  .react-side-banner {
+    @apply fixed top-1/2 z-10 hidden -translate-y-1/2;
+  }
+
+  .react-side-banner-left {
+    @apply left-4;
+  }
+
+  .react-side-banner-right {
+    @apply right-4;
+  }
+
+  @media (min-width: 1024px) {
+    .react-side-banner {
+      @apply block;
+    }
+  }
+
+  .side-banner-link {
+    @apply block overflow-hidden rounded-lg shadow-lg transition-transform duration-200 hover:scale-105;
+  }
+
+  .side-banner-image {
+    @apply h-auto w-auto max-w-[250px] object-contain;
+  }
+
+  @media (min-width: 1024px) {
+    .side-banner-image {
+      @apply max-w-[180px];
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .side-banner-image {
+      @apply max-w-[220px];
+    }
+  }
+
+  @media (min-width: 1536px) {
+    .side-banner-image {
+      @apply max-w-[250px];
+    }
   }
 </style>
 
