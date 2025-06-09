@@ -1,6 +1,6 @@
 ---
 organizer: React Advanced London 2025
-date: 2025-11-28T000:00Z
+date: 2025-11-28T08:00:00Z
 name: "Talk: Building Interactive, Async UI with React 19 and Ariakit"
 completed: false
 websiteLink: "https://reactadvanced.com"
