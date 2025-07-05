@@ -1,6 +1,6 @@
 ---
 organizer: React Alicante 2025
-date: 2025-09-03T08:00:00Z
+date: 2025-10-03T08:00:00Z
 name: "Talk: Building Interactive, Async UI with React 19 and Ariakit"
 completed: false
 websiteLink: "https://reactalicante.es"
