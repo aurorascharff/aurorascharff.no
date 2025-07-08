@@ -2,6 +2,7 @@
 import { LOCALE, SITE } from "@config";
 import "@styles/base.css";
 import { ViewTransitions } from "astro:transitions";
+import CertVisual from "../components/CertVisual";
 
 const googleSiteVerification = import.meta.env.PUBLIC_GOOGLE_SITE_VERIFICATION;
 
@@ -108,6 +109,8 @@ const socialImageURL = new URL(
         />
       )
     }
+
+    <CertVisual client:load />
 
     <ViewTransitions />
 
