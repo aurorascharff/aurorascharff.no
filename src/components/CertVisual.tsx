@@ -2,7 +2,6 @@ import { useState } from "react";
 
 export default function CertVisual() {
   const [open, setOpen] = useState(false);
-  console.log("CertVisual component rendered", open);
 
   const openContent = (
     <>
