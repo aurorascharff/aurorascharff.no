@@ -19,7 +19,7 @@ export default function CertVisual() {
   );
 
   return (
-    <div className="fixed bottom-0 right-0 z-40 m-8 flex items-center justify-end bg-right-top bg-no-repeat sm:mb-14 sm:mr-16">
+    <div className="fixed bottom-0 right-0 z-40 m-8 flex hidden items-center justify-end bg-right-top bg-no-repeat sm:mb-14 sm:mr-16 2xl:block">
       <div className="hero relative z-10 rounded-lg">
         <button
           onClick={() => setOpen(!open)}
