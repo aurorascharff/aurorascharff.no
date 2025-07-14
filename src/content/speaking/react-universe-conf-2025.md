@@ -1,5 +1,5 @@
 ---
-organizer: React Universe Conf 2024
+organizer: React Universe Conf 2025
 date: 2025-09-03T08:00:00Z
 name: "Talk: Modern React Patterns: Concurrent Rendering, Actions & What's Next"
 completed: false
