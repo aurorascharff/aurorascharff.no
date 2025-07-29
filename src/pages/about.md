@@ -3,11 +3,11 @@ layout: ../layouts/AboutLayout.astro
 title: "About me"
 ---
 
-Hello, my name is Aurora Scharff. I'm a software developer and Microsoft MVP from Norway, skilled in multiple technologies and domains such as React, Next.js, .NET, and Azure.
+Hello, my name is Aurora Scharff. I'm a Software Engineer from Norway and Microsoft MVP in Web Technologies, skilled in multiple technologies and domains such as React, Next.js, .NET, and Azure.
 
 Currently, I serve as a consultant at Crayon Consulting, while also contributing as React Certification Lead at certificates.dev. I focus on web development with extensive experience in React and Next.js, including active use of React Server Components.
 
-I enjoy solving problems, learning new things, and sharing knowledge through workshops, technical blog posts, social media, demo applications, and supporting fellow developers. I also regularly present internationally at recognized conferences.
+I enjoy solving problems, learning new things, and sharing knowledge through workshops, technical blog posts, social media, demo applications, and supporting fellow developers. I also regularly present internationally at recognized conferences, contributing to the global developer community through both my speaking engagements and educational content creation.
 
 In addition to my regular work, I offer consulting services to help businesses with their Next.js and React development.
 
