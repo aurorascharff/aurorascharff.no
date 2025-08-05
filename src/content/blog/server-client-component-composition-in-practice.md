@@ -187,7 +187,7 @@ Instead of converting the `CategoryList` to a client component, we can create a 
 
 We have to get a little creative here, because we want to toggle a specific number of items. Lets use the [`React.Children`](https://react.dev/reference/react/Children) API to handle this.
 
-For a refresher on this API, check out my blog post [React Children and cloneElement: Component Patterns from the Docs](https://certificates.dev/blog/react-children-and-cloneelement) at certificates.dev. On this platform you can also start your path to [becoming a Certified React Developer](https://certificates.dev/react) with the React Certification, for which I am the lead. It is a great way to deepen your knowledge of React and get certified at the same time!
+For a refresher on this API, check out my blog post [React Children and cloneElement: Component Patterns from the Docs](https://certificates.dev/blog?tech=react) at certificates.dev. On this platform you can also start your path to [becoming a Certified React Developer](https://certificates.dev/react) with the React Certification, for which I am the lead. It is a great way to deepen your knowledge of React and get certified at the same time!
 
 We can create a `ShowMore` component that takes children and an initial number of items to show, and handles the "Show More" logic:
 
@@ -474,7 +474,6 @@ export default function DiscountBanner() {
     <BannerContainer>
       <Suspense fallback={<GeneralBanner />}>
         <PersonalizedBanner />
-      </Suspense>
     </BannerContainer>
   );
 }
@@ -539,50 +538,65 @@ async function ProductDetails({ productId }: ProductDetailsProps) {
 The additional product info should be rendered inside the `Product` component's styling and layout. We can do this by exposing the `children` prop from the `Product` component, which can then be used to render additional information:
 
 ```jsx
-async function Product({ productId, children }: ProductProps) {
+async function Product({ productId, details }: ProductProps) {
   const product = await getProduct(productId);
   return (
     <div className="product">
       <h2>{product.name}</h2>
       <p>{product.description}</p>
       <p>Price: ${product.price}</p>
-      {children}
+      {details}
     </div>
   );
 }
 ```
 
-Let's now compose these components together in our product page:
+We can now use the standard `Product` component in a modal view:
+
+```jsx
+export default function ProductModal({ params }) {
+  return (
+    <div className="product-modal">
+      <Product productId={params.id} />
+    </div>
+  );
+}
+```
+
+Or compose both components together in our product page:
 
 ```jsx
 export default function ProductPage({ params }) {
   return (
     <div className="product-page">
-      <Product productId={params.id}>
+      <Product productId={params.id} details={
         <ProductDetails productId={params.id} />
+      }>
       </Product>
     </div>
   );
 }
 ```
 
-And wrap with Suspense to unblock the rendering of the page while the data is being fetched.
+And wrap with Suspense to unblock the rendering of the page while the data is being fetched:
 
 ```jsx
 export default function ProductPage({ params }) {
   return (
     <div className="product-page">
       <Suspense fallback={<ProductSkeleton />}>
-        <Product productId={params.id}>
+        <Product productId={params.id} details={
           <Suspense fallback={<ProductDetailsSkeleton />}>
             <ProductDetails productId={params.id} />
           </Suspense>
+        }>
         </Product>
-      </Suspense>
     </div>
   );
 }
 ```
+
+Combine it with the [preload pattern)(https://aurorascharff.no/posts/avoiding-server-component-waterfall-fetching-with-react-19-cache/) to preload the product data, and you have a fully functional product page that leverages server component composition effectively and optimized for performance.
 
 There we have it! Let's summarize the key takeaways from this post.
 
