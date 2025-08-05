@@ -189,7 +189,7 @@ Instead of converting the `CategoryList` to a client component, we can create a 
 
 We have to get a little creative here, because we want to toggle a specific number of items. Lets use the [`React.Children`](https://react.dev/reference/react/Children) API to handle this.
 
-For a refresher on this API, check out my blog post [React Children and cloneElement: Component Patterns from the Docs](https://certificates.dev/blog?tech=react) at certificates.dev. On this platform you can also start your path to [becoming a Certified React Developer](https://certificates.dev/react) with the React Certification, for which I am the lead. It is a great way to deepen your knowledge of React and get certified at the same time!
+For a refresher on this API, check out my blog post [React Children and cloneElement: Component Patterns from the Docs](https://certificates.dev/blog?tech=react) at certificates.dev. (If it's not yet published, it will be soon!). On this platform you can also start your path to [becoming a Certified React Developer](https://certificates.dev/react) with the React Certification, for which I am the lead. It is a great way to deepen your knowledge of React and get certified at the same time!
 
 We can create a `ShowMore` component that takes children and an initial number of items to show, and handles the "Show More" logic:
 
