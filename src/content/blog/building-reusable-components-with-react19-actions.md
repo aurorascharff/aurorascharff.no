@@ -3,7 +3,7 @@ author: Aurora Scharff
 pubDatetime: 2025-04-04T10:22:00Z
 title: Building Reusable Components with React 19 Actions
 slug: building-reusable-components-with-react19-actions
-featured: false
+featured: true
 draft: false
 tags:
   - React 19
