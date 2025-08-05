@@ -28,7 +28,7 @@ Let's start with a quick recap of what React Server Components are.
 
 [React Server Components (RSCs)](https://react.dev/reference/rsc/server-components) render on the server and send only the rendered output to the client. Unlike traditional SSR, they never execute in the browser.
 
-```jsx
+```tsx
 // This runs on the server only
 async function ServerComponent() {
   const data = await fetch('https://api.example.com/data');
@@ -48,7 +48,7 @@ Okay, let's get into the meat of this post.
 
 Let's say we have simple server component that fetches some data.
 
-```jsx
+```tsx
 async function ServerComponent() {
   const data = await getData();
   return <div>{data}</div>;
@@ -59,7 +59,7 @@ It's clear what this component does and what it's responsible for.
 
 Let's now say we want to add a way to dismiss this element from the UI with state. A simple task. One way to do this is to add "use client" to the component, and then use state to manage the visibility. We can then pass down the data as a prop:
 
-```jsx
+```tsx
 'use client';
 
 function ServerComponentTurnedClient({ data }) {
@@ -78,7 +78,7 @@ function ServerComponentTurnedClient({ data }) {
 
 Or, use an API like `useSuspenseQuery` for data fetching on the client:
 
-```jsx
+```tsx
 'use client';
 
 function ServerComponentTurnedClient() {
@@ -105,7 +105,7 @@ Do you notice the problem? Our `ServerComponentTurnedClient` component is now a 
 
 Here is the essential pattern we need to follow to avoid this problem. Instead of turning the `ServerComponent` into a client component, we can pass it down as a child to a client component wrapper that handles the state and UI rendering.
 
-```jsx
+```tsx
 'use client';
 
 function ClientWrapper({ children }) {
@@ -124,7 +124,7 @@ function ClientWrapper({ children }) {
 
 Then we can use it like this:
 
-```jsx
+```tsx
 function Page() {
   return (
     <ClientWrapper>
@@ -153,7 +153,7 @@ export function MotionDiv(props: HTMLMotionProps<'div'>) {
 
 Then we can use it in our server component:
 
-```jsx
+```tsx
 import { MotionDiv } from './MotionWrappers';
 
 async function ServerComponent() {
@@ -170,7 +170,7 @@ async function ServerComponent() {
 
 Let's say we have simple component that renders a list of product categories.
 
-```jsx
+```tsx
 async function CategoryList() {
   const categories = await getCategories();
   return (
@@ -219,7 +219,7 @@ export default function ShowMore({ children, initial = 5 }: ShowMoreProps) {
 
 Then we can use it like this in our `CategoryList` component:
 
-```jsx
+```tsx
 import ShowMore from '../components/ui/ShowMore';
 
 async function CategoryList() {
@@ -240,7 +240,7 @@ This way, server and client responsibilities stay separate and your code stays c
 
 Let's say we have a chat box server component that fetches messages from the server and renders them:
 
-```jsx
+```tsx
 async function Chat() {
   const messages = await getMessages();
   return (
@@ -289,7 +289,7 @@ export default function AutoScroller({ children, className }) {
 
 Then we can use it in our chat component:
 
-```jsx
+```tsx
 import AutoScroller from '../components/ui/AutoScroller';
 
 async function Chat() {
@@ -308,7 +308,7 @@ async function Chat() {
 
 Let's say we have a component that fetches some data from the server and renders `ProductCard` components:
 
-```jsx
+```tsx
 // product/ProductCards.tsx
 async function ProductCards() {
   const cardData = await getCardData();
@@ -328,7 +328,7 @@ function ProductCard({ title, image }) {
 
 Let's add a carousel effect to this using our composition patterns. We can create a reusable `ProductCarousel` component that handles the logic and UI rendering:
 
-```jsx
+```tsx
 // product/ProductCarousel.tsx
 'use client';
 
@@ -352,7 +352,7 @@ Again we utilized the `Children` API to handle the items in the carousel. Again,
 
 We can use it in the `ProductCards` component. It remains a server component that fetches the data, rendering server `ProductCard` children:
 
-```jsx
+```tsx
 // product/ProductCards.tsx
 import ProductCarousel from './ProductCarousel';
 
@@ -379,8 +379,8 @@ Let's move on to some server component composition patterns.
 
 Let's say we have a personalized banner component that informs the user of discount information.
 
-```jsx
-// Banner.jsx
+```tsx
+// Banner.tsx
 async function PersonalizedBanner() {
   const user = await getCurrentUser();
   const discount = await getDiscountData(user.id);
@@ -390,7 +390,7 @@ async function PersonalizedBanner() {
 
 Naturally, when executing an asynchronous call in a server component, we would wrap the component in Suspense and provide a fallback UI. It could look like this:
 
-```jsx
+```tsx
 export default function Page() {
   return (
     <Suspense fallback={<BannerSkeleton />}>
@@ -404,8 +404,8 @@ This is important to unblock the rendering of the page while the data is being f
 
 Let's create a generic `GeneralBanner` component that can be used for different purposes, and then compose it with the personalized data.
 
-```jsx
-// Banner.jsx
+```tsx
+// Banner.tsx
 function GeneralBanner() {
   return (
     <div className="banner">
@@ -420,8 +420,8 @@ function GeneralBanner() {
 
 Let's return this generic banner in the `PersonalizedBanner` component if the user is not logged in:
 
-```jsx
-// Banner.jsx
+```tsx
+// Banner.tsx
 async function PersonalizedBanner() {
   const user = await getCurrentUser();
   if (!user) {
@@ -435,7 +435,7 @@ async function PersonalizedBanner() {
 
 We can now compose these components together in our page:
 
-```jsx
+```tsx
 export default function Page() {
   return (
     <Suspense fallback={<GeneralBanner />}>
@@ -449,11 +449,11 @@ While the asynchronous call is running, the `GeneralBanner` will be shown, and o
 
 Let's wrap this with a banner container with our pattern from before. It will handle the styling and dismiss functionality, while the `PersonalizedBanner` and `GeneralBanner` handle the content.
 
-```jsx
-// BannerContainer.jsx
+```tsx
+// BannerContainer.tsx
 'use client';
 
-function BannerContainer({ children }) {
+function BannerContainer({ children }: BannerContainerProps) {
   const [visible, setVisible] = useState(true);
 
   if (!visible) return null;
@@ -469,13 +469,14 @@ function BannerContainer({ children }) {
 
 Let's export the `DiscountBanner` component as the default export, which will use the `BannerContainer` to wrap the `PersonalizedBanner`:
 
-```jsx
-// Banner.jsx
+```tsx
+// Banner.tsx
 export default function DiscountBanner() {
   return (
     <BannerContainer>
       <Suspense fallback={<GeneralBanner />}>
         <PersonalizedBanner />
+      </Suspense>
     </BannerContainer>
   );
 }
@@ -483,7 +484,7 @@ export default function DiscountBanner() {
 
 Then we can use the `DiscountBanner` component in our page:
 
-```jsx
+```tsx
 // page.tsx
 import DiscountBanner from './DiscountBanner';
 
@@ -505,7 +506,7 @@ Let's look at final example of how to compose server components with Suspense.
 
 Let's now say we have reusable `Product` component that fetches product data from the server and renders it:
 
-```jsx
+```tsx
 async function Product({ productId }: ProductProps) {
   const product = await getProductData(productId);
   return (
@@ -522,7 +523,7 @@ In a modal view, this component is sufficient. However, if we want to use it in 
 
 We can create a `ProductDetails` component that fetches additional data about the product and renders it:
 
-```jsx
+```tsx
 async function ProductDetails({ productId }: ProductDetailsProps) {
   const productDetails = await getProductDetails(productId);
   return (
@@ -539,7 +540,7 @@ async function ProductDetails({ productId }: ProductDetailsProps) {
 
 The additional product info should be rendered inside the `Product` component's styling and layout. We can do this by exposing the `details` prop from the `Product` component, which can then be used to render additional information:
 
-```jsx
+```tsx
 async function Product({ productId, details }: ProductProps) {
   const product = await getProduct(productId);
   return (
@@ -555,7 +556,7 @@ async function Product({ productId, details }: ProductProps) {
 
 We can now use the standard `Product` component in a modal view:
 
-```jsx
+```tsx
 export default function ProductModal({ params }) {
   return (
     <div className="product-modal">
@@ -567,7 +568,7 @@ export default function ProductModal({ params }) {
 
 Or compose both components together in our product page:
 
-```jsx
+```tsx
 export default function ProductPage({ params }) {
   return (
     <div className="product-page">
@@ -582,7 +583,7 @@ export default function ProductPage({ params }) {
 
 And wrap with Suspense to unblock the rendering of the page while the data is being fetched:
 
-```jsx
+```tsx
 export default function ProductPage({ params }) {
   return (
     <div className="product-page">
