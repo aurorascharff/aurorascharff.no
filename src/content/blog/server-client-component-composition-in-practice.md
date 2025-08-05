@@ -1,6 +1,6 @@
 ---
 author: Aurora Scharff
-pubDatetime: 2025-08-05T12:22:00Z
+pubDatetime: 2025-08-05T11:22:00Z
 title: Server and Client Component Composition in Practice
 slug: server-client-component-composition-in-practice
 featured: true
