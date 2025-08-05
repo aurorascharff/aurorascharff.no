@@ -279,7 +279,7 @@ If you are getting your flags from an external source, you can still use the sam
 import { cache } from 'react';
 
 export const getFeature = cache(async (feature: keyof FeatureSchemaType): Promise<boolean> => {
-  const response = await fetch(`https://api.example.com/flags/${feature}`);
+  const response = await getExternalFeatureFlag(feature);
   const data = await response.json();
   return data.enabled;
 });
