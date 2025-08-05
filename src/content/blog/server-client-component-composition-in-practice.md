@@ -593,6 +593,8 @@ There we have it! Let's summarize the key takeaways from this post.
 - Use Suspense with meaningful fallbacks to improve user experience during data loading
 - Build reusable UI patterns that work across different contexts and maintain clean component boundaries
 
+## Conclusion
+
 In this post, we explored how to compose client and server components effectively. We looked at several examples of how to keep responsibilities clear, optimize performance, and create reusable components. By following the essential pattern of separating data fetching from UI rendering, we can create components that are easy to maintain and optimize for performance.
 
 For further reading on this topic, I recommend checking out the [Twofold Framework blog post on composable streaming with Suspense](https://twofoldframework.com/blog/composable-streaming-with-suspense) by [Ryan Toronto](https://x.com/ryantotweets). It provides a deeper dive into how to compose server components with Suspense with more advanced examples.
