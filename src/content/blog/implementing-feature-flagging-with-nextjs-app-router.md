@@ -271,6 +271,22 @@ export default function SidebarItem({ feature = 'FEATURE_DEFAULT' }: Props) {
 
 And our sidebar will always show items that don't have a feature flag.
 
+### Flags from external sources
+
+If you are getting your flags from an external source, you can still use the same pattern. Just make sure to wrap your `getFeature` function in [cache](https://react.dev/reference/react/cache) to avoid unnecessary calls to the external source:
+
+```tsx
+import { cache } from 'react';
+
+export const getFeature = cache(async (feature: keyof FeatureSchemaType): Promise<boolean> => {
+  const response = await fetch(`https://api.example.com/flags/${feature}`);
+  const data = await response.json();
+  return data.enabled;
+});
+```
+
+Then continue using it freely in your server components as shown earlier.
+
 ## Conclusion
 
 In this blog post, I showed you how to implement simple feature flagging with the Next.js App Router. We used environment variables to toggle features in both server and client components.
