@@ -29,6 +29,7 @@ export default function postOgImage(post: CollectionEntry<"blog">, theme: any) {
           borderRadius: "50%",
           background: theme.primary,
           opacity: 0.1,
+          display: "flex",
         }}
       />
       <div
@@ -41,6 +42,7 @@ export default function postOgImage(post: CollectionEntry<"blog">, theme: any) {
           borderRadius: "50%",
           background: theme.secondary,
           opacity: 0.2,
+          display: "flex",
         }}
       />
 
@@ -92,6 +94,7 @@ export default function postOgImage(post: CollectionEntry<"blog">, theme: any) {
               height: "4px",
               borderRadius: "50%",
               background: theme.textLight,
+              display: "flex",
             }}
           />
 

@@ -26,6 +26,7 @@ export default function siteOgImage(theme: any) {
           bottom: "0",
           background: `radial-gradient(circle at 20% 80%, ${theme.primary}20 0%, transparent 50%), 
                        radial-gradient(circle at 80% 20%, ${theme.secondary}20 0%, transparent 50%)`,
+          display: "flex",
         }}
       />
 
