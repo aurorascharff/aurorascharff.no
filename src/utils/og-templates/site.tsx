@@ -12,6 +12,8 @@ export default function siteOgImage(theme: any) {
         background: theme.background,
         fontFamily: "IBM Plex Mono",
         position: "relative",
+        border: `8px solid ${theme.primary}`,
+        boxSizing: "border-box",
       }}
     >
       {/* Decorative background elements */}

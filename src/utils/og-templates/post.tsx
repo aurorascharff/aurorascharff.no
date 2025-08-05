@@ -14,6 +14,8 @@ export default function postOgImage(post: CollectionEntry<"blog">, theme: any) {
         background: theme.background,
         fontFamily: "IBM Plex Mono",
         position: "relative",
+        border: `8px solid ${theme.primary}`,
+        boxSizing: "border-box",
       }}
     >
       {/* Decorative elements */}
@@ -59,56 +61,51 @@ export default function postOgImage(post: CollectionEntry<"blog">, theme: any) {
             fontSize: "48px",
             fontWeight: 600,
             color: theme.text,
-            marginBottom: "20px",
+            marginBottom: "40px",
             lineHeight: 1.2,
           }}
         >
           {post.data.title}
         </h1>
 
-        {post.data.description && (
-          <p
-            style={{
-              fontSize: "24px",
-              color: theme.textLight,
-              marginBottom: "30px",
-              lineHeight: 1.4,
-            }}
-          >
-            {post.data.description}
-          </p>
-        )}
-
         <div
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "20px",
+            gap: "30px",
             marginTop: "20px",
           }}
         >
           <div
             style={{
-              padding: "8px 16px",
-              background: theme.primary,
-              color: "white",
-              borderRadius: "20px",
-              fontSize: "16px",
+              fontSize: "24px",
+              color: theme.text,
               fontWeight: 600,
             }}
           >
-            Blog Post
+            By {post.data.author || "Author Name"}
           </div>
 
           {post.data.pubDate && (
-            <div
-              style={{
-                fontSize: "18px",
-                color: theme.textLight,
-              }}
-            >
-              {new Date(post.data.pubDate).toLocaleDateString()}
-            </div>
+            <>
+              <div
+                style={{
+                  width: "4px",
+                  height: "4px",
+                  borderRadius: "50%",
+                  background: theme.textLight,
+                }}
+              />
+
+              <div
+                style={{
+                  fontSize: "20px",
+                  color: theme.textLight,
+                }}
+              >
+                {new Date(post.data.pubDate).toLocaleDateString()}
+              </div>
+            </>
           )}
         </div>
       </div>
