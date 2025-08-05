@@ -1,113 +1,105 @@
 // og-templates/post.tsx
-import { type CollectionEntry } from "astro:content";
+import { SITE } from "@config";
+import type { CollectionEntry } from "astro:content";
 
-export default function postOgImage(post: CollectionEntry<"blog">, theme: any) {
+export default (post: CollectionEntry<"blog">) => {
   return (
     <div
       style={{
-        height: "100%",
+        background: "linear-gradient(135deg, #fce7f3 0%, #f3e8ff 100%)",
         width: "100%",
+        height: "100%",
         display: "flex",
-        flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        background: theme.background,
-        fontFamily: "IBM Plex Mono",
-        position: "relative",
-        border: `8px solid ${theme.primary}`,
-        boxSizing: "border-box",
       }}
     >
-      {/* Decorative elements */}
       <div
         style={{
           position: "absolute",
-          top: "20px",
-          right: "20px",
-          width: "100px",
-          height: "100px",
-          borderRadius: "50%",
-          background: theme.primary,
-          opacity: 0.1,
+          top: "-1px",
+          right: "-1px",
+          border: "4px solid #ec4899",
+          background: "rgba(236, 72, 153, 0.1)",
+          opacity: "0.9",
+          borderRadius: "4px",
           display: "flex",
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          bottom: "40px",
-          left: "40px",
-          width: "60px",
-          height: "60px",
-          borderRadius: "50%",
-          background: theme.secondary,
-          opacity: 0.2,
-          display: "flex",
+          justifyContent: "center",
+          margin: "2.5rem",
+          width: "88%",
+          height: "80%",
         }}
       />
 
-      {/* Main content */}
       <div
         style={{
+          border: "4px solid #ec4899",
+          background: "rgba(255, 255, 255, 0.9)",
+          borderRadius: "4px",
           display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
           justifyContent: "center",
-          padding: "60px",
-          textAlign: "center",
-          maxWidth: "900px",
+          margin: "2rem",
+          width: "88%",
+          height: "80%",
         }}
       >
-        <h1
-          style={{
-            fontSize: "48px",
-            fontWeight: 600,
-            color: theme.text,
-            marginBottom: "40px",
-            lineHeight: 1.2,
-          }}
-        >
-          {post.data.title}
-        </h1>
-
         <div
           style={{
             display: "flex",
-            alignItems: "center",
-            gap: "30px",
-            marginTop: "20px",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            margin: "20px",
+            width: "90%",
+            height: "90%",
           }}
         >
-          <div
+          <p
             style={{
-              fontSize: "24px",
-              color: theme.text,
-              fontWeight: 600,
+              fontSize: 60,
+              fontWeight: "bold",
+              maxHeight: "84%",
+              overflow: "hidden",
+              color: "#1f2937",
+              margin: 0,
             }}
           >
-            By {post.data.author}
-          </div>
-
+            {post.data.title}
+          </p>
           <div
             style={{
-              width: "4px",
-              height: "4px",
-              borderRadius: "50%",
-              background: theme.textLight,
               display: "flex",
-            }}
-          />
-
-          <div
-            style={{
-              fontSize: "20px",
-              color: theme.textLight,
+              justifyContent: "space-between",
+              width: "100%",
+              marginBottom: "8px",
+              fontSize: 28,
             }}
           >
-            {post.data.pubDatetime.toLocaleDateString()}
+            <span style={{ color: "#6b7280" }}>
+              by{" "}
+              <span
+                style={{
+                  color: "transparent",
+                }}
+              >
+                "
+              </span>
+              <span
+                style={{
+                  overflow: "hidden",
+                  fontWeight: "bold",
+                  color: "#ec4899",
+                }}
+              >
+                {post.data.author}
+              </span>
+            </span>
+
+            <span style={{ color: "#6b7280" }}>
+              {post.data.pubDatetime.toLocaleDateString()}
+            </span>
           </div>
         </div>
       </div>
     </div>
   );
-}
+};
