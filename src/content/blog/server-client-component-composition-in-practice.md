@@ -598,14 +598,14 @@ export default function ProductPage({ params }) {
 }
 ```
 
-Combine it with the [preload pattern](https://aurorascharff.no/posts/avoiding-server-component-waterfall-fetching-with-react-19-cache/) to preload the product data, and you have a fully functional product page that leverages server component composition effectively and optimized for performance.
+Combine it with the [preload pattern](https://aurorascharff.no/posts/avoiding-server-component-waterfall-fetching-with-react-19-cache/) to preload the product data, and you have a fully functional product page that leverages server component composition effectively and is optimized for performance.
 
 There we have it! Let's summarize the key takeaways from this post.
 
 ## Key Takeaways
 
 - Use composition to avoid converting server components to client components—keep data fetching on the server and UI state on the client when possible
-- Pass server components as children to client wrappers for maximum reusability and clear separation of concerns
+- Pass server components as `children` to client wrappers for maximum reusability and clear separation of concerns
 - Use Suspense with meaningful fallbacks to improve user experience during data loading
 - Build reusable UI patterns that work across different contexts and maintain clean component boundaries
 
