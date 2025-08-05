@@ -83,30 +83,26 @@ export default function postOgImage(post: CollectionEntry<"blog">, theme: any) {
               fontWeight: 600,
             }}
           >
-            By {post.data.author || "Author Name"}
+            By {post.data.author}
           </div>
 
-          {post.data.pubDate && (
-            <>
-              <div
-                style={{
-                  width: "4px",
-                  height: "4px",
-                  borderRadius: "50%",
-                  background: theme.textLight,
-                }}
-              />
+          <div
+            style={{
+              width: "4px",
+              height: "4px",
+              borderRadius: "50%",
+              background: theme.textLight,
+            }}
+          />
 
-              <div
-                style={{
-                  fontSize: "20px",
-                  color: theme.textLight,
-                }}
-              >
-                {new Date(post.data.pubDate).toLocaleDateString()}
-              </div>
-            </>
-          )}
+          <div
+            style={{
+              fontSize: "20px",
+              color: theme.textLight,
+            }}
+          >
+            {post.data.pubDatetime.toLocaleDateString()}
+          </div>
         </div>
       </div>
     </div>
