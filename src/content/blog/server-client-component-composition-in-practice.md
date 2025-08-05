@@ -537,7 +537,7 @@ async function ProductDetails({ productId }: ProductDetailsProps) {
 }
 ```
 
-The additional product info should be rendered inside the `Product` component's styling and layout. We can do this by exposing the `children` prop from the `Product` component, which can then be used to render additional information:
+The additional product info should be rendered inside the `Product` component's styling and layout. We can do this by exposing the `details` prop from the `Product` component, which can then be used to render additional information:
 
 ```jsx
 async function Product({ productId, details }: ProductProps) {
@@ -598,7 +598,7 @@ export default function ProductPage({ params }) {
 }
 ```
 
-Combine it with the [preload pattern)(https://aurorascharff.no/posts/avoiding-server-component-waterfall-fetching-with-react-19-cache/) to preload the product data, and you have a fully functional product page that leverages server component composition effectively and optimized for performance.
+Combine it with the [preload pattern](https://aurorascharff.no/posts/avoiding-server-component-waterfall-fetching-with-react-19-cache/) to preload the product data, and you have a fully functional product page that leverages server component composition effectively and optimized for performance.
 
 There we have it! Let's summarize the key takeaways from this post.
 
