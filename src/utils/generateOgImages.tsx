@@ -22,6 +22,16 @@ const fetchFonts = async () => {
 
 const { fontRegular, fontBold } = await fetchFonts();
 
+// Updated theme colors
+const theme = {
+  background: "linear-gradient(135deg, #fce7f3 0%, #f3e8ff 100%)",
+  primary: "#ec4899", // Pink-500
+  secondary: "#8b5cf6", // Violet-500
+  accent: "#06b6d4", // Cyan-500
+  text: "#1f2937", // Gray-800
+  textLight: "#6b7280", // Gray-500
+};
+
 const options: SatoriOptions = {
   width: 1200,
   height: 630,
@@ -49,11 +59,11 @@ function svgBufferToPngBuffer(svg: string) {
 }
 
 export async function generateOgImageForPost(post: CollectionEntry<"blog">) {
-  const svg = await satori(postOgImage(post), options);
+  const svg = await satori(postOgImage(post, theme), options);
   return svgBufferToPngBuffer(svg);
 }
 
 export async function generateOgImageForSite() {
-  const svg = await satori(siteOgImage(), options);
+  const svg = await satori(siteOgImage(theme), options);
   return svgBufferToPngBuffer(svg);
 }
