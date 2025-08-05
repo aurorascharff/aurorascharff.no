@@ -99,6 +99,8 @@ function ServerComponentTurnedClient() {
 }
 ```
 
+Or utilize other APIs like [`use`](https://react.dev/reference/react/use), or reach for [other ways to solve data fetching i Next.js](https://www.trevorlasn.com/blog/fetching-data-for-complex-next-and-react-apps). This is not the focus of this post, so I won't go into detail on those.
+
 Do you notice the problem? Our `ServerComponentTurnedClient` component is now a client component, and handles more responsibilities than just data fetching. It also handles state management and UI rendering.
 
 Here is the essential pattern we need to follow to avoid this problem. Instead of turning the `ServerComponent` into a client component, we can pass it down as a child to a client component wrapper that handles the state and UI rendering.
