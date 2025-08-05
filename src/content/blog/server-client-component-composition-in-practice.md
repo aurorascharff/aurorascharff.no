@@ -593,6 +593,7 @@ export default function ProductPage({ params }) {
           </Suspense>
         }>
         </Product>
+      </Suspense>
     </div>
   );
 }
