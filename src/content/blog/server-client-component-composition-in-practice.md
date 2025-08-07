@@ -10,8 +10,8 @@ tags:
   - Next.js
   - App Router
   - React 19
-  - performance
-  - composition
+  - Performance
+  - Composition
   - Suspense
 description: In this blog post, I will show you how to compose client and server components effectively in React. We will explore patterns for keeping responsibilities clear, optimizing performance, and creating reusable components.
 ---
