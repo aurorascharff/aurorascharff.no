@@ -141,7 +141,7 @@ This way, the `ServerComponent` remains a server component, responsible only for
 Let's start with a simple example. We can utilize this pattern for [Motion](https://motion.dev/) animations, where we want to animate the children of a component without affecting the server component's data fetching. Instead of turning the server component into a client component just for an animation, we can wrap it in a client component that handles the animations:
 
 ```tsx
-// MotionWrappers.tsx
+// components/ui/MotionWrappers.tsx
 'use client';
 
 import { motion, HTMLMotionProps } from 'framer-motion'
@@ -154,7 +154,7 @@ export function MotionDiv(props: HTMLMotionProps<'div'>) {
 Then we can use it in our server component:
 
 ```jsx
-import { MotionDiv } from './MotionWrappers';
+import { MotionDiv } from '@/components/ui/MotionWrappers';
 
 async function ServerComponent() {
   const data = await getData();
@@ -220,7 +220,7 @@ export default function ShowMore({ children, initial = 5 }) {
 Then we can use it like this in our `CategoryList` component:
 
 ```jsx
-import ShowMore from '../components/ui/ShowMore';
+import ShowMore from '@/components/ui/ShowMore';
 
 async function CategoryList() {
   const categories = await getCategories();
@@ -290,7 +290,7 @@ export default function AutoScroller({ children, className }) {
 Then we can use it in our chat component:
 
 ```jsx
-import AutoScroller from '../components/ui/AutoScroller';
+import AutoScroller from '/@/components/ui/AutoScroller';
 
 async function Chat() {
   const messages = await getMessages();
@@ -313,39 +313,37 @@ Let's say we have a component that fetches some data from the server and renders
 async function ProductCards() {
   const cardData = await getCardData();
   return (
-    <div className="carousel">
+    <div className="product-cards">
       {cardData.map((card) => (
         <ProductCard key={card.id} title={card.title} image={card.image} />
       ))}
     </div>
   );
-}
+}''
 
 function ProductCard({ title, image }) {
   // ... 
 }
 ```
 
-Let's add a carousel effect to this using our composition patterns. We can create a reusable `ProductCarousel` component that handles the logic and UI rendering:
+Let's add an interactive carousel effect to this using our composition patterns. We can create a reusable `Carousel` component that handles the logic and UI rendering:
 
 ```jsx
-// product/ProductCarousel.jsx
+// components/ui/Carousel.jsx
 'use client';
 
-function ProductCarousel({ children }) {
+export default function Carousel({ children }) {
   const items = Children.toArray(children);
   const [i, setI] = useState(0);
 
   return (
-    <div>
+    <div className="carousel">
       <button onClick={() => setI(i === 0 ? items.length - 1 : i - 1)}>Prev</button>
       <div>{items[i]}</div>
       <button onClick={() => setI(i === items.length - 1 ? 0 : i + 1)}>Next</button>
     </div>
   );
 }
-
-export default ProductCarousel;
 ```
 
 Again we utilized the `Children` API to handle the items in the carousel. Again, this is a simplified example to illustrate the pattern.
@@ -354,22 +352,24 @@ We can use it in the `ProductCards` component. It remains a server component tha
 
 ```jsx
 // product/ProductCards.jsx
-import ProductCarousel from './ProductCarousel';
+import Carousel from '@/components/ui/Carousel';
 
 async function ProductCards() {
   const cardData = await getCardData();
 
   return (
-    <ProductCarousel>
-      {cardData.map((card) => (
-        <ProductCard key={card.id} title={card.title} image={card.image} />
-      ))}
-    </ProductCarousel>
+    <div className="product-cards">
+      <Carousel>
+        {cardData.map((card) => (
+          <ProductCard key={card.id} title={card.title} image={card.image} />
+        ))}
+      </Carousel>
+    </div>
   );
 }
 ```
 
-This keeps the data fetching on the server and the carousel logic/UI on the client, maintaining clear separation of concerns.
+This keeps the data fetching on the server and the carousel logic/UI on the client, maintaining clear separation of concerns. In this example, the `Carousel`is a reusable UI component that can be used in other parts of the application, however we could also create a specialized `ProductCarousel` component that wraps the `Carousel` component to handle product-specific logic or styling.
 
 Those are some examples of how to compose client and server components effectively. By keeping data fetching on the server and UI state on the client, we can create reusable components that are easy to maintain and optimize for performance. Keep this in mind the next time you encounter the need for a client-side interaction. See if you can solve the problem with composition instead of turning the server component into a client component.
 
@@ -538,7 +538,7 @@ async function ProductDetails({ productId }) {
 }
 ```
 
-The additional product info should be rendered inside the `Product` component's styling and layout. We can do this by exposing the `details` prop from the `Product` component, which can then be used to render additional information:
+The additional product info should be rendered inside the `Product` component's styling and layout. We can do this by exposing a `details` prop from the `Product` component, which can then be used to render additional information:
 
 ```jsx
 async function Product({ productId, details }) {
