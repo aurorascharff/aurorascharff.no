@@ -373,7 +373,7 @@ This keeps the data fetching on the server and the carousel logic/UI on the clie
 
 Those are some examples of how to compose client and server components effectively. By keeping data fetching on the server and UI state on the client, we can create reusable components that are easy to maintain and optimize for performance. Keep this in mind the next time you encounter the need for a client-side interaction. See if you can solve the problem with composition instead of turning the server component into a client component.
 
-Let's move on to some server component composition patterns.
+Let's move on to some server component composition patterns using Suspense.
 
 ## Example 5: A Personalized Banner
 
