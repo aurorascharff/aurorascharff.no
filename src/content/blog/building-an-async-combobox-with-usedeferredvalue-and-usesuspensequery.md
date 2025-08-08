@@ -13,7 +13,7 @@ tags:
   - Combobox
   - Suspense
   - React Error Boundary
-description: Learn how to build smooth search experiences by combining `useDeferredValue()` with `useSuspenseQuery()` for declarative async state management.
+description: In this blog post, I'll show you how to create a declarative combobox component using `useDeferredValue()` and `useSuspenseQuery()`.
 ---
 
 React concurrent features have unlocked new ways to build performant and responsive applications. In this blog post, I'll show you how to create a declarative combobox component using `useDeferredValue()` and `useSuspenseQuery()`. We'll explore how these hooks work together to deliver smooth user experiences, simplify loading and error state management, and provide automatic caching for optimal performance.
