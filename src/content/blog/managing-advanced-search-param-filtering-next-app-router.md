@@ -360,7 +360,7 @@ export function useFilters() {
 }
 ```
 
-See the full code for the provider [here](https://github.com/aurorascharff/next15-filterlist/blob/filter-provider/providers/FilterProvider.tsx).
+See the [full code for the provider here](https://github.com/aurorascharff/next15-filterlist/blob/filter-provider/providers/FilterProvider.tsx).
 
 The filters are now super easy to use:
 
@@ -557,7 +557,7 @@ The result is really nice! Notice the difference from the provider example - her
 
 ![Nuqs filters example](@assets/filters4.gif)
 
-The code for the nuqs implementation can be found [here](https://github.com/aurorascharff/next15-filterlist/tree/filter-nuqs).
+The code for the [nuqs implementation can be found here](https://github.com/aurorascharff/next15-filterlist/tree/filter-nuqs).
 
 ## Conclusion
 
