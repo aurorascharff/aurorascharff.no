@@ -3,7 +3,7 @@ author: Aurora Scharff
 pubDatetime: 2025-08-07T21:22:00Z
 title: Building an Async Combobox with useSuspenseQuery() and useDeferredValue()
 slug: building-an-async-combobox-with-usesuspensequery-and-usedeferredvalue
-featured: false
+featured: true
 draft: false
 tags:
   - React 19
