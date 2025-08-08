@@ -283,7 +283,7 @@ export default function BadCombobox({
 }
 ```
 
-This quickly becomes cumbersome, and while searching we get an unstable and flickering UX in the dropdown list. This happens because we are [not using Actions](https://react.dev/reference/react/useTransition#examples) for our async function. However, rather messing around with more states to fix it, or using Actions, let's try something different.
+This quickly becomes cumbersome, and while searching we get an [unstable and flickering UX](https://stackblitz.com/edit/vitejs-vite-7vdcz5t4?file=src%2FApp.jsx) in the dropdown list. This happens because we are [not using Actions](https://react.dev/reference/react/useTransition#examples) for our async function. However, rather messing around with more states to fix it, or using Actions, let's try something different.
 
 ### Extracting the SearchResults Component with useSuspenseQuery
 
@@ -531,7 +531,7 @@ function SearchResults({ query, asyncSearchFn, onItemClick }) {
 
 This component now provides a smooth and responsive autocomplete experience, leveraging React's concurrent features effectively, while keeping the code declarative and easy to understand.
 
-Check it out in [Stackblitz](https://stackblitz.com/edit/vitejs-vite-7vdcz5t4?file=src%2Findex.css)!
+Check it out in [Stackblitz](https://stackblitz.com/edit/vitejs-vite-7vdcz5t4?file=src%2FApp.jsx)!
 
 In a real app, this component would be extended with more functionality. Additionally, the patterns demonstrated are applicable to a lot more cases than just a combobox component! However, for this blog post, a simple version is enough to grasp the main concepts.
 
