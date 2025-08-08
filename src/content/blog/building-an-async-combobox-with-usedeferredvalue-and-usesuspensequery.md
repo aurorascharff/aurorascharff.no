@@ -212,7 +212,7 @@ The natural way to build this might be to keep a search result state, calling th
 It could look something like this:
 
 ```jsx
-export default function Combobox({
+export default function BadCombobox({
   asyncSearchFn,
   onSelect,
   placeholder = "Search...",
@@ -283,7 +283,7 @@ export default function Combobox({
 }
 ```
 
-This quickly becomes cumbersome. Let's try something different.
+This quickly becomes cumbersome, and while searching we get an unstable and flickering UX in the dropdown. Rather than messing around with more states to fix it, let's try something different.
 
 ### Extracting the SearchResults Component with useSuspenseQuery
 
