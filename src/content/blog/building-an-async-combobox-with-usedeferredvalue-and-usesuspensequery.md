@@ -531,7 +531,9 @@ This component now provides a smooth and responsive autocomplete experience, lev
 
 Check it out in [Stackblitz](https://stackblitz.com/edit/vitejs-vite-7vdcz5t4?file=src%2FApp.jsx)!
 
-In a real app, this component would be extended with more functionality. For example, as [noted on X](https://x.com/kurtextrem/status/1953784810003902717), we should be limiting the number of visible results for a search to avoid lag when React commits to the DOM. Additionally, the patterns demonstrated are applicable to a lot more cases than just a combobox component! However, for this blog post, a simple version is enough to grasp the main concepts.
+In a real app, this component would be extended with more functionality. For example, as [noted on X](https://x.com/kurtextrem/status/1953784810003902717), we should be limiting the number of visible results for a search to avoid lag when React commits to the DOM. And we could also add a debounce to prevent excessive calls to the search function while the user is typing - this version can be found in the Stackblitz example.
+
+The patterns demonstrated are applicable to a lot more cases than just a combobox component! However, for this blog post, a simple version is enough to grasp the main concepts.
 
 ## Key Takeaways
 
