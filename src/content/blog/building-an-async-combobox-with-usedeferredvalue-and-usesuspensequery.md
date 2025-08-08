@@ -57,15 +57,15 @@ function SearchInput() {
 The list component would filter items based on the `query` state:
 
 ```jsx
-function SearchSuggestions({ query }) {
-  const filteredSuggestions = suggestions.filter((suggestion) =>
-    suggestion.name.toLowerCase().includes(query.toLowerCase())
+function List({ query }) {
+  const filteredItems = items.filter((item) =>
+    item.name.toLowerCase().includes(query.toLowerCase())
   );
 
   return (
     <ul>
-      {filteredSuggestions.map((suggestion) => (
-        <li key={suggestion.id}>{suggestion.name}</li>
+      {filteredItems.map((item) => (
+        <li key={item.id}>{item.name}</li>
       ))}
     </ul>
   );
@@ -74,7 +74,7 @@ function SearchSuggestions({ query }) {
 
 If this list was really long, or it contained some heavy components, it could lead to performance issues as the user types. This is where `useDeferredValue()` comes in handy.
 
-You can wrap the `query` state with `useDeferredValue()` to defer the updates to the suggestions list:
+You can wrap the `query` state with `useDeferredValue()` to defer the updates to the list:
 
 ```jsx
 function SearchInput() {
@@ -87,16 +87,16 @@ function SearchInput() {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />
-      <SearchSuggestions query={deferredQuery} />
+      <List query={deferredQuery} />
     </>
   );
 } 
 ```
 
-Then, you would memoize the `SearchSuggestions` component to only re-render when the deferred query changes:
+Then, you would memoize the `List` component to only re-render when the deferred query changes:
 
 ```jsx
-const SearchSuggestions = React.memo(({ query }) => {
+const List = React.memo(({ query }) => {
   //...
 });
 ```
@@ -105,7 +105,7 @@ It tells React that re-rendering the list can be deprioritized so that it doesnâ
 
 For a more detailed explanation of the rendering optimization aspect of `useDeferredValue()`, check out the blog post [Snappy UI Optimization with useDeferredValue()](https://www.joshwcomeau.com/react/use-deferred-value/) by Josh Comeau.
 
-However, `useDeferredValue()` can also be used with a suspense enabled data source to create declarative loading states.
+However, `useDeferredValue()` can also be used with a suspense enabled data source to create a smooth stale-while-revalidate experience, which is what we will explore in this blog post.
 
 ## A Suspense Enabled Data Source
 
@@ -129,7 +129,10 @@ Here's a quick example of how you might use it:
 import { useSuspenseQuery } from '@tanstack/react-query';
 
 function SuspendedComponent() {
-  const { data } = useSuspenseQuery(['dataKey'], fetchData);
+  const { data } = useSuspenseQuery({
+    queryKey: ['dataKey'],
+    queryFn: fetchData
+  });
 
   return <p>{data}</p>;
 }
@@ -185,7 +188,7 @@ export default function Combobox({
   };
 
   return (
-    <div >
+    <div>
       <input
         placeholder={placeholder}
         value={filterText}
@@ -193,7 +196,9 @@ export default function Combobox({
         onFocus={() => setIsOpen(true)}
       />
       {isOpen && (
-      {/* ... */}
+        <div className="combobox-container">
+          {/* Search results will go here */}
+        </div>
       )}
     </div>
   );
@@ -217,7 +222,9 @@ export default function Combobox({
   const [isError, setIsError] = useState(false);
 
   const handleItemClick = (item) => {
-    // ...
+    setFilterText(item.name);
+    setIsOpen(false);
+    onSelect?.(item);
   };
 
   const handleSearch = async (text) => {
@@ -238,19 +245,33 @@ export default function Combobox({
       <input
         placeholder={placeholder}
         value={filterText}
-        onChange={(e) => setFilterText(e.target.value)}
+        onChange={(e) => {
+          setFilterText(e.target.value);
+          if (e.target.value.length > 0) {
+            handleSearch(e.target.value);
+          } else {
+            setSearchResults([]);
+            setIsLoading(false);
+            setIsError(false);
+          }
+        }}
         onFocus={() => setIsOpen(true)}
       />
       {isOpen && (
         <div className="combobox-container">
           {isLoading ? (
             <div>Loading...</div>
-          ) :
-            isError ? (
-              <div>Error loading results</div>
+          ) : isError ? (
+            <div>Error loading results</div>
           ) : (
             searchResults.map((item, index) => (
-              {/* ... */}
+              <div
+                key={item.id || index}
+                className="combobox-option"
+                onClick={() => handleItemClick(item)}
+              >
+                {item.name}
+              </div>
             ))
           )}
         </div>
@@ -277,19 +298,15 @@ function SearchResults({ query, asyncSearchFn, onItemClick }) {
     return <span>No results found</span>;
   }
 
-  return (
-    <>
-      {results.map((item, index) => (
-        <div
-          key={item.id || index}
-          className="combobox-option"
-          onClick={() => onItemClick(item)}
-        >
-          {item.name}
-        </div>
-      ))}
-    </>
-  );
+  return results.map((item, index) => (
+    <div
+      key={item.id || index}
+      className="combobox-option"
+      onClick={() => onItemClick(item)}
+    >
+      {item.name}
+    </div>
+  ));
 }
 ```
 
@@ -303,6 +320,8 @@ export default function Combobox({
   onSelect,
   placeholder = "Search...",
 }) {
+  // ... state variables and handlers
+
   return (
     <div>
       <input
@@ -379,9 +398,10 @@ export default function Combobox({
 
 Now, as the user types, the `SearchResults` component will remain visible with the previous results while the new search is being performed. This creates a smoother user experience, as the results will update once the new data is ready without hiding the previous results.
 
-We will further indicate the stale content by adding a `isStale` value:
+We will further indicate the stale content by adding an `isStale` value:
 
 ```jsx
+export default function Combobox({
   asyncSearchFn,
   onSelect,
   placeholder = "Search...",
@@ -408,7 +428,31 @@ When the `filterText` changes, `isStale` is true for as long as `useSuspenseQuer
 </ErrorBoundary>
 ```
 
-Perfect! Here is the complete code for our `Combobox` component:
+Perfect!
+
+Keep it mind that `useDeferredValue()` itself does not prevent extra network requests from being made. It only defers the rendering of the results. If you type quickly, you will still see multiple requests being sent to the server. However, `useSuspenseQuery()` provides built-in caching that automatically deduplicates requests, and shows instant cache hits for repeated queries.
+
+Let's add a min 2 chars requirement for searching:
+
+```jsx
+{deferredFilterText.length < 2 ? (
+  <div>Type at least 2 characters to search</div>
+) : (
+  <ErrorBoundary fallback={<div>Error loading results</div>}>
+    <Suspense fallback={<div>Loading results...</div>}>
+      <div className={isStale ? "animate-pulse" : ""}>
+        <SearchResults
+          query={deferredFilterText}
+          asyncSearchFn={asyncSearchFn}
+          onItemClick={handleItemClick}
+        />
+      </div>
+    </Suspense>
+  </ErrorBoundary>
+)}
+```
+
+Here is the complete code for our `Combobox` component:
 
 ```jsx
 import { useState, useDeferredValue, Suspense } from 'react';
@@ -441,17 +485,21 @@ export default function Combobox({
       />
       {isOpen && (
         <div className="combobox-container">
-          <ErrorBoundary fallback={<div>Error loading results</div>}>
-            <Suspense fallback={<div>Loading results...</div>}>
-              <div className={isStale ? "animate-pulse" : ""}>
-                <SearchResults
-                  query={deferredFilterText}
-                  asyncSearchFn={asyncSearchFn}
-                  onItemClick={handleItemClick}
-                />
-              </div>
-            </Suspense>
-          </ErrorBoundary>  
+          {deferredFilterText.length < 2 ? (
+            <div>Type at least 2 characters to search</div>
+          ) : (
+            <ErrorBoundary fallback={<div>Error loading results</div>}>
+              <Suspense fallback={<div>Loading results...</div>}>
+                <div className={isStale ? "animate-pulse" : ""}>
+                  <SearchResults
+                    query={deferredFilterText}
+                    asyncSearchFn={asyncSearchFn}
+                    onItemClick={handleItemClick}
+                  />
+                </div>
+              </Suspense>
+            </ErrorBoundary>
+          )}
         </div>
       )}
     </div>
@@ -467,27 +515,23 @@ function SearchResults({ query, asyncSearchFn, onItemClick }) {
     return <span>No results found</span>;
   }
 
-  return (
-    <>
-      {results.map((item, index) => (
-        <div
-          key={item.id || index}
-          className="autocomplete-option"
-          onClick={() => onItemClick(item)}
-        >
-          {item.name}
-        </div>
-      ))}
-    </>
-  );
+  return results.map((item, index) => (
+    <div
+      key={item.id || index}
+      className="combobox-option"
+      onClick={() => onItemClick(item)}
+    >
+      {item.name}
+    </div>
+  ));
 }
 ```
 
 This component now provides a smooth and responsive autocomplete experience, leveraging React's concurrent features effectively, while keeping the code declarative and easy to understand.
 
-In a real app, this component would be extended with more functionality, but for this blog post, a simple version is enough to grasp the main concepts.
+Check it out in [Stackblitz](https://stackblitz.com/edit/vitejs-vite-7vdcz5t4?file=src%2Findex.css)!
 
-And the patterns demonstrated are applicable to a lot more cases than just a combobox component!
+In a real app, this component would be extended with more functionality. Additionally, the patterns demonstrated are applicable to a lot more cases than just a combobox component! However, for this blog post, a simple version is enough to grasp the main concepts.
 
 ## Key Takeaways
 
@@ -495,6 +539,7 @@ And the patterns demonstrated are applicable to a lot more cases than just a com
 - Suspense and Error Boundaries eliminate the need for manual loading and error state management in components
 - Immediate state for input fields combined with deferred state for data fetching prevents search results from disappearing while users type
 - `useDeferredValue()` isn't just for rendering optimizationâ€”it creates smooth stale-while-revalidate UX when combined with Suspense-enabled data sources
+- Built-in query caching provides instant results for repeated searches and automatic request deduplication
 
 ## Conclusion
 
