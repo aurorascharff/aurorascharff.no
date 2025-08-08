@@ -283,7 +283,7 @@ export default function BadCombobox({
 }
 ```
 
-This quickly becomes cumbersome, and while searching we get an unstable and flickering UX in the dropdown. Rather than messing around with more states to fix it, let's try something different.
+This quickly becomes cumbersome, and while searching we get an unstable and flickering UX in the dropdown. This happens because we are [not using Actions](https://react.dev/reference/react/useTransition#examples) for our async function. However, rather messing around with more states to fix it, or using Actions, let's try something different.
 
 ### Extracting the SearchResults Component with useSuspenseQuery
 
