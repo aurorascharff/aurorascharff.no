@@ -22,7 +22,7 @@ React concurrent features have unlocked new ways to build performant and respons
 
 ## useDeferredValue() Refresher
 
-You might be familiar with [`useDeferredValue()`](https://react.dev/reference/react/useDeferredValue) from React 18, which allows you to defer updates to a value. A concurrent feature, it helps React prioritize urgent updates over less critical ones, keeping your application responsive.
+You might be familiar with [`useDeferredValue()`](https://react.dev/reference/react/useDeferredValue) from React 18, which allows you to defer rendering a part of the UI.
 
 It has a simple API:
 
@@ -30,7 +30,7 @@ It has a simple API:
 const deferredValue = useDeferredValue(value);
 ```
 
-Where `value` is the value you want to defer, and `deferredValue` is the deferred version of that value.
+Where `value` is the value you want to defer, and `deferredValue` is the deferred version of that value. It's a concurrent feature that tells React to prioritize urgent updates over less critical ones, keeping your application responsive.
 
 The most common use of `useDeferredValue()` is for rendering optimization. When you have expensive UI updates that might block user interactions, you can defer them to keep your app responsive.
 
