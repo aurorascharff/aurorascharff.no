@@ -4,7 +4,7 @@ pubDatetime: 2025-08-07T21:22:00Z
 title: Building an Async Combobox with useSuspenseQuery() and useDeferredValue()
 slug: building-an-async-combobox-with-usesuspensequery-and-usedeferredvalue
 featured: false
-draft: true
+draft: false
 tags:
   - React 19
   - useSuspenseQuery
@@ -16,7 +16,7 @@ tags:
 description: Learn how to build smooth search experiences by combining `useDeferredValue()` with `useSuspenseQuery()` for declarative async state management.
 ---
 
-React concurrent features have opened up new possibilities for building performant and responsive applications. In this blog post, I will show you how to build a declarative combobox component using `useDeferredValue()` and `useSuspenseQuery()`. We will explore how these hooks work together to create smooth user experiences without the complexity of manual loading and error state management.
+React concurrent features have unlocked new ways to build performant and responsive applications. In this blog post, I'll show you how to create a declarative combobox component using `useDeferredValue()` and `useSuspenseQuery()`. We'll explore how these hooks work together to deliver smooth user experiences, simplify loading and error state management, and provide automatic caching for optimal performance.
 
 ## Table of contents
 
@@ -168,7 +168,7 @@ Let's start by looking at a simplified combobox component API:
 />
 ```
 
-In a real application, we would probably add things like a minimum input length before triggering the search, static options, and more. But for now, let's focus on the core functionality.
+In a real combobox, you might want to add enhancements like support for static or default options, keyboard navigation, and accessibility improvements. And you might to build on top of a library like [Ariakit](https://ariakit.org/). For this example, we'll keep things simple and focus on the essential async search pattern.
 
 Here's our main component structure:
 
@@ -204,6 +204,8 @@ export default function Combobox({
   );
 }
 ```
+
+### The Problem with Manual State Management
 
 The natural way to build this might be to keep a search result state, calling the `asyncSearchFn` on every input change to fetch results, and handle loading and error states manually.
 
@@ -536,15 +538,14 @@ In a real app, this component would be extended with more functionality. Additio
 ## Key Takeaways
 
 - Extracting data fetching logic into separate components with `useSuspenseQuery()` keeps concerns isolated
-- Suspense and Error Boundaries eliminate the need for manual loading and error state management in components
+- Suspense and error boundaries eliminate the need for manual loading and error state management in components
 - Immediate state for input fields combined with deferred state for data fetching prevents search results from disappearing while users type
 - `useDeferredValue()` isn't just for rendering optimization—it creates smooth stale-while-revalidate UX when combined with Suspense-enabled data sources
 - Built-in query caching provides instant results for repeated searches and automatic request deduplication
+- The pattern extends beyond comboboxes—any time you need to balance immediate UI responsiveness with background data updates, these concurrent features provide an elegant solution
 
 ## Conclusion
 
-In this post, we built a combobox using `useDeferredValue()` and `useSuspenseQuery()` together. This combination creates a powerful pattern for building responsive search interfaces. By separating immediate user interactions from deferred data fetching, we get smooth stale-while-revalidate behavior without managing loading states manually.
-
-The pattern extends beyond comboboxes—any time you need to balance immediate UI responsiveness with background data updates, these concurrent features provide an elegant solution.
+In this post, we explored how to build responsive search interfaces using React's concurrent features. We looked at how `useDeferredValue()` and `useSuspenseQuery()` work together to create smooth user experiences, from basic component structure to advanced stale-while-revalidate patterns. By following the essential pattern of separating immediate user interactions from deferred data fetching, we can create components that are performant, declarative, and easy to maintain.
 
 I hope this post has been helpful in understanding React's concurrent features better. Please let me know if you have any questions or comments, and follow me on [X](https://x.com/aurorascharff) for more updates. Happy coding! 🚀
