@@ -32,9 +32,7 @@ const deferredValue = useDeferredValue(value);
 
 Where `value` is the value you want to defer, and `deferredValue` is the deferred version of that value. It's a concurrent feature that tells React to prioritize urgent updates over less critical ones, keeping your application responsive.
 
-The most common use of `useDeferredValue()` is for rendering optimization. When you have expensive UI updates that might block user interactions, you can defer them to keep your app responsive.
-
-For example, if you have a search input that updates frequently, you can defer the rendering of a suggestions list until the browser has time to process it, reducing lag while typing.
+The most common use of `useDeferredValue()` is for rendering optimization. When you have expensive UI updates that might block user interactions, you can defer them to keep your app responsive. For example, if you have a search input that updates frequently, you can defer the rendering of a list until the browser has time to process it, reducing lag while typing.
 
 Let's say you have an input field where users can type a search query, and a list of items that filters based on that query:
 
