@@ -103,7 +103,7 @@ const List = React.memo(({ query }) => {
 
 It tells React that re-rendering the list can be deprioritized so that it doesn’t block the keystrokes. The list will “lag behind” the input and then “catch up”. Like before, React will attempt to update the list as soon as possible, but will not block the user from typing.
 
-For a more detailed explanation of the rendering optimization aspect of `useDeferredValue()`, check out the blog post [Snappy UI Optimization with useDeferredValue()](https://www.joshwcomeau.com/react/use-deferred-value/) by Josh Comeau.
+For a more detailed explanation of the rendering optimization aspect of `useDeferredValue()`, check out the blog post [Snappy UI Optimization with useDeferredValue()](https://www.joshwcomeau.com/react/use-deferred-value/) by [Josh Comeau](https://bsky.app/profile/joshwcomeau.com).
 
 However, `useDeferredValue()` can also be used with a suspense enabled data source to create a smooth stale-while-revalidate experience, which is what we will explore in this blog post.
 
