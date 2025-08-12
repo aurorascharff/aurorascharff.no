@@ -1,12 +1,11 @@
-// og-templates/post.tsx
-import { SITE } from "@config";
 import type { CollectionEntry } from "astro:content";
 
 export default (post: CollectionEntry<"blog">) => {
   return (
     <div
       style={{
-        background: "linear-gradient(135deg, #fce7f3 0%, #f3e8ff 100%)",
+        background:
+          "linear-gradient(135deg, rgb(250, 252, 252) 0%, rgb(241, 186, 212) 100%)",
         width: "100%",
         height: "100%",
         display: "flex",
@@ -19,8 +18,8 @@ export default (post: CollectionEntry<"blog">) => {
           position: "absolute",
           top: "-1px",
           right: "-1px",
-          border: "4px solid #ec4899",
-          background: "rgba(236, 72, 153, 0.1)",
+          border: "4px solid rgb(227, 169, 198)",
+          background: "rgba(234, 206, 219, 0.3)",
           opacity: "0.9",
           borderRadius: "4px",
           display: "flex",
@@ -33,8 +32,8 @@ export default (post: CollectionEntry<"blog">) => {
 
       <div
         style={{
-          border: "4px solid #ec4899",
-          background: "rgba(255, 255, 255, 0.9)",
+          border: "4px solid rgb(227, 169, 198)",
+          background: "rgba(250, 252, 252, 0.95)",
           borderRadius: "4px",
           display: "flex",
           justifyContent: "center",
@@ -59,7 +58,7 @@ export default (post: CollectionEntry<"blog">) => {
               fontWeight: "bold",
               maxHeight: "84%",
               overflow: "hidden",
-              color: "#1f2937",
+              color: "rgb(34, 46, 54)",
               margin: 0,
             }}
           >
@@ -87,7 +86,7 @@ export default (post: CollectionEntry<"blog">) => {
                 style={{
                   overflow: "hidden",
                   fontWeight: "bold",
-                  color: "#ec4899",
+                  color: "rgb(211, 0, 106)",
                 }}
               >
                 {post.data.author}
