@@ -29,7 +29,7 @@ export default defineConfig({
       ],
     ],
     shikiConfig: {
-      theme: "one-dark-pro",
+      theme: "dracula-soft",
       wrap: true,
     },
   },
