@@ -535,7 +535,7 @@ In a real app, this component would be extended with more functionality. For exa
 
 The patterns demonstrated are applicable to a lot more cases than just a combobox component! However, for this blog post, a simple version is enough to grasp the main concepts.
 
-Watch out for my upcoming blog post on [certificates.dev](https://certificates.dev/blog?tech=react) that will give a comprehensive overview of all React concurrent features! On this platform you can also start your path to [becoming a Certified React Developer](https://certificates.dev/react) with the React Certification, for which I am the lead. It is a great way to deepen your knowledge of React and get certified at the same time!
+Check out my blog post [React Concurrent Features: An Overview](https://certificates.dev/blog/react-concurrent-features-an-overview) at [certificates.dev] for an overview of all React concurrent features! On this platform you can also start your path to [becoming a Certified React Developer](https://certificates.dev/react) with the React Certification, for which I am the lead. It is a great way to deepen your knowledge of React and get certified at the same time!
 
 ## Key Takeaways
 
