@@ -1,5 +1,5 @@
 ---
-organizer: DevSum 2025
+organizer: Voxxed Days Thessaloniki 2025
 date: 2025-11-07T08:00:00Z
 name: "Talk: The Remix Evolution: How React Router v7 Enables Fast and Resilient Apps"
 completed: false
