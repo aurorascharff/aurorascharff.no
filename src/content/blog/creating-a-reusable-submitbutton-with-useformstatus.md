@@ -312,7 +312,7 @@ Smooth.
 
 ![Delete button spinning](@assets/deletebutton.gif)
 
-See the app and the full code where I have implemented the patterns mentioned in my Remix Contacts Rebuild V2 [GitHub repo](https://github.com/aurorascharff/next15-remix-contacts-rebuild-v2).
+See the app and the full code where I have implemented the patterns mentioned in my Remix Contacts Rebuild V2 [GitHub repo](https://github.com/aurorascharff/next15-contacts).
 
 ## Conclusion
 

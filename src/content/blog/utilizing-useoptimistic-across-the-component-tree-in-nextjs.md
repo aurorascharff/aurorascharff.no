@@ -218,7 +218,7 @@ export default function JokesList() {
 
 And that's it! When we add a new joke, it will be added to the list optimistically.
 
-A proper example where a provider is being used with the useOptimistic hook across the component tree can be found [here](https://github.com/aurorascharff/next15-remix-contacts-rebuild-v2/blob/use-optimistic/app/contacts/%5BcontactId%5D/_components/Favorite.tsx) and [here](https://github.com/aurorascharff/next14-message-box/tree/optimistic-retry) and I also have another post on [Managing Advanced Search Param Filtering](https://aurorascharff.no/posts/managing-advanced-search-param-filtering-next-app-router/) where a step in the process is to use the useOptimistic hook inside a provider.
+A proper example where a provider is being used with the useOptimistic hook across the component tree can be found [here](https://github.com/aurorascharff/next15-contacts/blob/use-optimistic/app/contacts/%5BcontactId%5D/_components/Favorite.tsx) and [here](https://github.com/aurorascharff/next14-message-box/tree/optimistic-retry) and I also have another post on [Managing Advanced Search Param Filtering](https://aurorascharff.no/posts/managing-advanced-search-param-filtering-next-app-router/) where a step in the process is to use the useOptimistic hook inside a provider.
 
 ## Additional Notes
 

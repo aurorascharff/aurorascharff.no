@@ -19,7 +19,7 @@ description: With React 19 RC announced, the `useActionState` hook is a powerful
 
 The React 19 `useActionState` hook is a powerful tool for creating a component state based on the result of an action, typically useful with form submissions. However, there are unclear usage patterns and some gotchas that can make it hard to work with. In this blog post, we'll create a validated form using the hook, and we'll see how we can handle form resets and errors with it.
 
-The final result can be found [on GithHub](https://github.com/aurorascharff/next15-remix-contacts-rebuild-v2/blob/main/app/contacts/%5BcontactId%5D/edit/_components/ContactForm.tsx) and tried out [on Vercel](https://next15-remix-contacts-rebuild-v2.vercel.app/). Just give the app a minute if it initially throws an application error - the database is sleeping.
+The final result can be found [on GithHub](https://github.com/aurorascharff/next15-contacts/blob/main/app/contacts/%5BcontactId%5D/edit/_components/ContactForm.tsx) and tried out [on Vercel](https://next15-contacts.vercel.app/). Just give the app a minute if it initially throws an application error - the database is sleeping.
 
 ![Form validation example](@assets/form.gif)
 
@@ -348,10 +348,10 @@ The added benefit of using the `action` property is that the `onSubmit` event ca
 
 If you are not a fan of `useActionState`, you can use React Hook Form as an alternative. It is a great library for form validation and handling, and can use controlled inputs to manage a form state for you.
 
-I have an example of that in a [separate branch](https://github.com/aurorascharff/next15-remix-contacts-rebuild-v2/blob/react-hook-form/app/contacts/%5BcontactId%5D/edit/_components/ContactForm.tsx).
+I have an example of that in a [separate branch](https://github.com/aurorascharff/next15-contacts/blob/react-hook-form/app/contacts/%5BcontactId%5D/edit/_components/ContactForm.tsx).
 
 ## Conclusion
 
-In this blog post, we've seen how to use the `useActionState` hook to create a validated form. We've also seen how to handle form resets with it. The final result can be found [on GithHub](https://github.com/aurorascharff/next15-remix-contacts-rebuild-v2/blob/main/app/contacts/%5BcontactId%5D/edit/_components/ContactForm.tsx) and tried out [on Vercel](https://next15-remix-contacts-rebuild-v2.vercel.app/). Again, just give the app a minute if it initially throws an application error - the database is sleeping.
+In this blog post, we've seen how to use the `useActionState` hook to create a validated form. We've also seen how to handle form resets with it. The final result can be found [on GithHub](https://github.com/aurorascharff/next15-contacts/blob/main/app/contacts/%5BcontactId%5D/edit/_components/ContactForm.tsx) and tried out [on Vercel](https://next15-contacts.vercel.app/). Again, just give the app a minute if it initially throws an application error - the database is sleeping.
 
 I hope this post has been helpful. Please let me know if you have any questions or comments, and follow me on [X](https://x.com/aurorascharff) for more updates. Happy coding! 🚀

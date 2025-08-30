@@ -30,7 +30,7 @@ The [Remix Contacts tutorial](https://remix.run/docs/en/main/start/tutorial) is 
 
 This app also replaces the Remix stylesheet with tailwind.
 
-NB! See my [Remix Contacts Rebuild V2 GitHub repository](https://github.com/aurorascharff/next15-remix-contacts-rebuild-v2) for a "better", more Next.js-like approach of rebuilding the Remix Contacts tutorial. That version also has additional improvements.
+NB! See my [Remix Contacts Rebuild V2 GitHub repository](https://github.com/aurorascharff/next15-contacts) for a "better", more Next.js-like approach of rebuilding the Remix Contacts tutorial. That version also has additional improvements.
 
 ## Executing the Rebuild
 
@@ -875,7 +875,7 @@ Either way, we end up with a lot of boilerplate code to handle this, a trade-off
 
 The correct Nextjs approach might be to use a combination of Suspense and Transitions to handle loading states, but I wanted to replicate the features of Remix tutorial as closely as possible.
 
-Edit: See my [Remix Contacts Rebuild V2 GitHub repository](https://github.com/aurorascharff/next15-remix-contacts-rebuild-v2).
+Edit: See my [Remix Contacts Rebuild V2 GitHub repository](https://github.com/aurorascharff/next15-contacts).
 
 ### Problem 2: Search Params in Layouts
 

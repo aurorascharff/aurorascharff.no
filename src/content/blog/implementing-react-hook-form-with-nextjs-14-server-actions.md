@@ -24,7 +24,7 @@ We are going to be using Zod for validation and Prisma for our database. We will
 
 I do not have a separate repository for this blog post, but you can find working code [here](https://github.com/aurorascharff/next15-remix-jokes-rebuild/blob/main/app/demo/forms/_components/ReactHookForm.tsx).
 
-You can also find another example without optimistic UI [here](https://github.com/aurorascharff/next15-remix-contacts-rebuild-v2/blob/react-hook-form/app/contacts/%5BcontactId%5D/edit/_components/ContactForm.tsx).
+You can also find another example without optimistic UI [here](https://github.com/aurorascharff/next15-contacts/blob/react-hook-form/app/contacts/%5BcontactId%5D/edit/_components/ContactForm.tsx).
 
 ## Table of contents
 
@@ -395,7 +395,7 @@ export default function ReactHookForm({ jokes }: { jokes: Joke[] }) {
 
 Of course, add your own styling and make it look nice, and possibly generalize the rollback when you have multiple fields.
 
-Working examples of this code can as mentioned be found [here, with optimistic update](https://github.com/aurorascharff/next15-remix-jokes-rebuild/blob/main/app/(demo)/forms/react-hook/_components/ReactHookForm.tsx) and [here, without optimistic update](https://github.com/aurorascharff/next15-remix-contacts-rebuild-v2/blob/react-hook-form/app/contacts/%5BcontactId%5D/edit/_components/ContactForm.tsx).
+Working examples of this code can as mentioned be found [here, with optimistic update](https://github.com/aurorascharff/next15-remix-jokes-rebuild/blob/main/app/(demo)/forms/react-hook/_components/ReactHookForm.tsx) and [here, without optimistic update](https://github.com/aurorascharff/next15-contacts/blob/react-hook-form/app/contacts/%5BcontactId%5D/edit/_components/ContactForm.tsx).
 
 ## Conclusion
 
