@@ -371,6 +371,8 @@ export const RouterSelect = React.forwardRef<HTMLSelectElement, RouterSelectProp
 
 Check out this [StackBlitz](https://stackblitz.com/edit/bspkkmgm-cqbbodao?file=app%2Fpage.tsx,app%2Factions-reusable-router-select%2Frouter-select.tsx) for a working example.
 
+For a more practical, real-world example of the patterns described in this post, check out the [Filters.tsx](https://github.com/aurorascharff/next15-conferences/blob/main/components/Filters.tsx) component in my [Next.js 15 Conferences](https://next15-conferences.vercel.app/) project.
+
 ## Building Complex, Reusable Components
 
 When we are building more complex reusable components, we might run into constraints forcing us to move logic like optimistic updates to the parent.
