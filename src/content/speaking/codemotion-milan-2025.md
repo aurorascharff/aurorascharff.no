@@ -1,5 +1,5 @@
 ---
-organizer: Codemotion Milan 2025
+organizer: Codemotion Milan 2024
 date: 2025-10-14T08:00:00Z
 name: "Talk: Exploring the World of Remix: A Guide to Building Resilient and Performant Web Apps"
 completed: false
