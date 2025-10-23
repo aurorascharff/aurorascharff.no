@@ -1,7 +1,7 @@
 ---
 organizer: Next.js Conf 2025
 date: 2025-10-22T08:00:00Z
-name: "Talk: Composition, Caching, and Architecture. Future proofing your Next.js apps."
+name: "Talk: Composition, Caching, and Architecture in Modern Next.js"
 completed: true
 link: "https://www.youtube.com/watch?v=IdIgkiDu-94&t=7443s"
 websiteLink: "https://nextjs.org/conf"
