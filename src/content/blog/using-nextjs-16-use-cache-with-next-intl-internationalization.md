@@ -86,7 +86,32 @@ The proper solution is `next/root-params`, which will allow reading params deepl
 
 ## The Workaround
 
-Until `next/root-params` arrives, there's a workaround you can use. To enable static rendering with `next-intl`, you need to follow the [static rendering setup](https://next-intl.dev/docs/routing/setup#static-rendering) from the official documentation. This requires implementing `generateStaticParams` to define which locales should be statically generated at build time.
+Until `next/root-params` arrives, there's a workaround you can use. To enable static rendering with `next-intl`, you need to follow the [static rendering setup](https://next-intl.dev/docs/routing/setup#static-rendering) from the official documentation. This requires implementing `generateStaticParams` to define which locales should be statically generated at build time:
+
+```tsx
+import {routing} from '@/i18n/routing';
+
+export function generateStaticParams() {
+  return routing.locales.map((locale) => ({locale}));
+}
+```
+
+You also need to call `setRequestLocale` in your layouts and pages to enable static rendering:
+
+```tsx
+import {setRequestLocale} from 'next-intl/server';
+
+export default async function LocaleLayout({children, params}: Props) {
+  const {locale} = await params;
+  
+  // Enable static rendering
+  setRequestLocale(locale);
+  
+  return (
+    // ...
+  );
+}
+```
 
 If you have a component that doesn't use `'use cache'`, you can keep using `getTranslations()` normally:
 
@@ -103,7 +128,7 @@ async function DynamicComponent() {
 }
 ```
 
-For components where you want to use `'use cache'`, accept the locale as a prop and pass it explicitly to `getTranslations()`:
+For components where you want to use `'use cache'`, you would need to accept the locale as a prop and pass it explicitly to `getTranslations()`. The function supports passing a `locale` parameter alongside the namespace:
 
 ```tsx
 async function CachedComponent({locale}: {locale: Locale}) {
@@ -120,7 +145,7 @@ async function CachedComponent({locale}: {locale: Locale}) {
 }
 ```
 
-In your page component, extract the locale from params and pass it down to the cached component:
+Where would we get this locale value without dynamically rendering? In your page component, you can extract the locale from params and pass it down to the cached component:
 
 ```tsx
 export default async function IndexPage({params}: PageProps) {
