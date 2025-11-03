@@ -128,7 +128,7 @@ async function DynamicComponent() {
 }
 ```
 
-For components where you want to use `'use cache'`, you would need to accept the locale as a prop and pass it explicitly to `getTranslations()`. The function supports passing a `locale` parameter alongside the namespace:
+For components where you want to use `'use cache'`, you would need to accept the locale as a prop and pass it explicitly to `getTranslations()`. When you pass a `locale` parameter alongside the namespace, the function will use that value instead of reading from `headers()`:
 
 ```tsx
 async function CachedComponent({locale}: {locale: Locale}) {
@@ -169,7 +169,9 @@ export default async function IndexPage({params}: PageProps) {
 }
 ```
 
-Note that Suspense wraps the dynamic component for Partial Prerendering, allowing it to be prerendered with a loading skeleton while the cached component is included in the static shell. This works because the locale comes from the URL parameter, which is statically generated through `generateStaticParams`. When you pass `{locale, namespace}` to `getTranslations()`, the function no longer needs to read from headers internally, making the component cacheable.
+This works because the locale comes from the URL parameter, which is statically generated through `generateStaticParams`. When you pass `{locale, namespace}` to `getTranslations()`, the function no longer needs to read from headers internally, making the component cacheable.
+
+The Suspense boundary around `DynamicComponent` is a requirement when using `cacheComponents`. It enables streaming, allowing the dynamic component to progressively render while showing a loading skeleton. Meanwhile, Partial Prerendering ensures the cached component is included in the static shell, delivering immediate content to users.
 
 This follows a broader pattern in Next.js applications where you encode dynamic values into the URL structure to avoid relying on dynamic APIs like `headers()`, `cookies()`, or `searchParams`. Another example of this pattern is the [Vercel Flags SDK precompute pattern](https://flags-sdk.dev/frameworks/next/precompute) for feature flags. I've explored this pattern in a [separate branch of my Next.js 16 commerce demo](https://github.com/aurorascharff/next16-commerce/tree/request-context), where I implemented a request context system that encodes authentication state into URLs. With `cacheComponents` in Next.js 16, you can now handle many of these cases more elegantly by using `'use cache'` directly instead of encoding everything into URLs, which is why the [main branch](https://github.com/aurorascharff/next16-commerce/blob/main/app/layout.tsx) omits the URL encoding solution.
 
