@@ -1,8 +1,8 @@
 ---
 author: Aurora Scharff
 pubDatetime: 2025-11-03T10:22:00Z
-title: Using Next.js 16 'use cache' with next-intl Internationalization
-slug: using-nextjs-16-use-cache-with-next-intl-internationalization
+title: Implementing Next.js 16 'use cache' with next-intl Internationalization
+slug: implementing-nextjs-16-use-cache-with-next-intl-internationalization
 featured: false
 draft: false
 tags:
