@@ -78,7 +78,7 @@ This will error because `getTranslations()` reads from `headers()` internally, a
 
 ## Why next-intl Uses headers()
 
-Most developers use i18n libraries like [`next-intl`](https://next-intl.dev/) (maintained by [Jan Amann](https://x.com/jamannnnnn)) to handle internationalization in Next.js. Apps that use internationalization typically implement a top-level dynamic segment like `[locale]`. If you want to access the locale in deeply nested components, which you typically do, you need to read the segment value in a page or layout and manually pass it down through your component tree. This becomes cumbersome when many components need the locale argument.
+Most developers use i18n libraries like [`next-intl`](https://next-intl.dev/) to handle internationalization in Next.js. Apps that use internationalization typically implement a top-level dynamic segment like `[locale]`. If you want to access the locale in deeply nested components, which you typically do, you need to read the segment value in a page or layout and manually pass it down through your component tree. This becomes cumbersome when many components need the locale argument.
 
 To avoid this manual prop threading, `next-intl` passes the locale as a request header from middleware to Server Components behind the scenes. You can then call `getTranslations()` anywhere without threading the locale through your component tree. However, reading from `headers()` opts all pages into dynamic rendering by default. The library provides `setRequestLocale` to restore static rendering capabilities, but this requires careful implementation from developers.
 
