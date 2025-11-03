@@ -113,7 +113,7 @@ export default async function LocaleLayout({children, params}: Props) {
 }
 ```
 
-This setup resolves errors from `cacheComponents` about needing Suspense boundaries around your locale parameter and enables static rendering.
+This setup resolves errors from `cacheComponents` about needing Suspense boundaries around your `[locale]` dynamic segment and enables static rendering.
 
 Now you can start adding `'use cache'` to your components. If you have a component that doesn't need `'use cache'`, you can keep using `getTranslations()` normally:
 
