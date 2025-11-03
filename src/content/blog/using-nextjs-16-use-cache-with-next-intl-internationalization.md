@@ -179,9 +179,7 @@ You can find the full code for the examples in this post on [GitHub](https://git
 
 ## Conclusion
 
-In this blog post, I explored the compatibility challenges between `next-intl` and Next.js 16's `'use cache'`. While there's a temporary workaround involving explicit locale passing, the proper solution is `next/root-params`, which will allow i18n libraries to access params without relying on headers.
-
-The good news is that `next-intl` is already prepared for this transition, so no library changes will be necessary once the Next.js infrastructure is ready. Until then, the workaround demonstrated here can help you get `'use cache'` working with internationalized content, but use it carefully and be aware of its limitations.
+In this blog post, I explored the compatibility challenges between `next-intl` and Next.js 16's `'use cache'`. The temporary workaround involves explicit locale passing, but the proper solution is `next/root-params`, which will allow i18n libraries to access params without relying on headers. The good news is that `next-intl` is already prepared for this transition, so no library changes will be necessary once the Next.js infrastructure is ready.
 
 Thanks to [Jan Amann](https://x.com/jamannnnnn) for the [detailed explanation](https://x.com/aurorascharff/status/1985333783747285184) of the current state and future plans for `next-intl` compatibility with `'use cache'`.
 
