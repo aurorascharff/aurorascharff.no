@@ -82,11 +82,11 @@ Most developers use i18n libraries like [`next-intl`](https://next-intl.dev/) (m
 
 To avoid this manual prop threading, `next-intl` passes the locale as a request header from middleware to Server Components behind the scenes. You can then call `getTranslations()` anywhere without threading the locale through your component tree. However, reading from `headers()` opts all pages into dynamic rendering by default. The library provides `setRequestLocale` to restore static rendering capabilities, but this requires careful implementation from developers.
 
-The proper solution would be the ability to read params deeply from within the component tree without manual threading. This limitation was extensively discussed in the Next.js community as [a missing piece](https://github.com/vercel/next.js/discussions/58862). An upcoming API called `next/root-params` is being developed to address this. Once it ships, `next-intl` will be able to access the locale parameter directly without relying on headers, eliminating the need for `setRequestLocale` and making `'use cache'` work seamlessly.
+The proper solution would be the ability to read params deeply from within the component tree without manual threading. This limitation was extensively discussed in the Next.js community as [a missing piece](https://github.com/vercel/next.js/discussions/58862). An upcoming API called `next/root-params` is being developed to address this. Once it ships, `next-intl` will be able to access the locale parameter directly without relying on headers, eliminating the need for `setRequestLocale` and explicit locale prop passing, making `'use cache'` work seamlessly.
 
 ## The Workaround
 
-Until `next/root-params` arrives, there's a workaround you can use. To enable static rendering with `next-intl`, you need to follow the [static rendering setup](https://next-intl.dev/docs/routing/setup#static-rendering) from the official documentation. This requires implementing `generateStaticParams` to define which locales should be statically generated at build time:
+Until `next/root-params` arrives, there's a workaround you can use. To enable static rendering with `next-intl`, you need to follow the [static rendering setup](https://next-intl.dev/docs/routing/setup#static-rendering) from the official documentation. This requires implementing `generateStaticParams`, which returns an array of objects representing the dynamic segments to be statically generated at build time:
 
 ```tsx
 import {routing} from '@/i18n/routing';
@@ -96,7 +96,7 @@ export function generateStaticParams() {
 }
 ```
 
-You also need to call `setRequestLocale` in your layouts and pages to enable static rendering:
+You also need to call `setRequestLocale` in your layouts and pages:
 
 ```tsx
 import {setRequestLocale} from 'next-intl/server';
@@ -113,7 +113,7 @@ export default async function LocaleLayout({children, params}: Props) {
 }
 ```
 
-This setup resolves errors from `cacheComponents` about needing Suspense boundaries around your locale parameter and enabled static rendering.
+This setup resolves errors from `cacheComponents` about needing Suspense boundaries around your locale parameter and enables static rendering.
 
 Now you can start adding `'use cache'` to your components. If you have a component that doesn't need `'use cache'`, you can keep using `getTranslations()` normally:
 
@@ -147,7 +147,7 @@ async function CachedComponent({locale}: {locale: Locale}) {
 }
 ```
 
-Where would we get this locale value without dynamically rendering? In your page component, you can extract the locale from params and pass it down to the cached component:
+Where would we get this locale value without dynamically rendering? In your page component, you can extract the locale from params and pass it down to the `CachedComponent`:
 
 ```tsx
 export default async function IndexPage({params}: PageProps) {
@@ -171,7 +171,7 @@ export default async function IndexPage({params}: PageProps) {
 }
 ```
 
-The locale comes from the URL parameter, which is statically generated through `generateStaticParams`. The Suspense boundary around `DynamicComponent` is a requirement when using `cacheComponents` because it ensures a good user experience: the cached component renders immediately as part of the static shell while the dynamic component streams in progressively, showing the loading skeleton until its data is ready. This prevents the entire page from blocking on slow data fetching. With Partial Prerendering enabled, the cached component is included in the static shell, delivering immediate content to users.
+The Suspense boundary around `DynamicComponent` is a requirement when using `cacheComponents`. It allows the cached component to render immediately as part of the static shell while the dynamic component streams in progressively, showing the loading skeleton until its data is ready. This prevents the entire page from blocking on slow data fetching. With Partial Prerendering enabled, `CachedComponent` is included in the static shell, delivering immediate content to users.
 
 This follows a broader pattern in Next.js applications where you encode dynamic values into the URL structure to avoid relying on dynamic APIs like `headers()`, `cookies()`, or `searchParams`. Another example of this pattern is the [Vercel Flags SDK precompute pattern](https://flags-sdk.dev/frameworks/next/precompute) for feature flags. I've explored this pattern in a [separate branch of my Next.js 16 commerce demo](https://github.com/aurorascharff/next16-commerce/blob/request-context/proxy.ts), where I implemented a request context system that encodes authentication state into URLs. With `cacheComponents` in Next.js 16, you can now handle many of these cases more elegantly by using `'use cache'` directly instead of encoding everything into URLs, which is why the [main branch](https://github.com/aurorascharff/next16-commerce/blob/main/app/layout.tsx) omits the URL encoding solution.
 
