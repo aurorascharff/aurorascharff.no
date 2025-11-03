@@ -73,7 +73,7 @@ async function ProductList() {
 }
 ```
 
-This will error because `getTranslations()` reads from `headers()` internally, and cached components cannot depend on request-time information. The same applies to any dynamic APIs like `cookies()` or `searchParams`.
+This will error because by default, `getTranslations()` reads from `headers()` internally, and cached components cannot depend on request-time information. The same applies to any dynamic APIs like `cookies()` or `searchParams`.
 
 ## Why next-intl Uses headers()
 
