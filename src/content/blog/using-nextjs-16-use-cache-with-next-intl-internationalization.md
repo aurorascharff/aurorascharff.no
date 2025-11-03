@@ -82,7 +82,7 @@ Most developers use i18n libraries like [`next-intl`](https://next-intl.dev/) (m
 
 To avoid this manual prop threading, `next-intl` passes the locale as a request header from middleware to Server Components behind the scenes. You can then call `getTranslations()` anywhere without threading the locale through your component tree. However, reading from `headers()` opts all pages into dynamic rendering by default. The library provides `setRequestLocale` to restore static rendering capabilities, but this requires careful implementation from developers.
 
-The proper solution is `next/root-params`, which will allow reading params deeply from within the component tree. This limitation was extensively discussed in the Next.js community as [a missing piece](https://github.com/vercel/next.js/discussions/58862) that `next/root-params` is designed to solve. Once it ships, `next-intl` will be able to access the locale parameter directly without relying on headers, eliminating the need for `setRequestLocale` and making `'use cache'` work seamlessly.
+The proper solution would be the ability to read params deeply from within the component tree without manual threading. This limitation was extensively discussed in the Next.js community as [a missing piece](https://github.com/vercel/next.js/discussions/58862). An upcoming API called `next/root-params` is being developed to address this. Once it ships, `next-intl` will be able to access the locale parameter directly without relying on headers, eliminating the need for `setRequestLocale` and making `'use cache'` work seamlessly.
 
 ## The Workaround
 
