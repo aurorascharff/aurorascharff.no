@@ -76,13 +76,13 @@ async function ProductList() {
 
 This will error because `getTranslations()` reads from `headers()` internally, and cached components cannot depend on request-time information that varies per request.
 
-## The Root Cause and Future Solution
+## Why next-intl Uses Headers
 
-Most developers use i18n libraries like [`next-intl`](https://next-intl.dev/) (maintained by [Jan Amann](https://x.com/jamannnnnn)) to handle internationalization in Next.js. In `next-intl`, you implement a top-level dynamic segment like `[locale]` and set up middleware, after which `next-intl` handles passing the locale as a request header to Server Components behind the scenes. This approach makes the developer experience seamless: you can call `getTranslations()` anywhere without manually threading the locale through your component tree. However, it opts all pages into dynamic rendering by default because `next-intl` reads from `headers()` internally to retrieve the locale. The library then provides `setRequestLocale` to restore static rendering capabilities, but this requires careful implementation from developers.
+Most developers use i18n libraries like [`next-intl`](https://next-intl.dev/) (maintained by [Jan Amann](https://x.com/jamannnnnn)) to handle internationalization in Next.js. Apps that use internationalization typically implement a top-level dynamic segment like `[locale]`. If you want to access the locale in deeply nested components, which you typically do, you need to read the segment value in a page or layout and manually pass it down through your component tree. This becomes cumbersome when many components need the locale argument.
 
-The underlying challenge is that Next.js currently requires you to read segment values in a page or layout and pass them down through your component tree. This becomes cumbersome when many components need the locale argument, forcing developers to thread this value through almost all component layers. This limitation was extensively discussed in the Next.js community as [a missing piece](https://github.com/vercel/next.js/discussions/58862) that `next/root-params` is designed to solve.
+To avoid this manual prop threading, `next-intl` passes the locale as a request header from middleware to Server Components behind the scenes. You can then call `getTranslations()` anywhere without threading the locale through your component tree. However, reading from `headers()` opts all pages into dynamic rendering by default. The library provides `setRequestLocale` to restore static rendering capabilities, but this requires careful implementation from developers.
 
-The proper solution is `next/root-params`, which will allow reading params deeply from within the component tree. This will enable i18n libraries like `next-intl` to access the locale parameter internally without relying on headers. Once `next/root-params` ships, `next-intl` can integrate it into the library's internals, eliminating the need for workarounds like `setRequestLocale` and making `'use cache'` work seamlessly.
+The proper solution is `next/root-params`, which will allow reading params deeply from within the component tree. This limitation was extensively discussed in the Next.js community as [a missing piece](https://github.com/vercel/next.js/discussions/58862) that `next/root-params` is designed to solve. Once it ships, `next-intl` will be able to access the locale parameter directly without relying on headers, eliminating the need for `setRequestLocale` and making `'use cache'` work seamlessly.
 
 ## The Workaround
 
