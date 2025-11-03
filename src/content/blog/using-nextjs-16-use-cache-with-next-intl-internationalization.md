@@ -13,10 +13,10 @@ tags:
   - Caching
   - i18n
   - use cache
-description: Next.js 16 introduces component-level caching with the 'use cache' directive. In this blog post, I'll show you how to enable 'use cache' in internationalized apps by passing locale explicitly instead of reading from headers.
+description: Next.js 16 introduces component-level caching with the 'use cache' directive, but it doesn't work seamlessly with next-intl yet. In this blog post, I'll explore why the incompatibility exists and show you a practical workaround.
 ---
 
-Next.js 16 introduces the `'use cache'` directive, but it doesn't work seamlessly with `next-intl` yet. In this blog post, I'll show you how to implement `'use cache'` in internationalized Next.js apps by passing the locale explicitly as a prop. We'll explore why the incompatibility exists, the upcoming solution with `next/root-params`, and a practical workaround you can use today.
+Next.js 16 introduces the `'use cache'` directive, but it doesn't work seamlessly with `next-intl` yet. In this blog post, I'll explore why the incompatibility exists, what the upcoming solution with `next/root-params` will look like, and show you a practical workaround you can use today.
 
 ## Table of contents
 
@@ -76,7 +76,7 @@ async function ProductList() {
 
 This will error because `getTranslations()` reads from `headers()` internally, and cached components cannot depend on request-time information that varies per request.
 
-## Why next-intl Uses Headers
+## Why next-intl Uses headers()
 
 Most developers use i18n libraries like [`next-intl`](https://next-intl.dev/) (maintained by [Jan Amann](https://x.com/jamannnnnn)) to handle internationalization in Next.js. Apps that use internationalization typically implement a top-level dynamic segment like `[locale]`. If you want to access the locale in deeply nested components, which you typically do, you need to read the segment value in a page or layout and manually pass it down through your component tree. This becomes cumbersome when many components need the locale argument.
 
