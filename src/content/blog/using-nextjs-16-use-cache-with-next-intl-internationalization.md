@@ -10,7 +10,6 @@ tags:
   - React Server Components
   - next-intl
   - Performance
-  - Caching
   - i18n
   - use cache
 description: Next.js 16 introduces component-level caching with the 'use cache' directive, but it doesn't work seamlessly with next-intl yet. In this blog post, I'll explore why the incompatibility exists and show you a practical workaround.
