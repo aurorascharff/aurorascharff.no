@@ -113,7 +113,9 @@ export default async function LocaleLayout({children, params}: Props) {
 }
 ```
 
-If you have a component that doesn't use `'use cache'`, you can keep using `getTranslations()` normally:
+This setup resolves errors from `cacheComponents` about needing Suspense boundaries around your locale parameter and enabled static rendering.
+
+Now you can start adding `'use cache'` to your components. If you have a component that doesn't need `'use cache'`, you can keep using `getTranslations()` normally:
 
 ```tsx
 async function DynamicComponent() {
