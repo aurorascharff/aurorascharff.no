@@ -94,7 +94,11 @@ export default (post: CollectionEntry<"blog">) => {
             </span>
 
             <span style={{ color: "#6b7280" }}>
-              {post.data.pubDatetime.toLocaleDateString()}
+              {post.data.pubDatetime.toLocaleDateString("en-GB", {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+              })}
             </span>
           </div>
         </div>
