@@ -167,7 +167,7 @@ That should be all you need to set up Serwist in your Next.js project! If you're
 
 When working with PWAs, it's nice to be able to test the app locally. However, to test the PWA features, you need to run your Next.js app over HTTPS.
 
-**Important Note for Serwist Users**: Serwist does not currently support Turbopack (Next.js 16's default dev bundler). To test PWA functionality in development, you need to use webpack by adding the `--webpack` flag:
+**Important Note for Serwist Users**: Serwist does not currently support Turbopack (Next.js 16's default dev bundler) - see [GitHub issue #54](https://github.com/serwist/serwist/issues/54). To test PWA functionality in development, you need to use webpack by adding the `--webpack` flag:
 
 ```bash
 next dev --experimental-https --webpack
@@ -183,6 +183,12 @@ You can create a command in your `package.json` to easily run it:
     ...
   }
 }
+```
+
+**Note**: To suppress the Turbopack warning in development, add this to your `.env` file:
+
+```env
+SERWIST_SUPPRESS_TURBOPACK_WARNING=1
 ```
 
 The [Next.js documentation](https://nextjs.org/docs/app/api-reference/cli/next#using-https-during-development) contains more information on running with HTTPS, and [this article on PWAs from the Next.js docs](https://nextjs.org/docs/app/building-your-application/configuring/progressive-web-apps#7-testing-locally) explains why HTTPS is needed and includes important security considerations.
