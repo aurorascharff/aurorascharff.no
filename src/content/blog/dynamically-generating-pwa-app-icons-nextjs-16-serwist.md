@@ -102,7 +102,9 @@ This file will be compiled to `public/sw.js` during the build process.
 
 ### Creating the Manifest Route
 
-Instead of using a static `public/manifest.json` file, we'll create a dynamic API route that generates the manifest. Create an API route in your `app/` directory:
+Instead of using a static `public/manifest.json` file, we'll create a dynamic API route that generates the manifest. This allows us to access environment variables and customize the manifest based on the runtime environment, which is what we need for generating different app icons for development, staging, and production.
+
+Create an API route in your `app/` directory:
 
 ```ts
 // app/api/manifest/route.ts (or app/[locale]/api/manifest/route.ts if using i18n)
@@ -192,12 +194,6 @@ SERWIST_SUPPRESS_TURBOPACK_WARNING=1
 ```
 
 The [Next.js documentation](https://nextjs.org/docs/app/api-reference/cli/next#using-https-during-development) contains more information on running with HTTPS, and [this article on PWAs from the Next.js docs](https://nextjs.org/docs/app/building-your-application/configuring/progressive-web-apps#7-testing-locally) explains why HTTPS is needed and includes important security considerations.
-
-Now, let's move on to dynamically generating the app icons based on the environment.
-
-## Dynamically Generating the Manifest with an API Route
-
-We need to access the environment variables to determine which app icon to use. We've already created the API route for the manifest, so now we just need to make it dynamic.
 
 ## Generating App Icons Based on the Environment
 
