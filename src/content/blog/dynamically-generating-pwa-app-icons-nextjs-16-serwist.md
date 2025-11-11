@@ -20,7 +20,7 @@ Progressive Web Apps (PWAs) are a great way to enhance the user experience of yo
 
 I recently had the task of differentiating between different environments in the PWA app icons for a Next.js 16 project. The app icons needed to be dynamically generated based on the environment. I wanted to share how I accomplished this using the Next.js App Router and [Serwist](https://serwist.pages.dev/).
 
-**Update (Nov 2025)**: This article has been updated to use Serwist instead of next-pwa, as next-pwa is no longer compatible with Next.js 16.
+**Update (Nov 2025)**: This article has been updated to use Serwist instead of next-pwa. Turbopack is now the default bundler in Next.js 16, and next-pwa does not support Turbopack. You can still use next-pwa with Next.js 16 by running your dev/build commands with the `--webpack` flag to opt out of Turbopack.
 
 ## Table of contents
 
@@ -32,7 +32,7 @@ We are also offering the application as a PWA, so we need to generate the app ic
 
 ## Setting Up Serwist
 
-The library we will be using to set up the PWA is [Serwist](https://serwist.pages.dev/) via `@serwist/next`. Serwist is a modern, actively maintained service worker library that works with Next.js 16 and beyond. It's the recommended replacement for next-pwa, which is no longer compatible with newer Next.js versions.
+The library we will be using to set up the PWA is [Serwist](https://serwist.pages.dev/) via `@serwist/next`. Serwist is a modern, actively maintained service worker library for Next.js.
 
 To get started, we need to set it up in our Next.js project. These steps follow a pretty standard process, but I'll walk you through them here.
 
