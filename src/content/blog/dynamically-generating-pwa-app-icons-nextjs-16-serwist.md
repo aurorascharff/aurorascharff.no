@@ -18,7 +18,7 @@ description: Learn how to dynamically generate PWA app icons in Next.js 16 using
 
 Progressive Web Apps (PWAs) are a great way to enhance the user experience of your web application. They provide a more app-like experience by allowing users to install the app on their device and access it offline.
 
-I recently had the task of differentiating between different environments in the PWA app icons for a Next.js 16 project. The app icons needed to be dynamically generated based on the environment. I wanted to share how I accomplished this using the Next.js App Router and [Serwist](https://serwist.pages.dev/).
+I recently had the task of differentiating between different environments in the PWA app icons for a Next.js App Router project. The app icons needed to be dynamically generated based on the environment. I wanted to share how I accomplished this using Next.js 16 and [Serwist](https://serwist.pages.dev/).
 
 **Update (Nov 2025)**: This article has been updated to use Serwist instead of next-pwa. Next.js 16 made Turbopack the default bundler, but next-pwa requires webpack to build. This means when using next-pwa with Next.js 16, you must use the `--webpack` flag for all commands. Serwist, on the other hand, works in production with Turbopack, and only needs `--webpack` for local PWA testing in development (where it's typically disabled anyway).
 
