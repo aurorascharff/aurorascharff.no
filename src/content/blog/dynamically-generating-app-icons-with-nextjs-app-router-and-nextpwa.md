@@ -1,23 +1,26 @@
 ---
 author: Aurora Scharff
 pubDatetime: 2024-11-08T08:00:00Z
+modDatetime: 2025-11-11T08:00:00Z
 title: Dynamically Generating PWA App Icons in the Next.js App Router
-slug: dynamically-generating-app-icons-with-nextjs-app-router-and-nextpwa
+slug: dynamically-generating-app-icons-with-nextjs-app-router-and-serwist
 featured: false
 draft: false
 tags:
   - React Server Components
   - Next.js
   - App Router
-  - next-pwa
+  - Serwist
   - Progressive Web Apps
   - PWA
-description: Progressive Web Apps (PWAs) are a great way to enhance the user experience of your web application. In this blog post, I will show you how to dynamically generate PWA app icons in the Next.js App Router using next-pwa.
+description: Progressive Web Apps (PWAs) are a great way to enhance the user experience of your web application. In this blog post, I will show you how to dynamically generate PWA app icons in the Next.js App Router using Serwist.
 ---
 
 Progressive Web Apps (PWAs) are a great way to enhance the user experience of your web application. They provide a more app-like experience by allowing users to install the app on their device and access it offline.
 
-I recently had the task of differentiating between different environments in the PWA app icons for a Next.js App Router project. The app icons needed to be dynamically generated based on the environment. I wanted to share how I accomplished this using the Next.js App Router and [next-pwa](https://github.com/shadowwalker/next-pwa).
+I recently had the task of differentiating between different environments in the PWA app icons for a Next.js App Router project. The app icons needed to be dynamically generated based on the environment. I wanted to share how I accomplished this using the Next.js App Router and [Serwist](https://serwist.pages.dev/).
+
+**Update (Nov 2025)**: This article has been updated to use Serwist instead of next-pwa, as next-pwa is no longer compatible with Next.js 16.
 
 ## Table of contents
 
@@ -27,138 +30,87 @@ In the project I am working on, we have different environments for development, 
 
 We are also offering the application as a PWA, so we need to generate the app icons dynamically based on the environment to match the logo, since this is the icon that will be displayed on the phone's home screen.
 
-## Setting Up next-pwa
+## Setting Up Serwist
 
-The library we will be using to set it up the PWA is [next-pwa](https://github.com/shadowwalker/next-pwa). Next-pwa is a plugin for Next.js that allows you to add PWA support to your app with ease.
+The library we will be using to set up the PWA is [Serwist](https://serwist.pages.dev/) via `@serwist/next`. Serwist is a modern, actively maintained service worker library that works with Next.js 16 and beyond. It's the recommended replacement for next-pwa, which is no longer compatible with newer Next.js versions.
 
 To get started, we need to set it up in our Next.js project. These steps follow a pretty standard process, but I'll walk you through them here.
 
 ### Installation
 
-First, install next-pwa:
+First, install the required packages:
 
 ```bash
-npm install next-pwa
+npm install @serwist/next serwist
+npm install -D @serwist/cli
 ```
 
 ### Configuration
 
-Next, add the next-pwa configuration to your `next.config.ts` (or `next.config.js`) file:
+Next, add the Serwist configuration to your `next.config.ts` (or `next.config.js`) file:
 
 ```ts
 // next.config.ts
+import withSerwistInit from '@serwist/next';
 import type { NextConfig } from 'next';
 
-const withPWA = require('next-pwa')({
-  dest: 'public',
+const withSerwist = withSerwistInit({
+  swSrc: 'src/sw.ts',
+  swDest: 'public/sw.js',
   disable: process.env.NODE_ENV === 'development',
-  register: true,
-  skipWaiting: true,
 });
 
 const nextConfig: NextConfig = {
   // Your Next.js config
 };
 
-module.exports = withPWA(nextConfig);
+export default withSerwist(nextConfig);
 ```
 
-Configure this to your app's needs, such as the `dest`, `disable`, `register`, and `skipWaiting` properties. Refer to the [next-pwa documentation](https://github.com/shadowwalker/next-pwa).
+Configure this to your app's needs, such as the `swSrc`, `swDest`, and `disable` properties. Refer to the [Serwist documentation](https://serwist.pages.dev/).
 
-### Creating the manifest.json
+### Creating the Service Worker Source File
 
-The next step is to create the PWA manifest to in a `public/manifest.json` file:
-
-```json
-{
-  "name": "My App",
-  "short_name": "My App",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#000000",
-  "icons": [
-    {
-      "src": "/images/pwa/192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "/images/pwa/512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
-  ]
-}
-```
-
-Remember to configure this to your app's needs, such as the `name`, `short_name`, `start_url`, `background_color`, `theme_color`, and `icons` and `screenshots` properties.
-
-### Linking the manifest.json
-
-Lastly, link the `manifest.json` file to your app by adding it to the metadata of the root layout component:
-
-```tsx
-// app/layout.tsx
-
-export const metadata: Metadata = {
-    description: 'The best app ever',
-    manifest: '/manifest.json',
-    title: `My App`,
-};
-
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="en">
-      <body className={inter.className}>{children}</body>
-    </html>
-  );
-}
-```
-
-That should be all you need to set up next-pwa in your Next.js project! If you're having trouble, refer to the docs or other resources for more information. There's a lot of tutorials and guides out there.
-
-## Testing Locally with HTTPS
-
-When working with PWAs, it's nice to be able to test the app locally. However, to test the PWA features, you need to run your the Next.js app over HTTPS.
-
-The [Next.js documentation](https://nextjs.org/docs/app/api-reference/cli/next#using-https-during-development) contains information on how to run with HTTPS.
-
-In addition, [this article on PWAs from the Next.js docs](https://nextjs.org/docs/app/building-your-application/configuring/progressive-web-apps#7-testing-locally) explains why and how to run with HTTPs when working with PWAs. It also contains some important security aspects to consider, and other useful information.
-
-Basically, you can run your app with HTTPS with the following command:
-
-```bash
-next dev --experimental-https
-```
-
-You can also create a command in your `package.json` to easily run it again in the future:
-
-```json
-{
-  "scripts": {
-    "dev": "next dev",
-    "dev.https": "next dev --experimental-https",
-    ...
-  }
-}
-```
-
-Now, let's move on to dynamically generating the app icons based on the environment.
-
-## Dynamically Generating the manifest.json with an API route
-
-We need to access the environment variables to determine which app icon to use. A way to do this in Next.js is by creating an API route. This API route can read an environment variable and return the appropriate JSON response for the manifest.
-
-For the App Router, we can create an API route in the `app/api/` directory with a folder containing a `route.ts` file. Let's create a `manifest/` directory with a `route.ts` file:
+Create a service worker source file at `src/sw.ts`:
 
 ```ts
-// app/api/manifest/route.ts
+// src/sw.ts
+import { defaultCache } from '@serwist/next/worker';
+import { Serwist } from 'serwist';
+import type { PrecacheEntry, SerwistGlobalConfig } from 'serwist';
+
+declare global {
+  interface WorkerGlobalScope extends SerwistGlobalConfig {
+    __SW_MANIFEST: (PrecacheEntry | string)[] | undefined;
+  }
+}
+
+declare const self: ServiceWorkerGlobalScope;
+
+const serwist = new Serwist({
+  precacheEntries: self.__SW_MANIFEST,
+  skipWaiting: true,
+  clientsClaim: true,
+  navigationPreload: true,
+  runtimeCaching: defaultCache,
+});
+
+serwist.addEventListeners();
+```
+
+This file will be compiled to `public/sw.js` during the build process.
+
+### Creating the Manifest Route
+
+Instead of using a static `public/manifest.json` file, we'll create a dynamic API route that generates the manifest. Create an API route in your `app/` directory:
+
+```ts
+// app/api/manifest/route.ts (or app/[locale]/api/manifest/route.ts if using i18n)
 
 export async function GET() {
   const manifest = {
     name: 'My App',
-    short_name: `My App`,
+    short_name: 'My App',
     start_url: '/',
     display: 'standalone',
     background_color: '#ffffff',
@@ -185,7 +137,11 @@ export async function GET() {
 }
 ```
 
-Then, we can replace the link to the `manifest.json` file with this API route that fetches the manifest dynamically:
+Remember to configure this to your app's needs, such as the `name`, `short_name`, `start_url`, `background_color`, `theme_color`, `icons` and `screenshots` properties.
+
+### Linking the Manifest
+
+Lastly, link the manifest route to your app by adding it to the metadata of the root layout component:
 
 ```tsx
 // app/layout.tsx
@@ -205,71 +161,37 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 }
 ```
 
-And we can just delete the original `public/manifest.json` file.
+That should be all you need to set up Serwist in your Next.js project! If you're having trouble, refer to the [Serwist documentation](https://serwist.pages.dev/) for more information.
 
-## Dynamically Generating the webmanifest with manifest.ts
+## Testing Locally with HTTPS
 
-*NB! Currently verifying that this approach works together with next-pwa. Will update this section soon. If you don't need next-pwa, you can definitely use this approach.*
+When working with PWAs, it's nice to be able to test the app locally. However, to test the PWA features, you need to run your Next.js app over HTTPS.
 
-Another way to generate the `manifest.json` dynamically is by creating a `manifest.ts` file in the `app/` directory. This file can read the environment variable and return the appropriate manifest object, the same was as the API route could.
+**Important Note for Serwist Users**: Serwist does not currently support Turbopack (Next.js 16's default dev bundler). To test PWA functionality in development, you need to use webpack by adding the `--webpack` flag:
 
-I discovered this in the [Next.js docs](https://nextjs.org/docs/app/api-reference/file-conventions/metadata/manifest) after writing the previous section.
+```bash
+next dev --experimental-https --webpack
+```
 
-We create a `manifest.ts` file in the `app/` directory:
+You can create a command in your `package.json` to easily run it:
 
-```ts
-// app/manifest.ts
-import type { MetadataRoute } from 'next';
-
-export default function manifest(): MetadataRoute.Manifest {
-  return {
-    name: 'My App',
-    short_name: `My App`,
-    start_url: '/',
-    display: 'standalone',
-    background_color: '#ffffff',
-    theme_color: '#000000',
-    icons: [
-      {
-        src: '/images/pwa/192.png',
-        sizes: '192x192',
-        type: 'image/png',
-      },
-      {
-        src: '/images/pwa/512.png',
-        sizes: '512x512',
-        type: 'image/png',
-      },
-    ],
-  };
+```json
+{
+  "scripts": {
+    "dev": "next dev",
+    "dev.https": "next dev --experimental-https --webpack",
+    ...
+  }
 }
 ```
 
-This generates a `manifest.webmanifest` file that is added to the head of the HTML document. It can also access the environment variables, so we can decide which icon to use based on the environment.
+The [Next.js documentation](https://nextjs.org/docs/app/api-reference/cli/next#using-https-during-development) contains more information on running with HTTPS, and [this article on PWAs from the Next.js docs](https://nextjs.org/docs/app/building-your-application/configuring/progressive-web-apps#7-testing-locally) explains why HTTPS is needed and includes important security considerations.
 
-*TODO*: try linking it to the `app/layout.tsx` file and see if it works with next-pwa.
+Now, let's move on to dynamically generating the app icons based on the environment.
 
-<!-- This generates a `manifest.webmanifest` file that we can link to in the `app/layout.tsx` file:
+## Dynamically Generating the Manifest with an API Route
 
-```tsx
-// app/layout.tsx
-
-export const metadata: Metadata = {
-    description: 'The best app ever',
-    manifest: '/manifest.webmanifest',
-    title: `My App`,
-};
-
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="en">
-      <body className={inter.className}>{children}</body>
-    </html>
-  );
-}
-```
-
-And we can also delete the API route. -->
+We need to access the environment variables to determine which app icon to use. We've already created the API route for the manifest, so now we just need to make it dynamic.
 
 ## Generating App Icons Based on the Environment
 
@@ -369,43 +291,45 @@ Now, when you access the app on each environment URL and download it, the app ic
 
 Beautiful!
 
-## Caching the manifest.json
+## Caching the Manifest
 
-To avoid re-fetching the manifest.json on every page load, you define caching behavior for it in the `next.config.ts` (or `next.config.js`) file:
+To avoid re-fetching the manifest on every page load, you can define caching behavior for it in the `next.config.ts` (or `next.config.js`) file:
 
 ```ts
 // next.config.ts
+import withSerwistInit from '@serwist/next';
 import type { NextConfig } from 'next';
 
-const withPWA = require('next-pwa')({
-  dest: 'public',
+const withSerwist = withSerwistInit({
+  swSrc: 'src/sw.ts',
+  swDest: 'public/sw.js',
   disable: process.env.NODE_ENV === 'development',
-  register: true,
-  skipWaiting: true,
 });
 
 const nextConfig: NextConfig = {
-  // Your Next.js config
   headers: async () => {
-  return [
-    {
-      // Cache the manifest file (default: public, max-age=0, must-revalidate)
-      headers: [
-        {
-          key: 'cache-control',
-          value: 'public, max-age=3600',
-        },
-      ],
-      source: '/no/api/manifest',
-    }
-  ];
+    return [
+      {
+        // Cache the manifest file
+        headers: [
+          {
+            key: 'cache-control',
+            value: 'public, max-age=3600',
+          },
+        ],
+        source: '/api/manifest',
+      },
+    ];
+  },
 };
 
-module.exports = withPWA(nextConfig);
+export default withSerwist(nextConfig);
 ```
 
 ## Conclusion
 
-In this blog post, I showed you how to dynamically generate PWA app icons in the Next.js App Router with API routes and next-pwa. This approach allows you to differentiate between different environments by changing the app icon, making it easier for both you and users to identify which environment they are in.
+In this blog post, I showed you how to dynamically generate PWA app icons in the Next.js App Router with API routes and Serwist. This approach allows you to differentiate between different environments by changing the app icon, making it easier for both you and users to identify which environment they are in.
+
+Serwist is the modern, actively maintained solution for PWAs in Next.js and works great with Next.js 16. While it doesn't support Turbopack yet, you can easily test PWA functionality in development by using webpack with the `--webpack` flag.
 
 Please let me know if you have any questions or comments, and follow me on [X](https://x.com/aurorascharff) for more updates. Happy coding! 🚀
