@@ -12,7 +12,7 @@ tags:
   - Performance
   - i18n
   - use cache
-description: Next.js 16 introduces component-level caching with the 'use cache' directive, but it doesn't work seamlessly with next-intl yet. In this blog post, I'll explore why the incompatibility exists and show you a practical workaround.
+description: Next.js 16 introduces component-level caching with the 'use cache' directive, but it doesn't work seamlessly with next-intl yet. Learn why and discover a practical workaround.
 ---
 
 Next.js 16 introduces the `'use cache'` directive, but it doesn't work seamlessly with `next-intl` yet. In this blog post, I'll explore why the incompatibility exists, what the upcoming solution with `next/root-params` will look like, and show you a practical workaround you can use today.

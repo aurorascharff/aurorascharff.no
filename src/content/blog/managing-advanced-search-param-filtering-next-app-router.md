@@ -3,7 +3,7 @@ author: Aurora Scharff
 pubDatetime: 2024-10-24T10:30:00Z
 title: Managing Advanced Search Param Filtering in the Next.js App Router
 slug: managing-advanced-search-param-filtering-next-app-router
-featured: false
+featured: true
 draft: false
 tags:
   - React Server Components
@@ -14,7 +14,7 @@ tags:
   - useOptimistic
   - Search Params
   - Filtering
-description: When working with React Server Components and other new features and patterns in the Next.js App Router, it can be hard to manage advanced search param filtering. In this blog post, we will explore how to implement advanced search param filtering in the Next.js App Router, utilizing React 19 features like useOptimistic and the library nuqs.
+description: Learn how to implement advanced search param filtering in the Next.js App Router, utilizing React 19 features like useOptimistic and the library nuqs.
 ---
 
 Let's say we want to have some kind of advanced filtering functionality in our Next.js app. For example, we might have a list of tasks and we want to filter them by category and name. We could also be wanting pagination, sorting, and other features.

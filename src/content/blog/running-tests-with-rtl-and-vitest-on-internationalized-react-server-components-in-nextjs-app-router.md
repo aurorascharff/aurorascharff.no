@@ -11,7 +11,7 @@ tags:
   - Testing
   - App Router
   - i18n
-description: Considering the relatively new React Server Components (RSC) and Next.js App Router, there is not a lot of documentation on how to test them. In this blog post, I'll explain a method I found to work for running tests with Vitest and RTL (React Testing Library) on React Server Components that utilizes internationalization (i18n) via the next-international package.
+description: Learn a method for running tests with Vitest and RTL (React Testing Library) on React Server Components that utilizes internationalization (i18n) via the next-international package.
 ---
 
 Testing is a crucial part of any software development process, ensuring that your code functions as expected and maintains its integrity as your application evolves. Considering the relatively new React Server Components (RSC) and Next.js App Router, there is not a lot of documentation on how to test them. In this blog post, I'll explain a method I found to work for running tests with Vitest and RTL (React Testing Library) on React Server Components that utilizes internationalization (i18n) via the next-international package.

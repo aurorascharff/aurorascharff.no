@@ -3,7 +3,7 @@ author: Aurora Scharff
 pubDatetime: 2025-02-25T15:22:00Z
 title: Avoiding Server Component Waterfall Fetching with React 19 cache()
 slug: avoiding-server-component-waterfall-fetching-with-react-19-cache
-featured: true
+featured: false
 draft: false
 tags:
   - React Server Components
@@ -12,7 +12,7 @@ tags:
   - React 19
   - cache
   - performance
-description: In this blog post, I will show you how to use the React 19 cache() API in the Next.js App to optimize performance and avoid fetch waterfalls when using React Server Components.
+description: Learn how to use the React 19 cache() API in the Next.js App Router to optimize performance and avoid fetch waterfalls when using React Server Components.
 ---
 
 The `cache()` API is a new feature released in React 19. In this blog post, we will explore it in the Next.js App Router, and see how it can be used to reduce data coupling and preload data, optimizing performance and avoiding waterfall fetching when using React Server Components.

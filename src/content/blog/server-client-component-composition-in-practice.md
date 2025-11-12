@@ -13,7 +13,7 @@ tags:
   - Performance
   - Composition
   - Suspense
-description: In this blog post, I will show you how to compose client and server components effectively in React. We will explore patterns for keeping responsibilities clear, optimizing performance, and creating reusable components.
+description: Learn how to compose client and server components effectively in React. Explore patterns for keeping responsibilities clear, optimizing performance, and creating reusable components.
 ---
 
 React Server Components offer significant benefits by keeping data fetching on the server and reducing client-side JavaScript. However, many developers accidentally lose these benefits by converting server components into client components just to add simple interactions like dismiss buttons or animations.

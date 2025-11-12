@@ -14,7 +14,7 @@ tags:
   - Progressive Enhancement
   - Server Actions
   - Server Functions
-description: With React 19 RC announced, the `useActionState` hook is a powerful tool for creating a state based on the result of an action, typically useful with form submissions. However, there are unclear usage patterns and some gotchas that can make it hard to work with. In this blog post, we'll create a validated form using the hook, and we'll see how we can handle form resets and errors with it.
+description: The React 19 `useActionState` hook is a powerful tool for creating a state based on the result of an action, typically useful with form submissions. Learn how to create a validated form using the hook, and how to handle form resets and errors with it.
 ---
 
 The React 19 `useActionState` hook is a powerful tool for creating a component state based on the result of an action, typically useful with form submissions. However, there are unclear usage patterns and some gotchas that can make it hard to work with. In this blog post, we'll create a validated form using the hook, and we'll see how we can handle form resets and errors with it.

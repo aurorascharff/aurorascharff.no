@@ -11,7 +11,7 @@ tags:
   - App Router
   - useOptimistic
   - Server Functions
-description: The React Canary (soon to be React 19) hook useOptimistic is a powerful tool for building fast and responsive UIs. It allows you to update the UI optimistically while waiting for the server to respond. In this blog post, I'll show you how to use useOptimistic across the component tree in Next.js.
+description: The React 19 hook useOptimistic is a powerful tool for building fast and responsive UIs. Learn how to use useOptimistic across the component tree in Next.js with React Context.
 ---
 
 The React Canary (soon to be React 19) hook `useOptimistic()` is a powerful tool for building fast and responsive UIs. It allows you to update the UI optimistically while waiting for the server to respond.
