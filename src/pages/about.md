@@ -15,6 +15,6 @@ In addition to my regular work, I offer consulting services to help businesses w
 
 If you have any questions or inquiries, feel free to reach out to me on X or LinkedIn.
 
-<div className="bg-[#FCE2DF]">
-  <img src="/assets/main.jpeg" class="sm:w-1/2 mx-auto" alt="coding dev illustration">
+<div className="bg-[#F8B9C1]">
+  <img src="/assets/main.JPG" class="sm:w-1/2 mx-auto" alt="coding dev illustration">
 </div>
