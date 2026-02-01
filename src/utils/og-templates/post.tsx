@@ -4,8 +4,7 @@ export default (post: CollectionEntry<"blog">) => {
   return (
     <div
       style={{
-        background:
-          "linear-gradient(135deg, rgb(250, 252, 252) 0%, rgb(241, 186, 212) 100%)",
+        background: "rgb(25, 22, 28)",
         width: "100%",
         height: "100%",
         display: "flex",
@@ -15,25 +14,8 @@ export default (post: CollectionEntry<"blog">) => {
     >
       <div
         style={{
-          position: "absolute",
-          top: "-1px",
-          right: "-1px",
-          border: "4px solid rgb(227, 169, 198)",
-          background: "rgba(234, 206, 219, 0.3)",
-          opacity: "0.9",
-          borderRadius: "4px",
-          display: "flex",
-          justifyContent: "center",
-          margin: "2.5rem",
-          width: "88%",
-          height: "80%",
-        }}
-      />
-
-      <div
-        style={{
-          border: "4px solid rgb(227, 169, 198)",
-          background: "rgba(250, 252, 252, 0.95)",
+          border: "4px solid rgb(235, 155, 185)",
+          background: "rgb(25, 22, 28)",
           borderRadius: "4px",
           display: "flex",
           justifyContent: "center",
@@ -58,7 +40,7 @@ export default (post: CollectionEntry<"blog">) => {
               fontWeight: "bold",
               maxHeight: "84%",
               overflow: "hidden",
-              color: "rgb(34, 46, 54)",
+              color: "rgb(252, 248, 250)",
               margin: 0,
             }}
           >
@@ -73,7 +55,7 @@ export default (post: CollectionEntry<"blog">) => {
               fontSize: 28,
             }}
           >
-            <span style={{ color: "#6b7280" }}>
+            <span style={{ color: "rgb(180, 170, 175)" }}>
               by{" "}
               <span
                 style={{
@@ -86,14 +68,14 @@ export default (post: CollectionEntry<"blog">) => {
                 style={{
                   overflow: "hidden",
                   fontWeight: "bold",
-                  color: "rgb(211, 0, 106)",
+                  color: "rgb(235, 155, 185)",
                 }}
               >
                 {post.data.author}
               </span>
             </span>
 
-            <span style={{ color: "#6b7280" }}>
+            <span style={{ color: "rgb(180, 170, 175)" }}>
               {post.data.pubDatetime.toLocaleDateString("en-GB", {
                 year: "numeric",
                 month: "short",

@@ -5,7 +5,7 @@ export default () => {
   return (
     <div
       style={{
-        background: "linear-gradient(135deg, #fce7f3 0%, #f3e8ff 100%)",
+        background: "rgb(25, 22, 28)",
         width: "100%",
         height: "100%",
         display: "flex",
@@ -15,25 +15,8 @@ export default () => {
     >
       <div
         style={{
-          position: "absolute",
-          top: "-1px",
-          right: "-1px",
-          border: "4px solid #ec4899",
-          background: "rgba(236, 72, 153, 0.1)",
-          opacity: "0.9",
-          borderRadius: "4px",
-          display: "flex",
-          justifyContent: "center",
-          margin: "2.5rem",
-          width: "88%",
-          height: "80%",
-        }}
-      />
-
-      <div
-        style={{
-          border: "4px solid #ec4899",
-          background: "rgba(255, 255, 255, 0.9)",
+          border: "4px solid rgb(235, 155, 185)",
+          background: "rgb(25, 22, 28)",
           borderRadius: "4px",
           display: "flex",
           justifyContent: "center",
@@ -68,9 +51,7 @@ export default () => {
               style={{
                 fontSize: 72,
                 fontWeight: "bold",
-                background: "linear-gradient(45deg, #ec4899, #8b5cf6)",
-                backgroundClip: "text",
-                color: "transparent",
+                color: "rgb(235, 155, 185)",
                 margin: 0,
                 marginBottom: "20px",
               }}
@@ -80,7 +61,7 @@ export default () => {
             <p
               style={{
                 fontSize: 28,
-                color: "#6b7280",
+                color: "rgb(180, 170, 175)",
                 margin: 0,
               }}
             >
@@ -101,7 +82,7 @@ export default () => {
               style={{
                 overflow: "hidden",
                 fontWeight: "bold",
-                color: "#ec4899",
+                color: "rgb(235, 155, 185)",
               }}
             >
               {new URL(SITE.website).hostname}
