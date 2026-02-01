@@ -5,13 +5,13 @@
 @layer base {
   :root,
   html[data-theme="light"] {
-    /* Cool-toned white background contrasts warm pink */
-    --color-fill: 250, 251, 254;
+    /* Warm white background with bold rose accent */
+    --color-fill: 255, 253, 251;
     --color-text-base: 24, 24, 27;
-    --color-accent: 180, 60, 120;
-    --color-card: 241, 243, 248;
-    --color-card-muted: 225, 228, 235;
-    --color-border: 200, 205, 215;
+    --color-accent: 180, 50, 100;
+    --color-card: 250, 248, 246;
+    --color-card-muted: 242, 238, 235;
+    --color-border: 215, 210, 205;
   }
   html[data-theme="dark"] {
     /* Deep plum background with soft pink accent */

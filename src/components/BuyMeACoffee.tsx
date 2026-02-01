@@ -4,7 +4,7 @@ export default function BuyMeACoffee() {
       href="https://www.buymeacoffee.com/aurorascharff"
       target="_blank"
       rel="noopener noreferrer"
-      className="group inline-flex items-center gap-2 rounded-lg border-2 border-skin-accent bg-skin-accent/10 px-4 py-2 font-medium text-skin-accent transition-all duration-200 hover:bg-skin-accent hover:text-skin-inverted"
+      className="group inline-flex items-center gap-2 text-skin-accent decoration-dashed underline-offset-4 hover:underline"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -16,7 +16,7 @@ export default function BuyMeACoffee() {
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="!fill-transparent transition-transform duration-200 group-hover:scale-110"
+        className="!fill-transparent"
       >
         <path d="M17 8h1a4 4 0 1 1 0 8h-1" />
         <path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" />
