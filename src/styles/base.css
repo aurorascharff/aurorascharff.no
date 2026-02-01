@@ -5,20 +5,22 @@
 @layer base {
   :root,
   html[data-theme="light"] {
-    --color-fill: 250, 252, 252;
-    --color-text-base: 34, 46, 54;
-    --color-accent: 211, 0, 106;
-    --color-card: 234, 206, 219;
-    --color-card-muted: 241, 186, 212;
-    --color-border: 227, 169, 198;
+    /* Warm cream background with bold rose accents - high contrast */
+    --color-fill: 255, 252, 253;
+    --color-text-base: 28, 22, 26;
+    --color-accent: 200, 40, 100;
+    --color-card: 255, 240, 245;
+    --color-card-muted: 248, 210, 225;
+    --color-border: 220, 160, 180;
   }
   html[data-theme="dark"] {
-    --color-fill: 53, 54, 64;
-    --color-text-base: 233, 237, 241;
-    --color-accent: 255, 120, 200;
-    --color-card: 75, 76, 89;
-    --color-card-muted: 113, 85, 102;
-    --color-border: 134, 67, 107;
+    /* Rich deep plum background with vibrant rose accents */
+    --color-fill: 25, 22, 28;
+    --color-text-base: 252, 248, 250;
+    --color-accent: 255, 120, 165;
+    --color-card: 45, 38, 48;
+    --color-card-muted: 65, 52, 62;
+    --color-border: 95, 70, 85;
   }
   #sun-svg,
   html[data-theme="dark"] #moon-svg {
@@ -124,7 +126,7 @@
     white-space: pre;
   }
 
-  /* Ensure code blocks have proper padding and borders */
+  /* Code blocks - keep dracula theme background */
   pre {
     @apply rounded-lg border border-skin-line p-4 overflow-x-auto;
   }
@@ -134,14 +136,13 @@
     font-style: normal !important;
   }
 
-  /* Smart CSS filters to adapt dracula theme for light mode */
-  html[data-theme="light"] pre {
-    filter: invert(1) hue-rotate(180deg) brightness(1.2) contrast(0.85) saturate(0.7) sepia(0.1);
+  /* Elegant selection highlighting */
+  ::selection {
+    background: rgba(200, 40, 100, 0.3);
   }
-
-  /* Ensure dark mode uses original colors */
-  html[data-theme="dark"] pre {
-    filter: none;
+  
+  html[data-theme="dark"] ::selection {
+    background: rgba(255, 120, 165, 0.35);
   }
 }
 

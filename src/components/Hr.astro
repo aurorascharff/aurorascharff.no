@@ -8,5 +8,21 @@ const { noPadding = false, ariaHidden = true } = Astro.props;
 ---
 
 <div class={`max-w-3xl mx-auto ${noPadding ? "px-0" : "px-4"}`}>
-  <hr class="border-skin-line" aria-hidden={ariaHidden} />
+  <hr class="hr-line" aria-hidden={ariaHidden} />
 </div>
+
+<style>
+  .hr-line {
+    @apply relative border-skin-line;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgb(var(--color-border)) 15%,
+      rgb(var(--color-accent) / 0.4) 50%,
+      rgb(var(--color-border)) 85%,
+      transparent 100%
+    );
+    border: none;
+    height: 1px;
+  }
+</style>
