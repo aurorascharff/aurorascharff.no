@@ -3,6 +3,8 @@ layout: ../layouts/AboutLayout.astro
 title: "About me"
 ---
 
+<img src="/assets/main.JPG" class="sm:float-right sm:w-1/3 sm:ml-6 mb-4 rounded-lg" alt="Aurora Scharff">
+
 Hey, I'm Aurora Scharff ♡
 
 I'm a Software Engineer from Norway and Microsoft MVP in Web Technologies, skilled in multiple technologies and domains, including React, Next.js, .NET, and Azure.
@@ -14,7 +16,3 @@ I also write React-focused blog content on [certificates.dev/blog](https://certi
 I enjoy solving problems, learning new things, and sharing knowledge through workshops, blog posts, demo apps, and supporting fellow developers. I regularly present at international conferences too.
 
 **Want to work together?** I offer consulting services to help with Next.js and React development. Feel free to reach out on X or LinkedIn!
-
-<div className="bg-skin-fill p-4 rounded-lg">
-  <img src="/assets/main.JPG" class="sm:w-1/2 mx-auto rounded-lg" alt="coding dev illustration">
-</div>
