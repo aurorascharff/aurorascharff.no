@@ -15,6 +15,6 @@ I enjoy solving problems, learning new things, and sharing knowledge through wor
 
 **Want to work together?** I offer consulting services to help with Next.js and React development. Feel free to reach out on X or LinkedIn!
 
-<div className="bg-[#F8B9C1]">
-  <img src="/assets/main.JPG" class="sm:w-1/2 mx-auto" alt="coding dev illustration">
+<div className="bg-skin-fill p-4 rounded-lg">
+  <img src="/assets/main.JPG" class="sm:w-1/2 mx-auto rounded-lg" alt="coding dev illustration">
 </div>
