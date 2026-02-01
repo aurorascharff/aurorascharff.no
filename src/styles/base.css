@@ -5,19 +5,19 @@
 @layer base {
   :root,
   html[data-theme="light"] {
-    /* Warm cream background with bold rose accents - high contrast */
-    --color-fill: 255, 252, 253;
-    --color-text-base: 28, 22, 26;
-    --color-accent: 200, 40, 100;
-    --color-card: 255, 240, 245;
-    --color-card-muted: 248, 210, 225;
-    --color-border: 220, 160, 180;
+    /* Cool-toned white background contrasts warm pink */
+    --color-fill: 250, 251, 254;
+    --color-text-base: 24, 24, 27;
+    --color-accent: 180, 60, 120;
+    --color-card: 241, 243, 248;
+    --color-card-muted: 225, 228, 235;
+    --color-border: 200, 205, 215;
   }
   html[data-theme="dark"] {
-    /* Rich deep plum background with vibrant rose accents */
+    /* Deep plum background with soft pink accent */
     --color-fill: 25, 22, 28;
     --color-text-base: 252, 248, 250;
-    --color-accent: 255, 120, 165;
+    --color-accent: 235, 155, 185;
     --color-card: 45, 38, 48;
     --color-card-muted: 65, 52, 62;
     --color-border: 95, 70, 85;
@@ -129,6 +129,16 @@
   /* Code blocks - keep dracula theme background */
   pre {
     @apply rounded-lg border border-skin-line p-4 overflow-x-auto;
+  }
+
+  /* Smart CSS filters to adapt dracula theme for light mode */
+  html[data-theme="light"] pre {
+    filter: invert(1) hue-rotate(180deg) brightness(1.2) contrast(0.85) saturate(0.7) sepia(0.1);
+  }
+
+  /* Ensure dark mode uses original colors */
+  html[data-theme="dark"] pre {
+    filter: none;
   }
 
   /* Remove cursive/italic fonts from code blocks */
