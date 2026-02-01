@@ -4,7 +4,7 @@ export default (post: CollectionEntry<"blog">) => {
   return (
     <div
       style={{
-        background: "rgb(25, 22, 28)",
+        background: "rgb(23, 23, 26)",
         width: "100%",
         height: "100%",
         display: "flex",
@@ -15,7 +15,7 @@ export default (post: CollectionEntry<"blog">) => {
       <div
         style={{
           border: "4px solid rgb(235, 155, 185)",
-          background: "rgb(25, 22, 28)",
+          background: "rgb(23, 23, 26)",
           borderRadius: "4px",
           display: "flex",
           justifyContent: "center",
@@ -40,7 +40,7 @@ export default (post: CollectionEntry<"blog">) => {
               fontWeight: "bold",
               maxHeight: "84%",
               overflow: "hidden",
-              color: "rgb(252, 248, 250)",
+              color: "rgb(250, 250, 252)",
               margin: 0,
             }}
           >
@@ -55,7 +55,7 @@ export default (post: CollectionEntry<"blog">) => {
               fontSize: 28,
             }}
           >
-            <span style={{ color: "rgb(180, 170, 175)" }}>
+            <span style={{ color: "rgb(160, 160, 165)" }}>
               by{" "}
               <span
                 style={{
@@ -75,7 +75,7 @@ export default (post: CollectionEntry<"blog">) => {
               </span>
             </span>
 
-            <span style={{ color: "rgb(180, 170, 175)" }}>
+            <span style={{ color: "rgb(160, 160, 165)" }}>
               {post.data.pubDatetime.toLocaleDateString("en-GB", {
                 year: "numeric",
                 month: "short",

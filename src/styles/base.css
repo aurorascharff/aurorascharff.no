@@ -14,13 +14,13 @@
     --color-border: 215, 210, 205;
   }
   html[data-theme="dark"] {
-    /* Deep plum background with soft pink accent */
-    --color-fill: 25, 22, 28;
-    --color-text-base: 252, 248, 250;
+    /* Neutral dark background with soft pink accent */
+    --color-fill: 23, 23, 26;
+    --color-text-base: 250, 250, 252;
     --color-accent: 235, 155, 185;
-    --color-card: 45, 38, 48;
-    --color-card-muted: 65, 52, 62;
-    --color-border: 95, 70, 85;
+    --color-card: 35, 35, 40;
+    --color-card-muted: 50, 50, 56;
+    --color-border: 75, 75, 82;
   }
   #sun-svg,
   html[data-theme="dark"] #moon-svg {

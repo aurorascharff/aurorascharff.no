@@ -5,7 +5,7 @@ export default () => {
   return (
     <div
       style={{
-        background: "rgb(25, 22, 28)",
+        background: "rgb(23, 23, 26)",
         width: "100%",
         height: "100%",
         display: "flex",
@@ -16,7 +16,7 @@ export default () => {
       <div
         style={{
           border: "4px solid rgb(235, 155, 185)",
-          background: "rgb(25, 22, 28)",
+          background: "rgb(23, 23, 26)",
           borderRadius: "4px",
           display: "flex",
           justifyContent: "center",
@@ -61,7 +61,7 @@ export default () => {
             <p
               style={{
                 fontSize: 28,
-                color: "rgb(180, 170, 175)",
+                color: "rgb(160, 160, 165)",
                 margin: 0,
               }}
             >
