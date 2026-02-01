@@ -3,17 +3,17 @@ layout: ../layouts/AboutLayout.astro
 title: "About me"
 ---
 
-Hello, my name is Aurora Scharff. I'm a Software Engineer from Norway and Microsoft MVP in Web Technologies, skilled in multiple technologies and domains such as React, Next.js, .NET, and Azure.
+Hey, I'm Aurora Scharff ♡
 
-Currently, I serve as a consultant at Crayon Consulting, while also contributing as React Certification Lead at certificates.dev. I focus on web development with extensive experience in React and Next.js, including active use of React Server Components.
+I'm a Software Engineer from Norway and Microsoft MVP in Web Technologies, skilled in multiple technologies and domains, including React, Next.js, .NET, and Azure.
 
-I also write React-focused blog content on [certificates.dev](https://certificates.dev/blog?tech=react), covering modern React patterns and best practices.
+I work as a consultant at [Crayon Consulting](https://crayonconsulting.no) and I'm the React Certification Lead at [certificates.dev](https://certificates.dev). My focus is web development with extensive experience in React and Next.js, including active use of React Server Components.
 
-I enjoy solving problems, learning new things, and sharing knowledge through workshops, technical blog posts, social media, demo applications, and supporting fellow developers. I also regularly present internationally at recognized conferences.
+I also write React-focused blog content on [certificates.dev/blog](https://certificates.dev/blog?tech=react), covering modern React patterns and best practices.
 
-In addition to my regular work, I offer consulting services to help businesses with their Next.js and React development.
+I enjoy solving problems, learning new things, and sharing knowledge through workshops, blog posts, demo apps, and supporting fellow developers. I regularly present at international conferences too.
 
-If you have any questions or inquiries, feel free to reach out to me on X or LinkedIn.
+**Want to work together?** I offer consulting services to help with Next.js and React development. Feel free to reach out on X or LinkedIn!
 
 <div className="bg-[#F8B9C1]">
   <img src="/assets/main.JPG" class="sm:w-1/2 mx-auto" alt="coding dev illustration">
