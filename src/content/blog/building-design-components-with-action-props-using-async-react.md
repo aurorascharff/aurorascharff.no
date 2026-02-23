@@ -502,6 +502,6 @@ The consumer passes the current value, a Server Function as the `action`, and a 
 
 ## Conclusion
 
-The action props pattern applies to any interactive component: selects, checkboxes, search inputs, toggles. Ideally, this logic should live in the component libraries we already use. The React docs now establish this as a first-class pattern, and the [Async React Working Group](https://github.com/reactwg/async-react/discussions) is working with routers, data libraries, and UI frameworks to standardize it, but until then we can build our own.
+The action props pattern applies to any interactive component: selects, checkboxes, search inputs, toggles. Ideally, this logic should live in the component libraries we already use. Async React has already standardized much of the async routing and loading layers, and the [Async React Working Group](https://github.com/reactwg/async-react/discussions) is now working with UI frameworks to bring the same coordination to the design layer, but until then we can build our own.
 
 I hope this post has been helpful. Please let me know if you have any questions or comments, and follow me on [Bluesky](https://bsky.app/profile/aurorascharff.no) or [X](https://x.com/aurorascharff) for more updates. Happy coding! 🚀
