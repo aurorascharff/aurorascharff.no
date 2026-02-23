@@ -32,6 +32,25 @@ Errors in Actions bubble to error boundaries, fitting the declarative model.
 
 The [React docs on exposing action props](https://react.dev/reference/react/useTransition#exposing-action-props-from-components) describe a pattern where components accept action functions as props and run them inside transitions internally, so consumers just pass a value and an action. The refreshed [`useOptimistic` docs](https://react.dev/reference/react/useOptimistic#using-optimistic-state-in-action-props) expand on this by combining optimistic state with action props.
 
+The basic shape looks like this:
+
+```tsx
+function DesignComponent({ value, action }) {
+  const [optimistic, setOptimistic] = useOptimistic(value);
+  const [isPending, startTransition] = useTransition();
+
+  function handleChange(newValue) {
+    startTransition(async () => {
+      setOptimistic(newValue);
+      await action(newValue);
+    });
+  }
+  // ...
+}
+```
+
+The component owns the transition and the optimistic state. The consumer just passes a value and an action.
+
 In the future, component libraries and design systems can ship components with action props built in, but until then, we can build them ourselves.
 
 ## Example 1: TabList
