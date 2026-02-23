@@ -303,7 +303,7 @@ export function EditableText({ value, onSave }: EditableTextProps) {
 }
 ```
 
-Say a consumer uses this for an editable revenue goal in a chart dashboard:
+Say a consumer uses this for an editable revenue goal in a sales dashboard:
 
 ```tsx
 function RevenueGoal({ goal }: { goal: number | null }) {
