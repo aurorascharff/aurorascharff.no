@@ -123,7 +123,7 @@ export function TabList({ tabs, activeTab, changeAction }: TabListProps) {
 }
 ```
 
-Now a spinner shows while the Action is pending. Because the loading indicator lives inside the component, the feedback is localized to the interaction (better UX), and the consumer doesn't need to manage any loading state (better DX). The design component owns both the UI and the async behavior. But the active tab still doesn't update immediately.
+Now a spinner shows while the Action is pending. Because the loading indicator lives inside the component, the feedback is localized to the interaction. But the active tab still doesn't update immediately.
 
 ### Adding Optimistic Updates
 
@@ -160,7 +160,7 @@ export function TabList({ tabs, activeTab, changeAction }: TabListProps) {
 
 Now the tab switches instantly when clicked, giving the user immediate confirmation that their interaction was registered. The `optimisticTab` holds the new value while the Action is pending, and once the `changeAction` completes and `activeTab` updates from the parent, it settles to the new source of truth.
 
-Because everything runs inside a transition, React coordinates it all into a single stable commit, avoiding intermediate renders and UI flickering.
+Because everything runs inside a transition, React coordinates it all into a single stable commit, avoiding intermediate renders and UI flickering. The consumer doesn't need to manage any loading or optimistic state (better DX), and the design component owns both the UI and the async behavior (better UX).
 
 ### Adding a Regular onChange
 
