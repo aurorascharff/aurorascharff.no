@@ -3,7 +3,7 @@ author: Aurora Scharff
 pubDatetime: 2025-04-04T10:22:00Z
 title: Building Reusable Components with React 19 Actions
 slug: building-reusable-components-with-react19-actions
-featured: true
+featured: false
 draft: false
 tags:
   - React 19
@@ -12,7 +12,7 @@ tags:
   - Next.js
   - App Router
   - useTransition
-description: Learn how to build reusable components with React 19 Actions, track transition states, use optimistic updates, and expose action properties for custom logic. 
+description: Learn how to build reusable components with React 19 Actions, track transition states, use optimistic updates, and expose action properties for custom logic.
 ---
 
 React 19 Actions simplify handling pending states, errors, optimistic updates, and sequential requests. In this post, we’ll explore building reusable components with React 19 Actions in the Next.js App Router. We will utilize `useTransition()` to track transition states, `useOptimistic()` to provide immediate feedback to users, and also expose an action property to support custom logic in parent components.
@@ -85,9 +85,7 @@ return (
 And it might handle the change like this:
 
 ```tsx
-const handleChange = async (
-  event: React.ChangeEvent<HTMLSelectElement>
-) => {
+const handleChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
   const newValue = event.target.value;
 
   // Update URL
@@ -95,7 +93,7 @@ const handleChange = async (
   url.searchParams.set(name, newValue);
 
   // Simulate a delay that would occur if the route destination is doing async work
-  await new Promise((resolve) => setTimeout(resolve, 500));
+  await new Promise(resolve => setTimeout(resolve, 500));
 
   // Navigate
   router.push(url.href, { scroll: false });
@@ -129,20 +127,18 @@ Let's track the state of the push to the router by creating an Action with the `
 We wrap our push to the router in the returned `startNavTransition()` function, which will track the pending state of that transition. This will allow us to know when the transition is in progress and when it is completed.
 
 ```tsx
-    const [isNavPending, startNavTransition] = useTransition();
+const [isNavPending, startNavTransition] = useTransition();
 
-    const handleChange = async (
-      event: React.ChangeEvent<HTMLSelectElement>
-    ) => {
-      const newValue = event.target.value;
-      startNavTransition(async () => {
-        const url = new URL(window.location.href);
-        url.searchParams.set(name, newValue);
+const handleChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
+  const newValue = event.target.value;
+  startNavTransition(async () => {
+    const url = new URL(window.location.href);
+    url.searchParams.set(name, newValue);
 
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        router.push(url.href, { scroll: false });
-      });
-    };
+    await new Promise(resolve => setTimeout(resolve, 500));
+    router.push(url.href, { scroll: false });
+  });
+};
 ```
 
 Now, we can use the `isNavPending` state to display a loading indicator while the transition is in progress, and add accessibility attributes like `aria-busy`.
@@ -159,13 +155,13 @@ Now, we can use the `isNavPending` state to display a loading indicator while th
     onChange={handleChange}
     {...props}
   >
-    {options.map((option) => (
+    {options.map(option => (
       <option key={option.value} value={option.value}>
         {option.label}
       </option>
     ))}
   </select>
-  {isNavPending && 'Pending nav...'}
+  {isNavPending && "Pending nav..."}
 </div>
 ```
 
@@ -180,16 +176,14 @@ This is where `useOptimistic()` comes in. It allows us to update the state immed
 ```tsx
 const [optimisticValue, setOptimisticValue] = useOptimistic(value);
 
-const handleChange = async (
-  event: React.ChangeEvent<HTMLSelectElement>
-) => {
+const handleChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
   const newValue = event.target.value;
   startNavTransition(async () => {
     setOptimisticValue(newValue);
     const url = new URL(window.location.href);
     url.searchParams.set(name, newValue);
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 500));
     router.push(url.href, { scroll: false });
   });
 };
@@ -220,9 +214,7 @@ export interface RouterSelectProps {
 And we can call this property inside the `handleChange` transition:
 
 ```tsx
-const handleChange = async (
-  event: React.ChangeEvent<HTMLSelectElement>
-) => {
+const handleChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
   const newValue = event.target.value;
   startNavTransition(async () => {
     setOptimisticValue(newValue);
@@ -230,7 +222,7 @@ const handleChange = async (
     const url = new URL(window.location.href);
     url.searchParams.set(name, newValue);
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 500));
     router.push(url.href, { scroll: false });
   });
 };
