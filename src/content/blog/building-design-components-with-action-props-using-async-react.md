@@ -175,7 +175,7 @@ export function TabList({ tabs, activeTab, changeAction }: TabListProps) {
 
 Now the tab switches instantly when clicked. The `optimisticTab` holds the new value while the Action is pending, and once the `changeAction` completes and `activeTab` updates from the parent, it settles to the new source of truth.
 
-Because everything runs inside a transition, React coordinates it all into a single stable commit, avoiding intermediate renders and UI flickering. The consumer just passes values and callbacks, and the design component handles the async implementation and the UI.
+Because everything runs inside a transition, React coordinates it into a single stable commit with no intermediate renders or flickering.
 
 ### The Final TabList
 
@@ -390,7 +390,7 @@ const resolvedDisplay = optimisticValue
   : null;
 ```
 
-The component applies the formatting to the optimistic value internally, so the display updates immediately on commit without the consumer needing access to the optimistic state. Here is what it looks like from the consumer side:
+Here is what it looks like from the consumer side:
 
 ```tsx
 <EditableText
@@ -400,7 +400,7 @@ The component applies the formatting to the optimistic value internally, so the 
 />
 ```
 
-The consumer provides the formatting logic, and the component applies it to whichever value is current, whether that's the confirmed prop or the optimistic update.
+The component applies the formatting to whichever value is current (the confirmed prop or the optimistic update), so the display updates immediately on commit without the consumer needing access to the optimistic state.
 
 ### The Final EditableText
 
@@ -480,7 +480,7 @@ export function EditableText({
 }
 ```
 
-In a real project, you'd extend input attributes via `React.ComponentProps<"input">` and add proper styling. You can see a full implementation of [`EditableText` on GitHub](https://github.com/aurorascharff/next16-chart-dashboard/blob/main/components/design/EditableText.tsx).
+In a real project, you'd also extend input attributes via `React.ComponentProps<"input">`. You can see a full implementation of [`EditableText` on GitHub](https://github.com/aurorascharff/next16-chart-dashboard/blob/main/components/design/EditableText.tsx).
 
 ### Usage: RevenueGoal in a Sales Dashboard
 
@@ -516,7 +516,7 @@ export function RevenueGoal({
 }
 ```
 
-The consumer passes the current value, a Server Function as the `action`, and a `displayValue` formatter for currency. Optimistic updates, the pending spinner, and rollback are all handled internally by `EditableText`. You can try it out on [next16-chart-dashboard](https://next16-chart-dashboard.vercel.app/).
+The consumer passes the current value, a Server Function as the `action`, and a `displayValue` formatter for currency. The rest is handled internally. You can try it out on [next16-chart-dashboard](https://next16-chart-dashboard.vercel.app/).
 
 ## Key Takeaways
 
