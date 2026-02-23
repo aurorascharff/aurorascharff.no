@@ -175,7 +175,7 @@ export function TabList({ tabs, activeTab, changeAction }: TabListProps) {
 
 Now the tab switches instantly when clicked. The `optimisticTab` holds the new value while the Action is pending, and once the `changeAction` completes and `activeTab` updates from the parent, it settles to the new source of truth.
 
-Because everything runs inside a transition, React coordinates it into a single stable commit with no intermediate renders or flickering.
+Because everything runs inside a transition, React coordinates it all into a single stable commit, avoiding intermediate renders and UI flickering. The consumer just passes values and callbacks, and the design component handles the async implementation and the UI.
 
 ### The Final TabList
 
