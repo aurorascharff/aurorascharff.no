@@ -265,6 +265,8 @@ export function PostTabs() {
 
 Optimistic updates, the pending spinner, and rollback are all handled internally by `TabList`. The tabs switch instantly, and the post list, wrapped in `Suspense`, stays visible while the new filtered data loads in the background. You can try it out on [next16-async-react-blog](https://next16-async-react-blog.vercel.app/dashboard).
 
+![PostTabs filtering blog posts by status in the dashboard](@assets/blogtabs.gif)
+
 ## Example 2: EditableText
 
 Let's apply the same pattern to an inline editable text field. The user clicks to edit, types a value, and commits with Enter or a save button.
@@ -517,6 +519,8 @@ export function RevenueGoal({
 ```
 
 The consumer passes the current value, a Server Function as the `action`, and a `displayValue` formatter for currency. The rest is handled internally. You can try it out on [next16-chart-dashboard](https://next16-chart-dashboard.vercel.app/).
+
+![RevenueGoal inline editing with formatted currency display](@assets/revenuegoal.gif)
 
 ## Key Takeaways
 
