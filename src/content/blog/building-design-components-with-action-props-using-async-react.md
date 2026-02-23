@@ -32,7 +32,7 @@ Errors in Actions bubble to error boundaries, fitting the declarative model.
 
 The [React docs on exposing action props](https://react.dev/reference/react/useTransition#exposing-action-props-from-components) describe a pattern where components accept action functions as props and run them inside transitions internally, so consumers just pass a value and an action. The refreshed [`useOptimistic` docs](https://react.dev/reference/react/useOptimistic#using-optimistic-state-in-action-props) expand on this by combining optimistic state with action props.
 
-The basic shape looks like this:
+The basic pattern looks like this:
 
 ```tsx
 function DesignComponent({ value, action }) {
