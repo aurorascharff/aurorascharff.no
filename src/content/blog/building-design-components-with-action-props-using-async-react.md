@@ -1,10 +1,10 @@
 ---
 author: Aurora Scharff
-pubDatetime: 2026-02-23T08:00:00Z
+pubDatetime: 2026-02-23T17:00:00Z
 title: Building Design Components with Action Props using Async React
 slug: building-design-components-with-action-props-using-async-react
 featured: true
-draft: true
+draft: false
 tags:
   - Async React
   - Actions
