@@ -1,6 +1,6 @@
 ---
 author: Aurora Scharff
-pubDatetime: YYYY-MM-DDTHH:MM:SSZ
+pubDatetime: 2000-01-01T00:00:00Z
 title: Your Blog Post Title Here
 slug: your-blog-post-title-here
 featured: false
