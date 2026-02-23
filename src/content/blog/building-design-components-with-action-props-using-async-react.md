@@ -49,7 +49,7 @@ function DesignComponent({ value, action }) {
 
 The component owns the transition, the optimistic state, and the pending UI. The consumer just passes a value and an action.
 
-In the future, component libraries and design systems can ship components with action props built in, but until then, we can build them ourselves.
+In the future, component libraries can ship components with action props built in, but until then (or for your own components), we can build them ourselves.
 
 ## Example 1: TabList
 
