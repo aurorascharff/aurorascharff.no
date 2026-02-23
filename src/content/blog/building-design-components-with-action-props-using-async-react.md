@@ -15,9 +15,9 @@ tags:
 description: Learn how to build reusable design components that expose action props and internally manage optimistic updates, loading states, and automatic rollback, so consumers just pass a value and an action.
 ---
 
-React Conf 2025 established the concept of Async React, introducing three layers: async design, async router, and async data. This post focuses on the design layer: building components that encapsulate optimistic updates, localized loading indicators, and automatic rollback internally, so consumers just pass a value and an action.
+React Conf 2025 established the concept of [Async React](https://www.youtube.com/watch?v=B_2E96URooA), introducing three layers: async design, async router, and async data. In this post, we'll put the design layer into practice by building two components from scratch (a tab list and an inline editable text field), progressively improving the UX during async work while keeping optimistic updates and loading states internal so consumers stay simple.
 
-For an overview or refresher on Async React, check out my article [The next era of React has arrived](https://blog.logrocket.com/the-next-era-of-react/) on LogRocket. For a first look at this pattern, see my [previous post](/posts/building-reusable-components-with-react19-actions) where we built a reusable `Select` component before Async React gave us the terminology.
+For an overview or refresher on the Async React primitives, check out my article [The next era of React has arrived](https://blog.logrocket.com/the-next-era-of-react/) on LogRocket. For another example, see my [previous post](/posts/building-reusable-components-with-react19-actions) where we built a reusable `Select` component with this pattern before Async React gave us the terminology.
 
 ## Table of contents
 
@@ -25,8 +25,8 @@ For an overview or refresher on Async React, check out my article [The next era 
 
 The components in this post rely on two Async React primitives:
 
-- [`useTransition`](https://react.dev/reference/react/useTransition): wraps async work into an [Action](https://react.dev/reference/react/useTransition#starttransition) (a function that runs inside a transition), keeping the UI responsive, and provides an `isPending` flag.
-- [`useOptimistic`](https://react.dev/reference/react/useOptimistic): shows temporary state that is coordinated with the Action and reverts automatically on failure.
+- [`useTransition`](https://react.dev/reference/react/useTransition): runs async work as an [Action](https://react.dev/reference/react/useTransition#starttransition) (a function inside a transition) that React coordinates, keeping the UI responsive, and provides an `isPending` flag.
+- [`useOptimistic`](https://react.dev/reference/react/useOptimistic): shows temporary state that is coordinated with an async Action and reverts automatically on failure.
 
 Errors in Actions bubble to error boundaries, fitting the declarative model.
 
@@ -39,8 +39,6 @@ In the future, component libraries and design systems can ship components with a
 Let's build a reusable tab list component. A basic version might look like this:
 
 ```tsx
-"use client";
-
 type TabListProps = {
   tabs: { label: string; value: string }[];
   activeTab: string;
@@ -160,11 +158,13 @@ export function TabList({ tabs, activeTab, changeAction }: TabListProps) {
 
 Now the tab switches instantly when clicked, giving the user immediate confirmation that their interaction was registered. The `optimisticTab` holds the new value while the Action is pending, and once the `changeAction` completes and `activeTab` updates from the parent, it settles to the new source of truth.
 
-Because everything runs inside a transition, React coordinates it all into a single stable commit, avoiding intermediate renders and UI flickering. The consumer doesn't need to manage any loading or optimistic state, and the design component owns both the UI and the async behavior.
+Because everything runs inside a transition, React coordinates it all into a single stable commit, avoiding intermediate renders and UI flickering. The consumer just passes values and callbacks, and the design component handles the async implementation and the UI.
 
 ### The Final TabList
 
-The consumer might also need a regular `onChange` for synchronous side effects outside the Action (for example, logging or local state), so the final version accepts both `changeAction` and `onChange`. The `onChange` fires synchronously before the transition starts:
+The consumer might also need a regular `onChange` for synchronous side effects outside the Action (for example, logging or local state), so the final version accepts both. The `onChange` fires synchronously before the transition starts.
+
+Here is the final `TabList`:
 
 ```tsx
 "use client";
@@ -246,7 +246,7 @@ export function PostTabs() {
 }
 ```
 
-The tabs switch instantly via the optimistic update, and the post list, wrapped in `Suspense`, stays visible while the new filtered data loads in the background. You can try it out on [next16-async-react-blog](https://next16-async-react-blog.vercel.app/dashboard).
+Optimistic updates, the pending spinner, and rollback are all handled internally by `TabList`. The tabs switch instantly, and the post list, wrapped in `Suspense`, stays visible while the new filtered data loads in the background. You can try it out on [next16-async-react-blog](https://next16-async-react-blog.vercel.app/dashboard).
 
 ## Example 2: EditableText
 
@@ -355,7 +355,7 @@ Now we get the same benefits as `TabList`: the value updates instantly, `isPendi
 
 ### Formatting Optimistic State with displayValue
 
-Since the optimistic state lives inside the component, how can the consumer control how it's displayed? For example, a revenue goal stores a raw number like `70000`, but should display as `$70,000`. One approach that worked well for me is a render-prop-style `displayValue` prop that receives the optimistic value:
+When the optimistic state lives inside the component, how can the consumer control how it's displayed? For example, a revenue goal stores a raw number like `70000`, but should display as `$70,000`. One approach is a render-prop-style `displayValue` prop that receives the optimistic value:
 
 ```tsx
 type EditableTextProps = {
@@ -376,15 +376,15 @@ const resolvedDisplay = optimisticValue
   : null;
 ```
 
-The component applies the formatting to the optimistic value internally, so the display updates immediately on commit without the consumer needing access to the optimistic state. Like `TabList`, we also accept an `onChange` callback that fires synchronously on commit alongside `action`, for side effects outside the transition.
+The component applies the formatting to the optimistic value internally, so the display updates immediately on commit without the consumer needing access to the optimistic state.
 
 ### The Final EditableText
 
-Here is the final implementation with editing UI, save/cancel buttons, and keyboard handling:
+Like `TabList`, the final version also accepts an `onChange` callback for synchronous side effects outside the transition.
+
+Here is the final implementation:
 
 ```tsx
-"use client";
-
 import { useOptimistic, useState, useTransition } from "react";
 
 type EditableTextProps = {
@@ -495,7 +495,8 @@ The consumer passes the current value, a Server Function as the `action`, and a 
 ## Key Takeaways
 
 - Actions coordinate multiple async operations into stable commits, avoiding intermediate renders and UI flickering.
-- Optimistic state stays synchronized with the source of truth and reverts automatically when an Action fails, with errors bubbling to error boundaries.
+- Optimistic state stays synchronized with the source of truth and reverts automatically when an Action fails.
+- Errors thrown inside Actions bubble to the nearest error boundary, so components don't need manual error handling.
 - Design components encapsulate async coordination internally using `useTransition` and `useOptimistic`, so consumers just use the `action` prop.
 - Name action props with the "Action" suffix to follow Async React conventions.
 
