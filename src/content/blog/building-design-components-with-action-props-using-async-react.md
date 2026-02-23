@@ -233,7 +233,7 @@ In a real project, you'd use proper tab primitives for accessibility and styling
 
 ### Usage: PostTabs in a Blog Dashboard
 
-Here is the same `PostTabs` consumer, now using the finished `TabList`:
+Here is a concrete consumer using the finished `TabList` to filter blog posts via the URL:
 
 ```tsx
 "use client";
@@ -476,7 +476,7 @@ In a real project, you'd add proper styling and input prefix handling. You can s
 
 ### Usage: RevenueGoal in a Chart Dashboard
 
-Here is the revenue goal scenario from earlier, now using the finished `EditableText`:
+Here is a concrete consumer using the finished `EditableText` to edit a revenue goal:
 
 ```tsx
 "use client";
