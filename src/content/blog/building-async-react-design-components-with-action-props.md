@@ -160,7 +160,7 @@ export function TabList({ tabs, activeTab, changeAction }: TabListProps) {
 
 Now the tab switches instantly when clicked, giving the user immediate confirmation that their interaction was registered. The `optimisticTab` holds the new value while the Action is pending, and once the `changeAction` completes and `activeTab` updates from the parent, it settles to the new source of truth.
 
-Because everything runs inside a transition, React coordinates it all into a single stable commit, avoiding intermediate renders and UI flickering. The consumer doesn't need to manage any loading or optimistic state (better DX), and the design component owns both the UI and the async behavior (better UX).
+Because everything runs inside a transition, React coordinates it all into a single stable commit, avoiding intermediate renders and UI flickering. The consumer doesn't need to manage any loading or optimistic state, and the design component owns both the UI and the async behavior.
 
 ### Adding a Regular onChange
 
@@ -351,7 +351,7 @@ Now we get the same benefits as `TabList`: the value updates instantly, `isPendi
 
 ### The displayValue Prop
 
-Since the optimistic state lives inside the component, how does the consumer control how it's displayed? For example, a revenue goal stores a raw number like `70000`, but should display as `$70,000`. One approach that worked well for me is a `displayValue` prop that receives the optimistic value:
+Since the optimistic state lives inside the component, how does the consumer control how it's displayed? For example, a revenue goal stores a raw number like `70000`, but should display as `$70,000`. One approach that worked well for me is a render-prop-style `displayValue` prop that receives the optimistic value:
 
 ```tsx
 type EditableTextProps = {
@@ -490,14 +490,13 @@ The consumer passes the current value, a Server Function as the `action`, and a 
 
 ## Key Takeaways
 
-- Design components encapsulate async coordination internally using `useTransition` and `useOptimistic`, so consumers just use the `action` prop.
-- Optimistic state stays synchronized with the source of truth and reverts automatically when an Action fails, with errors bubbling to error boundaries.
 - Actions coordinate multiple async operations into stable commits, avoiding intermediate renders and UI flickering.
-- A `displayValue` prop lets consumers customize how internal state is displayed without moving that state outside the component.
+- Optimistic state stays synchronized with the source of truth and reverts automatically when an Action fails, with errors bubbling to error boundaries.
+- Design components encapsulate async coordination internally using `useTransition` and `useOptimistic`, so consumers just use the `action` prop.
 - Name action props with the "Action" suffix to follow Async React conventions.
 
 ## Conclusion
 
-The action props pattern applies to any interactive component: selects, checkboxes, search inputs, toggles. Ideally, this logic should live in the component libraries we already use. The React docs now establish this as a first-class pattern, and the [Async React Working Group](https://github.com/reactwg/async-react/discussions) is working with routers, data libraries, and design systems to standardize it, but until then we can build our own.
+The action props pattern applies to any interactive component: selects, checkboxes, search inputs, toggles. Ideally, this logic should live in the component libraries we already use. The React docs now establish this as a first-class pattern, and the [Async React Working Group](https://github.com/reactwg/async-react/discussions) is working with routers, data libraries, and component libraries to standardize it, but until then we can build our own.
 
 I hope this post has been helpful. Please let me know if you have any questions or comments, and follow me on [Bluesky](https://bsky.app/profile/aurorascharff.no) or [X](https://x.com/aurorascharff) for more updates. Happy coding! 🚀
