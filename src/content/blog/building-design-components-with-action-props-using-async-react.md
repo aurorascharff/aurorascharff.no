@@ -336,7 +336,7 @@ When `onSave` is async (like the Server Function `saveRevenueGoal` saving to a d
 
 ### Adding Optimistic State and Pending Indicators
 
-Just like with `TabList`, we add `useTransition` and `useOptimistic`:
+Just like with `TabList`, we rename the callback to `action` (signaling it runs inside a transition) and add `useTransition` and `useOptimistic`:
 
 ```tsx
 export function EditableText({ value, action }: EditableTextProps) {
