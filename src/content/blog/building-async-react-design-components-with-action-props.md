@@ -178,7 +178,7 @@ function handleTabChange(value: string) {
 
 ### The Final TabList
 
-Here is the final implementation with both props:
+Here is the final implementation:
 
 ```tsx
 "use client";
