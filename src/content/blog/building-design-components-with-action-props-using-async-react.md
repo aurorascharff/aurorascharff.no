@@ -321,7 +321,7 @@ function RevenueGoal({ goal }: { goal: number | null }) {
 }
 ```
 
-When `onSave` is async (like the Server Function `saveRevenueGoal` saving to a database), the displayed value doesn't update until it completes and the parent re-renders with the new `value` prop. On slow connections, the user saves and sees stale text with no feedback: the same problem we had with `TabList`.
+When `onSave` is async (like the Server Function `saveRevenueGoal` saving to the server), the displayed value doesn't update until it completes and the parent re-renders with the new `value` prop. On slow connections, the user saves and sees stale text with no feedback: the same problem we had with `TabList`.
 
 ### Adding Optimistic State and Pending Indicators
 
