@@ -28,11 +28,11 @@ In Async React, [Actions](https://react.dev/reference/react/useTransition#startt
 - [`useTransition`](https://react.dev/reference/react/useTransition): wraps async work into an Action that React coordinates, keeping the UI responsive, and provides an `isPending` flag.
 - [`useOptimistic`](https://react.dev/reference/react/useOptimistic): shows temporary state that is coordinated with the Action and reverts automatically on failure.
 
-These are two of the Async React primitives for coordinating user interactions. Errors in Actions bubble to error boundaries, fitting the declarative model.
+Errors in Actions bubble to error boundaries, fitting the declarative model.
 
-The [React docs on exposing action props](https://react.dev/reference/react/useTransition#exposing-action-props-from-components) describe a pattern where components accept action functions as props and run them inside transitions internally, so consumers just pass a value and an action. The [`useOptimistic` docs](https://react.dev/reference/react/useOptimistic#using-optimistic-state-in-action-props) expand on this by combining optimistic state with action props.
+The [React docs on exposing action props](https://react.dev/reference/react/useTransition#exposing-action-props-from-components) describe a pattern where components accept action functions as props and run them inside transitions internally, so consumers just pass a value and an action. The refreshed [`useOptimistic` docs](https://react.dev/reference/react/useOptimistic#using-optimistic-state-in-action-props) expand on this by combining optimistic state with action props.
 
-In the future, component libraries and design systems should ship components with action props built in, but until then, we can build them ourselves.
+In the future, component libraries and design systems can ship components with action props built in, but until then, we can build them ourselves.
 
 ## Example 1: TabList
 
