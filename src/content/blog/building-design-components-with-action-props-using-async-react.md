@@ -369,7 +369,7 @@ Now we get the same benefits as `TabList`: the value updates instantly, `isPendi
 
 ### Formatting Optimistic State with displayValue
 
-When the optimistic state lives inside the component, how can the consumer control how it's displayed? For example, the stored value might be a raw number but should render as formatted currency. One approach is a render-prop-style `displayValue` prop that receives the optimistic value:
+Sometimes the raw value and the displayed text differ. For example, the stored value might be a raw number but should render as formatted currency. Since the optimistic state lives inside the component, we need a way for the consumer to provide that formatting. One approach is a render-prop-style `displayValue` prop:
 
 ```tsx
 type EditableTextProps = {
