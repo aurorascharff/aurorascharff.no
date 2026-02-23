@@ -25,10 +25,10 @@ For an overview or refresher on Async React, check out my article [The next era 
 
 Per the [React docs](https://react.dev/reference/react/useTransition#starttransition), Actions are functions called inside transitions that React coordinates. To build the pattern in this post, we'll use two Async React primitives:
 
-- [`useTransition`](https://react.dev/reference/react/useTransition) — wraps async work into an Action, keeping the UI responsive, and provides an `isPending` flag.
-- [`useOptimistic`](https://react.dev/reference/react/useOptimistic) — shows temporary state for the duration of an Action that reverts automatically on failure.
+- [`useTransition`](https://react.dev/reference/react/useTransition): wraps async work into an Action, keeping the UI responsive, and provides an `isPending` flag.
+- [`useOptimistic`](https://react.dev/reference/react/useOptimistic): shows temporary state for the duration of an Action that reverts automatically on failure.
 
-Together, they give us optimistic updates, pending indicators, and automatic rollback. Errors in Actions also bubble to error boundaries, so unexpected failures are handled for free.
+Together, they give us a declarative, consistent coordination system for async work: optimistic updates, pending indicators, and automatic rollback. Errors in Actions also bubble to error boundaries, so unexpected failures are handled for free.
 
 The [React docs on exposing action props](https://react.dev/reference/react/useTransition#exposing-action-props-from-components) describe a pattern where components accept action functions as props and run them inside transitions internally, combining both primitives so consumers just pass a value and an action. The new [`useOptimistic` docs](https://react.dev/reference/react/useOptimistic#using-optimistic-state-in-action-props) expand on this with examples of using optimistic state inside action props.
 
@@ -123,7 +123,7 @@ export function TabList({ tabs, activeTab, changeAction }: TabListProps) {
 }
 ```
 
-Now a spinner shows while the Action is pending. Because the loading indicator lives inside the component, the feedback is localized to the interaction, which creates a much better user experience. But the active tab still doesn't update immediately.
+Now a spinner shows while the Action is pending. Because the loading indicator lives inside the component, the feedback is localized to the interaction (better UX), and the consumer doesn't need to manage any loading state (better DX). The design component owns both the UI and the async behavior. But the active tab still doesn't update immediately.
 
 ### Adding Optimistic Updates
 
