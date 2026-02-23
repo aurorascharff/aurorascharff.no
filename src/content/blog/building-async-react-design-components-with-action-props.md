@@ -15,7 +15,7 @@ tags:
 description: Learn how to build reusable design components that expose action props and internally manage optimistic updates, loading states, and automatic rollback, so consumers just pass a value and an action.
 ---
 
-In a [previous post](/posts/building-reusable-components-with-react19-actions), we built a reusable select component with an action prop. Since then, React Conf 2025 established the concept of Async React, giving us proper terminology for these patterns. In this post, we'll take it further and build "design components": self-contained components that encapsulate all async coordination internally, including optimistic updates, localized loading indicators, and automatic rollback on failure.
+In a [previous post](/posts/building-reusable-components-with-react19-actions), we built a reusable `Select` component that accepts an action prop and internally manages its own pending and optimistic state. Since then, React Conf 2025 established the concept of Async React, giving us proper terminology for these patterns. In this post, we'll take it further and build "design components": self-contained components that encapsulate all async coordination internally, including optimistic updates, localized loading indicators, and automatic rollback on failure.
 
 For an overview or refresher on Async React, check out my article [The next era of React has arrived](https://blog.logrocket.com/the-next-era-of-react/) on LogRocket.
 
