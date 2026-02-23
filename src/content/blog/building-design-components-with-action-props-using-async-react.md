@@ -480,7 +480,7 @@ export function EditableText({
 }
 ```
 
-In a real project, you'd also extend input attributes via `React.ComponentProps<"input">`. You can see a full implementation of [`EditableText` on GitHub](https://github.com/aurorascharff/next16-chart-dashboard/blob/main/components/design/EditableText.tsx).
+In a real project, you could also extend input attributes via `React.ComponentProps<"input">` and add blur handling. You can see a full implementation of [`EditableText` on GitHub](https://github.com/aurorascharff/next16-chart-dashboard/blob/main/components/design/EditableText.tsx).
 
 ### Usage: RevenueGoal in a Sales Dashboard
 
