@@ -64,7 +64,7 @@ export function TabList({ tabs, activeTab, onChange }: TabListProps) {
 }
 ```
 
-A consumer might use this to filter posts by status:
+Say a consumer uses this to filter posts by status:
 
 ```tsx
 function PostTabs() {
@@ -230,7 +230,7 @@ In a real project, you'd use proper tab primitives for accessibility and styling
 
 ### Usage: PostTabs in a Blog Dashboard
 
-Here is an example of how to use `TabList` in practice. The consumer reads the search params and passes a `changeAction` that pushes to the router:
+Here is the same `PostTabs` consumer, now using the finished `TabList`:
 
 ```tsx
 "use client";
@@ -273,16 +273,16 @@ A basic version might look like this:
 
 type EditableTextProps = {
   value: string;
-  action: (value: string) => void | Promise<void>;
+  onSave: (value: string) => void | Promise<void>;
 };
 
-export function EditableText({ value, action }: EditableTextProps) {
+export function EditableText({ value, onSave }: EditableTextProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(value);
 
   function handleCommit() {
     setIsEditing(false);
-    action(draft);
+    onSave(draft);
   }
 
   function handleCancel() {
@@ -317,7 +317,22 @@ export function EditableText({ value, action }: EditableTextProps) {
 }
 ```
 
-When `action` is async (like a Server Function saving to a database), the displayed value doesn't update until the Action completes and the parent re-renders with the new `value` prop.
+Say a consumer uses this for an editable revenue goal in a chart dashboard:
+
+```tsx
+function RevenueGoal({ goal }: { goal: number | null }) {
+  return (
+    <EditableText
+      value={goal?.toString() ?? ""}
+      onSave={async value => {
+        await saveRevenueGoal(value);
+      }}
+    />
+  );
+}
+```
+
+When `onSave` is async (like the Server Function `saveRevenueGoal` saving to a database), the displayed value doesn't update until it completes and the parent re-renders with the new `value` prop. On slow connections, the user saves and sees stale text with no feedback: the same problem we had with `TabList`.
 
 ### Adding Optimistic State and Pending Indicators
 
@@ -351,7 +366,7 @@ Now we get the same benefits as `TabList`: the value updates instantly, `isPendi
 
 ### Formatting Optimistic State with displayValue
 
-Since the optimistic state lives inside the component, how does the consumer control how it's displayed? For example, a revenue goal stores a raw number like `70000`, but should display as `$70,000`. One approach that worked well for me is a render-prop-style `displayValue` prop that receives the optimistic value:
+Since the optimistic state lives inside the component, how can the consumer control how it's displayed? For example, a revenue goal stores a raw number like `70000`, but should display as `$70,000`. One approach that worked well for me is a render-prop-style `displayValue` prop that receives the optimistic value:
 
 ```tsx
 type EditableTextProps = {
@@ -362,7 +377,7 @@ type EditableTextProps = {
 };
 ```
 
-It accepts either a function or a static `ReactNode`, so the consumer can pass a formatter or a pre-rendered element:
+It accepts either a function or a static `ReactNode`, so the consumer can pass a formatter or a pre-rendered element. Inside the component, we resolve it against the optimistic value:
 
 ```tsx
 const resolvedDisplay = optimisticValue
@@ -456,7 +471,7 @@ In a real project, you'd add proper styling and input prefix handling. You can s
 
 ### Usage: RevenueGoal in a Chart Dashboard
 
-Here is an example of how to use `EditableText` in practice:
+Here is the revenue goal scenario from earlier, now using the finished `EditableText`:
 
 ```tsx
 "use client";
@@ -486,7 +501,7 @@ export function RevenueGoal({
 }
 ```
 
-The consumer passes the current value, a Server Function as the `action`, and a `displayValue` formatter for currency. Optimistic updates, the pending spinner, and rollback are all handled internally by `EditableText`. You can try it out on [next16-chart-dashboard](https://next16-chart-dashboard.vercel.app/).
+The consumer passes the current value, a Server Function as the `action`, and a `displayValue` formatter for currency. The `use()` hook unwraps the promise passed from a Server Component without blocking the rest of the page from rendering. Optimistic updates, the pending spinner, and rollback are all handled internally by `EditableText`. You can try it out on [next16-chart-dashboard](https://next16-chart-dashboard.vercel.app/).
 
 ## Key Takeaways
 
@@ -497,6 +512,6 @@ The consumer passes the current value, a Server Function as the `action`, and a 
 
 ## Conclusion
 
-The action props pattern applies to any interactive component: selects, checkboxes, search inputs, toggles. Ideally, this logic should live in the component libraries we already use. The React docs now establish this as a first-class pattern, and the [Async React Working Group](https://github.com/reactwg/async-react/discussions) is working with routers, data libraries, and component libraries to standardize it, but until then we can build our own.
+The action props pattern applies to any interactive component: selects, checkboxes, search inputs, toggles. Ideally, this logic should live in the component libraries we already use. The React docs now establish this as a first-class pattern, and the [Async React Working Group](https://github.com/reactwg/async-react/discussions) is working with routers, data libraries, and UI frameworks to standardize it, but until then we can build our own.
 
 I hope this post has been helpful. Please let me know if you have any questions or comments, and follow me on [Bluesky](https://bsky.app/profile/aurorascharff.no) or [X](https://x.com/aurorascharff) for more updates. Happy coding! 🚀
