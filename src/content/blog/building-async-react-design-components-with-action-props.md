@@ -23,7 +23,7 @@ For an overview or refresher on Async React, check out my article [The next era 
 
 ## Actions and the Action Prop Pattern
 
-Per the [React docs](https://react.dev/reference/react/useTransition#starttransition), Actions are functions called inside transitions that React coordinates into a single stable commit. To build the pattern in this post, we'll use two Async React primitives:
+Per the [React docs](https://react.dev/reference/react/useTransition#starttransition), Actions are functions called inside transitions that React coordinates. To build the pattern in this post, we'll use two Async React primitives:
 
 - [`useTransition`](https://react.dev/reference/react/useTransition) — wraps async work into an Action and provides an `isPending` flag for loading indicators.
 - [`useOptimistic`](https://react.dev/reference/react/useOptimistic) — shows temporary state for the duration of an Action that reverts automatically on failure.
