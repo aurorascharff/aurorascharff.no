@@ -4,7 +4,7 @@ pubDatetime: 2026-02-23T08:00:00Z
 title: Building Design Components with Action Props using Async React
 slug: building-design-components-with-action-props-using-async-react
 featured: true
-draft: false
+draft: true
 tags:
   - Async React
   - Actions
@@ -123,11 +123,11 @@ export function TabList({ tabs, activeTab, changeAction }: TabListProps) {
 }
 ```
 
-Now a spinner shows while the Action is pending. Because the loading indicator lives inside the component, the feedback is localized to the interaction. But the active tab still doesn't update immediately.
+Now a spinner shows while the Action is pending. Because the loading indicator lives inside the component, the feedback is localized to the interaction, which is a much better experience than a global loading bar. But the active tab still doesn't update immediately.
 
 ### Adding Optimistic Updates
 
-This is where `useOptimistic()` comes in. It creates a temporary client-side state derived from the `activeTab` prop that we can update immediately inside the Action:
+This is where `useOptimistic()` comes in. It creates a temporary client-side state derived from the `activeTab` prop that we can set inside the Action before it completes:
 
 ```tsx
 export function TabList({ tabs, activeTab, changeAction }: TabListProps) {
@@ -162,23 +162,9 @@ Now the tab switches instantly when clicked, giving the user immediate confirmat
 
 Because everything runs inside a transition, React coordinates it all into a single stable commit, avoiding intermediate renders and UI flickering. The consumer doesn't need to manage any loading or optimistic state, and the design component owns both the UI and the async behavior.
 
-### Adding a Regular onChange
-
-The consumer might also need a regular `onChange` for synchronous side effects outside the Action, so we can accept both:
-
-```tsx
-function handleTabChange(value: string) {
-  onChange?.(value);
-  startTransition(async () => {
-    setOptimisticTab(value);
-    await changeAction?.(value);
-  });
-}
-```
-
 ### The Final TabList
 
-Here is the final implementation:
+The consumer might also need a regular `onChange` for synchronous side effects outside the Action (for example, logging or local state), so the final version accepts both `changeAction` and `onChange`. The `onChange` fires synchronously before the transition starts:
 
 ```tsx
 "use client";
@@ -322,12 +308,15 @@ Say a consumer uses this for an editable revenue goal in a chart dashboard:
 ```tsx
 function RevenueGoal({ goal }: { goal: number | null }) {
   return (
-    <EditableText
-      value={goal?.toString() ?? ""}
-      onSave={async value => {
-        await saveRevenueGoal(value);
-      }}
-    />
+    <div>
+      <label>Revenue Goal</label>
+      <EditableText
+        value={goal?.toString() ?? ""}
+        onSave={async value => {
+          await saveRevenueGoal(value);
+        }}
+      />
+    </div>
   );
 }
 ```
