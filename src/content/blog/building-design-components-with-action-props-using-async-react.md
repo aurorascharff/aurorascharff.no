@@ -349,7 +349,7 @@ export function EditableText({ value, action }: EditableTextProps) {
 
 Now we get the same benefits as `TabList`: the value updates instantly, `isPending` drives a spinner, and failures revert automatically. Note that `handleCancel` resets to `optimisticValue` rather than `value`, so the draft reflects the latest pending save if one is still in flight.
 
-### The displayValue Prop
+### Formatting Optimistic State with displayValue
 
 Since the optimistic state lives inside the component, how does the consumer control how it's displayed? For example, a revenue goal stores a raw number like `70000`, but should display as `$70,000`. One approach that worked well for me is a render-prop-style `displayValue` prop that receives the optimistic value:
 
