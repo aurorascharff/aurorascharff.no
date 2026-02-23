@@ -231,7 +231,9 @@ In a real project, you'd use proper tab primitives for accessibility and styling
 
 ### Usage: PostTabs in a Blog Dashboard
 
-Here is a concrete consumer using the finished `TabList` to filter blog posts via the URL:
+Let's say we wanted to filter blog posts by status in a blog admin panel, where each tab updates a search param and the page re-renders server-side with the filtered data.
+
+Here is the consumer using the finished `TabList`:
 
 ```tsx
 "use client";
@@ -367,7 +369,7 @@ Now we get the same benefits as `TabList`: the value updates instantly, `isPendi
 
 ### Formatting Optimistic State with displayValue
 
-When the optimistic state lives inside the component, how can the consumer control how it's displayed? For example, a revenue goal stores a raw number like `70000`, but should display as `$70,000`. One approach is a render-prop-style `displayValue` prop that receives the optimistic value:
+When the optimistic state lives inside the component, how can the consumer control how it's displayed? For example, the stored value might be a raw number but should render as formatted currency. One approach is a render-prop-style `displayValue` prop that receives the optimistic value:
 
 ```tsx
 type EditableTextProps = {
@@ -388,7 +390,17 @@ const resolvedDisplay = optimisticValue
   : null;
 ```
 
-The component applies the formatting to the optimistic value internally, so the display updates immediately on commit without the consumer needing access to the optimistic state.
+The component applies the formatting to the optimistic value internally, so the display updates immediately on commit without the consumer needing access to the optimistic state. Here is what it looks like from the consumer side:
+
+```tsx
+<EditableText
+  value="70000"
+  action={saveValue}
+  displayValue={value => formatCurrency(Number(value))} // renders "$70,000"
+/>
+```
+
+The consumer provides the formatting logic, and the component applies it to whichever value is current, whether that's the confirmed prop or the optimistic update.
 
 ### The Final EditableText
 
@@ -470,9 +482,11 @@ export function EditableText({
 
 In a real project, you'd extend input attributes via `React.ComponentProps<"input">` and add proper styling. You can see a full implementation of [`EditableText` on GitHub](https://github.com/aurorascharff/next16-chart-dashboard/blob/main/components/design/EditableText.tsx).
 
-### Usage: RevenueGoal in a Chart Dashboard
+### Usage: RevenueGoal in a Sales Dashboard
 
-Here is a concrete consumer using the finished `EditableText` to edit a revenue goal:
+Let's say we wanted to let users edit a revenue goal inline in a sales dashboard, where the raw number is stored as a string but displayed as formatted currency.
+
+Here is the consumer using the finished `EditableText`:
 
 ```tsx
 "use client";
