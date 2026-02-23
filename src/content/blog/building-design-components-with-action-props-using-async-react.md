@@ -79,27 +79,27 @@ export function TabList({ tabs, activeTab, onChange }: TabListProps) {
 }
 ```
 
-Say a consumer uses this to filter posts by status:
+A consumer might use this to filter content via the URL:
 
 ```tsx
-function PostTabs() {
-  const router = useRouter();
+import { useRouter, useSearchParams } from "next/navigation";
+
+function FilterTabs() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const currentTab = searchParams.get("filter") ?? "all";
 
   return (
     <TabList
       tabs={tabs}
       activeTab={currentTab}
-      onChange={value => {
-        router.push(`/dashboard?filter=${value}`);
-      }}
+      onChange={value => router.push(`/?filter=${value}`)}
     />
   );
 }
 ```
 
-When `onChange` triggers async work (in this example, `router.push()` in the Next.js App Router triggers server-side data fetching), the `activeTab` won't update until it completes. On slow networks, the user clicks a tab and nothing happens, getting no feedback that their interaction was registered.
+When `onChange` triggers async work (like a router navigation that fetches data server-side), the `activeTab` won't update until the work completes. On slow networks, the user clicks a tab and nothing happens, getting no feedback that their interaction was registered.
 
 ### Tracking the Pending State
 
@@ -320,25 +320,24 @@ export function EditableText({ value, onSave }: EditableTextProps) {
 }
 ```
 
-Say a consumer uses this for an editable revenue goal in a sales dashboard:
+A consumer might use this to persist a value asynchronously:
 
 ```tsx
-function RevenueGoal({ goal }: { goal: number | null }) {
+import { updateName } from "@/actions";
+
+function EditableName({ name }) {
   return (
-    <div>
-      <label>Revenue Goal</label>
-      <EditableText
-        value={goal?.toString() ?? ""}
-        onSave={async value => {
-          await saveRevenueGoal(value);
-        }}
-      />
-    </div>
+    <EditableText
+      value={name}
+      onSave={async newValue => {
+        await updateName(newValue);
+      }}
+    />
   );
 }
 ```
 
-When `onSave` is async (like the Server Function `saveRevenueGoal`), the displayed value doesn't update until it completes and the parent re-renders with the new `value` prop. On slow connections, the user saves and sees stale text with no feedback: the same problem we had with `TabList`.
+When `onSave` is async, the displayed text doesn't update until it completes and the parent re-renders with the new `value` prop. On slow connections, the user saves and sees stale text with no feedback: the same problem we had with `TabList`.
 
 ### Adding Optimistic State and Pending Indicators
 
