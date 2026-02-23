@@ -15,17 +15,17 @@ tags:
 description: Learn how to build reusable design components that expose action props and internally manage optimistic updates, loading states, and automatic rollback, so consumers just pass a value and an action.
 ---
 
-React Conf 2025 established the concept of Async React, introducing three layers: async design, async router, and async data. This post focuses on the design layer: building components that encapsulate optimistic updates, localized loading indicators, and automatic rollback internally, so consumers just pass a value and an action. In a [previous post](/posts/building-reusable-components-with-react19-actions), we built a reusable `Select` component with this pattern before Async React gave us the terminology.
+React Conf 2025 established the concept of Async React, introducing three layers: async design, async router, and async data. This post focuses on the design layer: building components that encapsulate optimistic updates, localized loading indicators, and automatic rollback internally, so consumers just pass a value and an action.
 
-For an overview or refresher on Async React, check out my article [The next era of React has arrived](https://blog.logrocket.com/the-next-era-of-react/) on LogRocket.
+For an overview or refresher on Async React, check out my article [The next era of React has arrived](https://blog.logrocket.com/the-next-era-of-react/) on LogRocket. For a first look at this pattern, see my [previous post](/posts/building-reusable-components-with-react19-actions) where we built a reusable `Select` component before Async React gave us the terminology.
 
 ## Table of contents
 
 ## Actions and the Action Prop Pattern
 
-In Async React, [Actions](https://react.dev/reference/react/useTransition#starttransition) are functions that run inside transitions, letting React coordinate async work. The components in this post rely on two Async React primitives:
+The components in this post rely on two Async React primitives:
 
-- [`useTransition`](https://react.dev/reference/react/useTransition): wraps async work into an Action that React coordinates, keeping the UI responsive, and provides an `isPending` flag.
+- [`useTransition`](https://react.dev/reference/react/useTransition): wraps async work into an [Action](https://react.dev/reference/react/useTransition#starttransition) (a function that runs inside a transition), keeping the UI responsive, and provides an `isPending` flag.
 - [`useOptimistic`](https://react.dev/reference/react/useOptimistic): shows temporary state that is coordinated with the Action and reverts automatically on failure.
 
 Errors in Actions bubble to error boundaries, fitting the declarative model.
