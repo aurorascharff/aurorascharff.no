@@ -99,7 +99,7 @@ function FilterTabs() {
 }
 ```
 
-When `onChange` triggers async work (like a router navigation that fetches data server-side), the `activeTab` won't update until the work completes. On slow networks, the user clicks a tab and nothing happens, getting no feedback that their interaction was registered.
+When `onChange` triggers async work (like `router.push` in Next.js, where a Server Component re-renders with new search params), the `activeTab` won't update until the work completes. On slow networks, the user clicks a tab and nothing happens, getting no feedback that their interaction was registered.
 
 ### Tracking the Pending State
 
@@ -173,7 +173,7 @@ export function TabList({ tabs, activeTab, changeAction }: TabListProps) {
 }
 ```
 
-Now the tab switches instantly when clicked, giving the user immediate confirmation that their interaction was registered. The `optimisticTab` holds the new value while the Action is pending, and once the `changeAction` completes and `activeTab` updates from the parent, it settles to the new source of truth.
+Now the tab switches instantly when clicked. The `optimisticTab` holds the new value while the Action is pending, and once the `changeAction` completes and `activeTab` updates from the parent, it settles to the new source of truth.
 
 Because everything runs inside a transition, React coordinates it all into a single stable commit, avoiding intermediate renders and UI flickering. The consumer just passes values and callbacks, and the design component handles the async implementation and the UI.
 
@@ -184,8 +184,6 @@ The consumer might also need a regular `onChange` for synchronous side effects o
 Here is the final `TabList`:
 
 ```tsx
-"use client";
-
 import { useOptimistic, useTransition } from "react";
 
 type TabListProps = {
