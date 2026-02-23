@@ -323,14 +323,12 @@ export function EditableText({ value, onSave }: EditableTextProps) {
 A consumer might use this to persist a value asynchronously:
 
 ```tsx
-import { updateName } from "@/actions";
-
-function EditableName({ name }) {
+function EditablePrice({ price }) {
   return (
     <EditableText
-      value={name}
+      value={price}
       onSave={async newValue => {
-        await updateName(newValue);
+        await savePrice(newValue);
       }}
     />
   );
