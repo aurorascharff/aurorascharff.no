@@ -28,7 +28,7 @@ Per the [React docs](https://react.dev/reference/react/useTransition#starttransi
 - [`useTransition`](https://react.dev/reference/react/useTransition) — wraps async work into an Action, keeping the UI responsive, and provides an `isPending` flag.
 - [`useOptimistic`](https://react.dev/reference/react/useOptimistic) — shows temporary state for the duration of an Action that reverts automatically on failure.
 
-Combined with `useOptimistic`, Actions coordinate optimistic updates into the transition, reverting them on failure. Errors also bubble to error boundaries, giving us robust error handling for free.
+Together, they give us optimistic updates, pending indicators, and automatic rollback. Errors in Actions also bubble to error boundaries, so unexpected failures are handled for free.
 
 The [React docs on exposing action props](https://react.dev/reference/react/useTransition#exposing-action-props-from-components) describe a pattern where components accept action functions as props and run them inside transitions internally, combining both primitives so consumers just pass a value and an action. The new [`useOptimistic` docs](https://react.dev/reference/react/useOptimistic#using-optimistic-state-in-action-props) expand on this with examples of using optimistic state inside action props.
 
