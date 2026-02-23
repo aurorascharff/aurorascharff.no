@@ -321,7 +321,7 @@ function RevenueGoal({ goal }: { goal: number | null }) {
 }
 ```
 
-When `onSave` is async (like the Server Function `saveRevenueGoal` saving to the server), the displayed value doesn't update until it completes and the parent re-renders with the new `value` prop. On slow connections, the user saves and sees stale text with no feedback: the same problem we had with `TabList`.
+When `onSave` is async (like the Server Function `saveRevenueGoal`), the displayed value doesn't update until it completes and the parent re-renders with the new `value` prop. On slow connections, the user saves and sees stale text with no feedback: the same problem we had with `TabList`.
 
 ### Adding Optimistic State and Pending Indicators
 
@@ -490,7 +490,7 @@ export function RevenueGoal({
 }
 ```
 
-The consumer passes the current value, a Server Function as the `action`, and a `displayValue` formatter for currency. The `use()` hook unwraps the promise passed from a Server Component without blocking the rest of the page from rendering. Optimistic updates, the pending spinner, and rollback are all handled internally by `EditableText`. You can try it out on [next16-chart-dashboard](https://next16-chart-dashboard.vercel.app/).
+The consumer passes the current value, a Server Function as the `action`, and a `displayValue` formatter for currency. Optimistic updates, the pending spinner, and rollback are all handled internally by `EditableText`. You can try it out on [next16-chart-dashboard](https://next16-chart-dashboard.vercel.app/).
 
 ## Key Takeaways
 
