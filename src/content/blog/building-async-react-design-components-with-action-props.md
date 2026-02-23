@@ -23,7 +23,7 @@ For an overview or refresher on Async React, check out my article [The next era 
 
 ## Actions and the Action Prop Pattern
 
-In Async React, [Actions](https://react.dev/reference/react/useTransition#starttransition) are functions that run inside transitions, letting React coordinate async work. The components in this post rely on two primitives:
+In Async React, [Actions](https://react.dev/reference/react/useTransition#starttransition) are functions that run inside transitions, letting React coordinate async work. The components in this post rely on two Async React primitives:
 
 - [`useTransition`](https://react.dev/reference/react/useTransition): wraps async work into an Action, keeping the UI responsive, and provides an `isPending` flag.
 - [`useOptimistic`](https://react.dev/reference/react/useOptimistic): shows temporary state for the duration of an Action that reverts automatically on failure.
