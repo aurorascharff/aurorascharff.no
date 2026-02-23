@@ -270,8 +270,6 @@ Let's apply the same pattern to an inline editable text field. The user clicks t
 A basic version might look like this:
 
 ```tsx
-"use client";
-
 type EditableTextProps = {
   value: string;
   onSave: (value: string) => void | Promise<void>;
