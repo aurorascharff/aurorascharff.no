@@ -23,10 +23,12 @@ For an overview or refresher on Async React, check out my article [The next era 
 
 ## Actions and the Action Prop Pattern
 
-Per the [React docs](https://react.dev/reference/react/useTransition#starttransition), Actions are functions called inside transitions. React coordinates all updates in an Action into a single stable commit, reverts optimistic updates on failure, and unlike regular event handlers, errors bubble so we can handle unexpected failures with error boundaries. To build the pattern in this post, we'll use two Async React primitives:
+Per the [React docs](https://react.dev/reference/react/useTransition#starttransition), Actions are functions called inside transitions that React coordinates into a single stable commit. To build the pattern in this post, we'll use two Async React primitives:
 
 - [`useTransition`](https://react.dev/reference/react/useTransition) — wraps async work into an Action and provides an `isPending` flag for loading indicators.
 - [`useOptimistic`](https://react.dev/reference/react/useOptimistic) — shows temporary state for the duration of an Action that reverts automatically on failure.
+
+Actions also bubble errors to error boundaries and revert optimistic updates on failure, giving us robust error handling for free.
 
 The [React docs on exposing action props](https://react.dev/reference/react/useTransition#exposing-action-props-from-components) describe a pattern where components accept action functions as props and run them inside transitions internally, combining both primitives so consumers just pass a value and an action. The new [`useOptimistic` docs](https://react.dev/reference/react/useOptimistic#using-optimistic-state-in-action-props) expand on this with examples of using optimistic state inside action props.
 
