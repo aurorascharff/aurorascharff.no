@@ -53,8 +53,8 @@ export function TabList({ tabs, activeTab, onChange }: TabListProps) {
       {tabs.map(tab => (
         <button
           key={tab.value}
-          data-active={tab.value === activeTab || undefined}
           onClick={() => onChange(tab.value)}
+          className={tab.value === activeTab ? "active" : ""}
         >
           {tab.label}
         </button>
@@ -111,8 +111,8 @@ export function TabList({ tabs, activeTab, changeAction }: TabListProps) {
       {tabs.map(tab => (
         <button
           key={tab.value}
-          data-active={tab.value === activeTab || undefined}
           onClick={() => handleTabChange(tab.value)}
+          className={tab.value === activeTab ? "active" : ""}
         >
           {tab.label}
         </button>
@@ -146,8 +146,8 @@ export function TabList({ tabs, activeTab, changeAction }: TabListProps) {
       {tabs.map(tab => (
         <button
           key={tab.value}
-          data-active={tab.value === optimisticTab || undefined}
           onClick={() => handleTabChange(tab.value)}
+          className={tab.value === optimisticTab ? "active" : ""}
         >
           {tab.label}
         </button>
@@ -214,8 +214,8 @@ export function TabList({
       {tabs.map(tab => (
         <button
           key={tab.value}
-          data-active={tab.value === optimisticTab || undefined}
           onClick={() => handleTabChange(tab.value)}
+          className={tab.value === optimisticTab ? "active" : ""}
         >
           {tab.label}
         </button>
