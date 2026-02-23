@@ -347,30 +347,28 @@ export function EditableText({ value, action }: EditableTextProps) {
 }
 ```
 
-Now we get the same benefits as `TabList`: the value updates instantly, `isPending` drives a spinner, and failures revert automatically. Because the `action` runs inside a transition, errors bubble to the nearest error boundary. Note that `handleCancel` resets to `optimisticValue` rather than `value`, so the draft reflects the latest pending save if one is still in flight.
+Now we get the same benefits as `TabList`: the value updates instantly, `isPending` drives a spinner, and failures revert automatically. Note that `handleCancel` resets to `optimisticValue` rather than `value`, so the draft reflects the latest pending save if one is still in flight.
 
-### The renderDisplay Prop
+### The displayValue Prop
 
-Since the optimistic state lives inside the component, how does the consumer control how it's displayed? For example, a revenue goal stores a raw number like `70000`, but should display as `$70,000`. One approach that worked well for me is a `renderDisplay` prop that receives the optimistic value:
+Since the optimistic state lives inside the component, how does the consumer control how it's displayed? For example, a revenue goal stores a raw number like `70000`, but should display as `$70,000`. One approach that worked well for me is a `displayValue` prop that receives the optimistic value:
 
 ```tsx
 type EditableTextProps = {
   value: string;
   action: (value: string) => void | Promise<void>;
   onChange?: (value: string) => void;
-  renderDisplay?:
-    | ((optimisticValue: string) => React.ReactNode)
-    | React.ReactNode;
+  displayValue?: ((value: string) => React.ReactNode) | React.ReactNode;
 };
 ```
 
 It accepts either a function or a static `ReactNode`, so the consumer can pass a formatter or a pre-rendered element:
 
 ```tsx
-const displayValue = optimisticValue
-  ? typeof renderDisplay === "function"
-    ? renderDisplay(optimisticValue)
-    : (renderDisplay ?? optimisticValue)
+const resolvedDisplay = optimisticValue
+  ? typeof displayValue === "function"
+    ? displayValue(optimisticValue)
+    : (displayValue ?? optimisticValue)
   : null;
 ```
 
@@ -387,12 +385,17 @@ import { useOptimistic, useState, useTransition } from "react";
 
 type EditableTextProps = {
   value: string;
-  renderDisplay?: ((optimisticValue: string) => React.ReactNode) | React.ReactNode;
+  displayValue?: ((value: string) => React.ReactNode) | React.ReactNode;
   onChange?: (value: string) => void;
   action: (value: string) => void | Promise<void>;
 };
 
-export function EditableText({ value, renderDisplay, action, onChange }: EditableTextProps) {
+export function EditableText({
+  value,
+  displayValue,
+  action,
+  onChange,
+}: EditableTextProps) {
   const [isPending, startTransition] = useTransition();
   const [optimisticValue, setOptimisticValue] = useOptimistic(value);
   const [isEditing, setIsEditing] = useState(false);
@@ -408,12 +411,14 @@ export function EditableText({ value, renderDisplay, action, onChange }: Editabl
     });
   }
 
-  function handleCancel() { /* ... */ }
+  function handleCancel() {
+    /* ... */
+  }
 
-  const displayValue = optimisticValue
-    ? typeof renderDisplay === "function"
-      ? renderDisplay(optimisticValue)
-      : (renderDisplay ?? optimisticValue)
+  const resolvedDisplay = optimisticValue
+    ? typeof displayValue === "function"
+      ? displayValue(optimisticValue)
+      : (displayValue ?? optimisticValue)
     : null;
 
   if (isEditing) {
@@ -422,8 +427,8 @@ export function EditableText({ value, renderDisplay, action, onChange }: Editabl
         value={draft}
         onChange={e => setDraft(e.target.value)}
         onKeyDown={e => {
-          if (e.key === 'Enter') handleCommit();
-          if (e.key === 'Escape') handleCancel();
+          if (e.key === "Enter") handleCommit();
+          if (e.key === "Escape") handleCancel();
         }}
         autoFocus
       />
@@ -432,10 +437,17 @@ export function EditableText({ value, renderDisplay, action, onChange }: Editabl
   }
 
   return (
-    <button onClick={() => { setDraft(optimisticValue); setIsEditing(true); }}>
-      {displayValue || 'Click to edit...'}
-    </button>
-    {isPending && <Spinner />}
+    <>
+      <button
+        onClick={() => {
+          setDraft(optimisticValue);
+          setIsEditing(true);
+        }}
+      >
+        {resolvedDisplay || "Click to edit..."}
+      </button>
+      {isPending && <Spinner />}
+    </>
   );
 }
 ```
@@ -465,7 +477,7 @@ export function RevenueGoal({
     <EditableText
       value={goal?.toString() ?? ""}
       action={saveRevenueGoal}
-      renderDisplay={value => formatCurrency(Number(value))}
+      displayValue={value => formatCurrency(Number(value))}
       prefix="$"
       type="number"
       placeholder="Set a target..."
@@ -474,14 +486,14 @@ export function RevenueGoal({
 }
 ```
 
-The consumer passes the current value, a Server Function as the `action`, and a `renderDisplay` formatter for currency. Optimistic updates, the pending spinner, and rollback are all handled internally by `EditableText`. You can try it out on [next16-chart-dashboard](https://next16-chart-dashboard.vercel.app/).
+The consumer passes the current value, a Server Function as the `action`, and a `displayValue` formatter for currency. Optimistic updates, the pending spinner, and rollback are all handled internally by `EditableText`. You can try it out on [next16-chart-dashboard](https://next16-chart-dashboard.vercel.app/).
 
 ## Key Takeaways
 
 - Design components encapsulate async coordination internally using `useTransition` and `useOptimistic`, so consumers just use the `action` prop.
 - Optimistic state stays synchronized with the source of truth and reverts automatically when an Action fails, with errors bubbling to error boundaries.
 - Actions coordinate multiple async operations into stable commits, avoiding intermediate renders and UI flickering.
-- Render props allow consumers to customize how internal state is displayed without moving that state outside the component.
+- A `displayValue` prop lets consumers customize how internal state is displayed without moving that state outside the component.
 - Name action props with the "Action" suffix to follow Async React conventions.
 
 ## Conclusion
