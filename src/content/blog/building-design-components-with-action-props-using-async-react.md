@@ -468,7 +468,7 @@ export function EditableText({
 }
 ```
 
-In a real project, you'd add proper styling and input prefix handling. You can see a full implementation of [`EditableText` on GitHub](https://github.com/aurorascharff/next16-chart-dashboard/blob/main/components/design/EditableText.tsx).
+In a real project, you'd extend input attributes via `React.ComponentProps<"input">` and add proper styling. You can see a full implementation of [`EditableText` on GitHub](https://github.com/aurorascharff/next16-chart-dashboard/blob/main/components/design/EditableText.tsx).
 
 ### Usage: RevenueGoal in a Chart Dashboard
 
