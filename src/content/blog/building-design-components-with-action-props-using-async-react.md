@@ -320,7 +320,7 @@ export function EditableText({ value, onSave }: EditableTextProps) {
 }
 ```
 
-A consumer might use this to persist a value asynchronously:
+A consumer might use this to persist a value asynchronously, with custom formatting for display:
 
 ```tsx
 function EditablePrice({ price }) {
@@ -330,12 +330,13 @@ function EditablePrice({ price }) {
       onSave={async newValue => {
         await savePrice(newValue);
       }}
+      displayValue={formatCurrency(Number(price))}
     />
   );
 }
 ```
 
-When `onSave` is async, the displayed text doesn't update until it completes and the parent re-renders with the new `value` prop. On slow connections, the user saves and sees stale text with no feedback: the same problem we had with `TabList`.
+When `onSave` is async, the displayed text doesn't update until it completes and the parent re-renders with the new `value` prop. The formatted `displayValue` is also stale until then, since it's derived from the parent's `price`. On slow connections, the user saves and sees stale text with no feedback: the same problem we had with `TabList`.
 
 ### Adding Optimistic State and Pending Indicators
 
@@ -369,7 +370,17 @@ Now we get the same benefits as `TabList`: the value updates instantly, `isPendi
 
 ### Formatting Optimistic State with displayValue
 
-Sometimes the raw value and the displayed text differ. For example, the stored value might be a raw number but should render as formatted currency. Since the optimistic state lives inside the component, we need a way for the consumer to provide that formatting. One approach is a render-prop-style `displayValue` prop:
+The `EditablePrice` consumer above passes a static `displayValue` derived from the parent's `price` prop. But since the optimistic state lives inside the component, that static value won't reflect an optimistic update. One solution is to let `displayValue` also accept a function that receives the current value and returns formatted output:
+
+```tsx
+<EditableText
+  value={price}
+  action={savePrice}
+  displayValue={value => formatCurrency(Number(value))} // renders "$70,000"
+/>
+```
+
+Here is how the prop is typed:
 
 ```tsx
 type EditableTextProps = {
@@ -380,7 +391,7 @@ type EditableTextProps = {
 };
 ```
 
-It accepts either a function or a static `ReactNode`, so the consumer can pass a formatter or a pre-rendered element. Inside the component, we resolve it against the optimistic value:
+It accepts either a function or a static `ReactNode`. Inside the component, we resolve it against the optimistic value:
 
 ```tsx
 const resolvedDisplay = optimisticValue
@@ -390,17 +401,7 @@ const resolvedDisplay = optimisticValue
   : null;
 ```
 
-Here is what it looks like from the consumer side:
-
-```tsx
-<EditableText
-  value="70000"
-  action={saveValue}
-  displayValue={value => formatCurrency(Number(value))} // renders "$70,000"
-/>
-```
-
-The component applies the formatting to whichever value is current (the confirmed prop or the optimistic update), so the display updates immediately on commit without the consumer needing access to the optimistic state.
+When `displayValue` is a function, the component calls it with the optimistic value, so the formatted display updates immediately on commit without the consumer needing access to the optimistic state.
 
 ### The Final EditableText
 
