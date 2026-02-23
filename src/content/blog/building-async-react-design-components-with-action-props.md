@@ -84,7 +84,7 @@ function PostTabs() {
 }
 ```
 
-In the Next.js App Router, `router.push()` can trigger async work if a server component uses the new search params for data fetching. The `activeTab` won't update until the navigation completes, so on slow networks the user clicks a tab and nothing happens. From a UX perspective, this is a problem: the user gets no feedback and might think the component is broken.
+When `onChange` triggers async work (in this example, `router.push()` in the Next.js App Router triggers server-side data fetching), the `activeTab` won't update until it completes. On slow networks, the user clicks a tab and nothing happens, getting no feedback that their interaction was registered.
 
 ### Tracking the Pending State
 
