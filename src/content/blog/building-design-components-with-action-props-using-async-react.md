@@ -28,7 +28,7 @@ The components in this post rely on two Async React primitives:
 - [`useTransition`](https://react.dev/reference/react/useTransition): runs async work as an [Action](https://react.dev/reference/react/useTransition#starttransition) (a function inside a transition) that React coordinates, keeping the UI responsive, and provides an `isPending` flag. Errors bubble to error boundaries.
 - [`useOptimistic`](https://react.dev/reference/react/useOptimistic): shows temporary state that is coordinated with an async Action and reverts automatically on failure.
 
-The [React docs on exposing action props](https://react.dev/reference/react/useTransition#exposing-action-props-from-components) describe a pattern where components accept action functions as props and run them inside transitions internally. The refreshed [`useOptimistic` docs](https://react.dev/reference/react/useOptimistic#using-optimistic-state-in-action-props) expand on this by combining optimistic state with action props.
+The React docs describe the pattern of [exposing action props](https://react.dev/reference/react/useTransition#exposing-action-props-from-components): components accept action functions as props and run them inside transitions internally. The refreshed [`useOptimistic` docs](https://react.dev/reference/react/useOptimistic#using-optimistic-state-in-action-props) show how to combine it with optimistic state.
 
 The basic pattern looks like this:
 
