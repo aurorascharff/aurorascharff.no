@@ -267,7 +267,7 @@ Optimistic updates, the pending spinner, and rollback are all handled internally
 
 ![PostTabs filtering blog posts by status in the dashboard](@assets/blogtabs.gif)
 
-### Customizing the Pending State
+### Bonus: Customizing the Pending State
 
 The built-in spinner is a sensible default, but sometimes you want full control over the pending UI. The component could accept a `hideSpinner` prop, letting the consumer suppress the default indicator. The consumer can then add its own `useTransition` and use `isPending` however they like.
 
@@ -287,8 +287,8 @@ export function PostTabs() {
         tabs={tabs}
         activeTab={currentTab}
         changeAction={value => {
-          return startTransition(() => {
-            return router.push(`/dashboard?filter=${value}`);
+          startTransition(() => {
+            router.push(`/dashboard?filter=${value}`);
           });
         }}
       />
