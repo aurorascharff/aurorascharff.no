@@ -276,7 +276,7 @@ Loading state is a first-class design concern. Keeping it inside design componen
 
 But sometimes you want full control over the pending UI. One approach is to accept a `hideSpinner` prop, letting the consumer suppress the default indicator. The consumer can then add its own `useTransition` and use `isPending` however they like. The best practices here are not yet fully established.
 
-One approach is to set a `data-pending` attribute on a wrapper and use Tailwind's `group-has-data-pending:` variant to style surrounding content:
+With `hideSpinner`, the consumer can set a `data-pending` attribute on a wrapper and use Tailwind's `group-has-data-pending:` variant to style surrounding content:
 
 ```tsx
 export function PostTabs() {
