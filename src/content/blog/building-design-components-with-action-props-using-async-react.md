@@ -179,7 +179,7 @@ Because everything runs inside a transition, React coordinates it all into a sin
 
 ### The Final TabList
 
-The consumer might also need a regular `onChange` for synchronous side effects outside the Action (for example, logging or local state), so the final version accepts both. The `onChange` fires synchronously before the transition starts.
+The consumer might also need an `onChange` event handler when they need access to the event itself, for example to run validation or call `event.preventDefault()`. The `onChange` fires synchronously before the transition starts.
 
 Here is the final `TabList`:
 
@@ -190,7 +190,7 @@ type TabListProps = {
   tabs: { label: string; value: string }[];
   activeTab: string;
   changeAction?: (value: string) => void | Promise<void>;
-  onChange?: (value: string) => void;
+  onChange?: (e: React.MouseEvent<HTMLButtonElement>) => void;
 };
 
 export function TabList({
@@ -202,8 +202,11 @@ export function TabList({
   const [optimisticTab, setOptimisticTab] = useOptimistic(activeTab);
   const [isPending, startTransition] = useTransition();
 
-  function handleTabChange(value: string) {
-    onChange?.(value);
+  function handleTabChange(
+    e: React.MouseEvent<HTMLButtonElement>,
+    value: string
+  ) {
+    onChange?.(e);
     startTransition(async () => {
       setOptimisticTab(value);
       await changeAction?.(value);
@@ -215,7 +218,7 @@ export function TabList({
       {tabs.map(tab => (
         <button
           key={tab.value}
-          onClick={() => handleTabChange(tab.value)}
+          onClick={e => handleTabChange(e, tab.value)}
           className={tab.value === optimisticTab ? "active" : ""}
         >
           {tab.label}
@@ -430,7 +433,7 @@ Here is how the prop is typed:
 type EditableTextProps = {
   value: string;
   action: (value: string) => void | Promise<void>;
-  onChange?: (value: string) => void;
+  onChange?: (e: React.SyntheticEvent) => void;
   displayValue?: ((value: string) => React.ReactNode) | React.ReactNode;
 };
 ```
@@ -449,7 +452,7 @@ When `displayValue` is a function, the component calls it with the optimistic va
 
 ### The Final EditableText
 
-Like `TabList`, the final version also accepts an `onChange` callback for synchronous side effects outside the transition.
+Like `TabList`, the final version also accepts an `onChange` event handler for when the consumer needs access to the event.
 
 Here is the final implementation:
 
@@ -459,7 +462,7 @@ import { useOptimistic, useState, useTransition } from "react";
 type EditableTextProps = {
   value: string;
   displayValue?: ((value: string) => React.ReactNode) | React.ReactNode;
-  onChange?: (value: string) => void;
+  onChange?: (e: React.SyntheticEvent) => void;
   action: (value: string) => void | Promise<void>;
 };
 
@@ -474,10 +477,10 @@ export function EditableText({
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(value);
 
-  function handleCommit() {
+  function handleCommit(e: React.SyntheticEvent) {
     setIsEditing(false);
     if (draft === optimisticValue) return;
-    onChange?.(draft);
+    onChange?.(e);
     startTransition(async () => {
       setOptimisticValue(draft);
       await action(draft);
@@ -500,7 +503,7 @@ export function EditableText({
         value={draft}
         onChange={e => setDraft(e.target.value)}
         onKeyDown={e => {
-          if (e.key === "Enter") handleCommit();
+          if (e.key === "Enter") handleCommit(e);
           if (e.key === "Escape") handleCancel();
         }}
         autoFocus
