@@ -267,6 +267,52 @@ Optimistic updates, the pending spinner, and rollback are all handled internally
 
 ![PostTabs filtering blog posts by status in the dashboard](@assets/blogtabs.gif)
 
+### Customizing the Pending State
+
+The built-in spinner is a sensible default, but sometimes you want full control over the pending UI. The component could accept a `hideSpinner` prop, letting the consumer suppress the default indicator. The consumer can then add its own `useTransition` and use `isPending` however they like.
+
+One approach is to set a `data-pending` attribute on a wrapper and use Tailwind's `group-has-data-pending:` variant to style surrounding content:
+
+```tsx
+export function PostTabs() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const currentTab = searchParams.get("filter") ?? "all";
+  const [isPending, startTransition] = useTransition();
+
+  return (
+    <div data-pending={isPending ? "" : undefined}>
+      <TabList
+        hideSpinner
+        tabs={tabs}
+        activeTab={currentTab}
+        changeAction={value => {
+          return startTransition(() => {
+            return router.push(`/dashboard?filter=${value}`);
+          });
+        }}
+      />
+    </div>
+  );
+}
+```
+
+The consumer's `startTransition` controls `isPending`, and `data-pending` cascades through the DOM so any descendant can react to it with CSS. The optimistic tab switch still happens inside `TabList`, while the surrounding UI shows a custom loading treatment. Add a `group` class to a shared ancestor, and descendants can use `group-has-data-pending:` to style themselves:
+
+```tsx
+<div className="space-y-4 group-has-data-pending:animate-pulse">
+  {posts.map(post => (
+    <Card className="has-data-pending:bg-muted/70 has-data-pending:animate-pulse">
+      {/* ... */}
+    </Card>
+  ))}
+</div>
+```
+
+Now clicking a tab instantly switches the active tab (optimistic update inside `TabList`), while the card list shows customized feedback via CSS.
+
+![Customizing the pending state in the dashboard](@assets/customize.gif)
+
 ## Example 2: EditableText
 
 Let's apply the same pattern to an inline editable text field. The user clicks to edit, types a value, and commits with Enter or a save button.
