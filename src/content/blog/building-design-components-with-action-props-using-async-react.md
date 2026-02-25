@@ -230,7 +230,7 @@ export function TabList({
 }
 ```
 
-In a real project, you'd use proper tab primitives for accessibility and styling. You can see a full implementation of [`TabList` on GitHub](https://github.com/aurorascharff/next16-async-react-blog/blob/main/components/design/TabList.tsx).
+The code above is stripped down to focus on the action props pattern. You can see the [`TabList` on GitHub](https://github.com/aurorascharff/next16-async-react-blog/blob/main/components/design/TabList.tsx). A complete design component would also handle things like accessibility primitives, controlled and uncontrolled usage, and more.
 
 ### Usage: PostTabs in a Blog Dashboard
 
@@ -530,7 +530,7 @@ export function EditableText({
 }
 ```
 
-In a real project, you could also extend input attributes via `React.ComponentProps<"input">` and add blur handling. You can see a full implementation of [`EditableText` on GitHub](https://github.com/aurorascharff/next16-chart-dashboard/blob/main/components/design/EditableText.tsx).
+Like `TabList`, the code above is stripped down. You can see the [`EditableText` on GitHub](https://github.com/aurorascharff/next16-chart-dashboard/blob/main/components/design/EditableText.tsx). A complete design component would also handle things like extended input attributes, controlled and uncontrolled usage, and more.
 
 ### Usage: RevenueGoal in a Sales Dashboard
 
