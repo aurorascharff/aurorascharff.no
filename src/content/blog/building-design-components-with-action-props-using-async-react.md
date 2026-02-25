@@ -301,11 +301,9 @@ The consumer's `startTransition` controls `isPending`, and `data-pending` cascad
 
 ```tsx
 <div className="space-y-4 group-has-data-pending:animate-pulse">
-  {posts.map(post => (
-    <Card className="has-data-pending:bg-muted/70 has-data-pending:animate-pulse">
-      {/* ... */}
-    </Card>
-  ))}
+  {posts.map(post => ({
+    /* ... */
+  }))}
 </div>
 ```
 
