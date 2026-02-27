@@ -6,7 +6,7 @@ import { SITE } from "@config";
 export async function GET() {
   const events = await getCollection("speaking");
   const sortedEvents = getSortedEvents(events).filter(
-    event => event.data.completed
+    event => event.data.completed && event.data.address !== "Remote"
   );
   return rss({
     title: `${SITE.title} - Speaking`,
