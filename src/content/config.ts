@@ -33,6 +33,7 @@ const speaking = defineCollection({
       websiteLink: z.string().optional(),
       name: z.string(),
       completed: z.boolean(),
+      address: z.string().optional(),
       ogImage: image()
         .refine(img => img.width >= 1200 && img.height >= 630, {
           message: "OpenGraph image must be at least 1200 X 630 pixels!",
