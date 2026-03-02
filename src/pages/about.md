@@ -7,12 +7,10 @@ title: "About me"
 
 Hey, I'm Aurora Scharff ♡
 
-I'm a Software Engineer from Norway and Microsoft MVP in Web Technologies, skilled in multiple technologies and domains, including React, Next.js, .NET, and Azure.
+I'm a Software Engineer from Norway, working as a DX Engineer at [Vercel](https://vercel.com) and the React Certification Lead at [certificates.dev](https://certificates.dev). I specialize in React and Next.js, focused on technical content, developer education, and community. Microsoft MVP in Web Technologies.
 
-I work as a consultant at [Crayon Consulting](https://crayonconsulting.no) and I'm the React Certification Lead at [certificates.dev](https://certificates.dev). My focus is web development with extensive experience in React and Next.js, including active use of React Server Components.
+I enjoy solving problems, learning new things, and sharing knowledge through demo apps, blog posts, workshops, and conferences. I've spoken at 20+ conferences worldwide, including React Conf and Next.js Conf.
 
-I also write React-focused blog content on [certificates.dev/blog](https://certificates.dev/blog?tech=react), covering modern React patterns and best practices.
+You can also find my writing on the [certificates.dev blog](https://certificates.dev/blog?tech=react).
 
-I enjoy solving problems, learning new things, and sharing knowledge through workshops, blog posts, demo apps, and supporting fellow developers. I regularly present at international conferences too.
-
-**Want to work together?** I offer consulting services to help with Next.js and React development. Feel free to reach out on X or LinkedIn!
+I'd love to hear from you. Reach out on X, Bluesky, or LinkedIn!
