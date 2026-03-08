@@ -37,6 +37,9 @@ export default defineConfig({
     optimizeDeps: {
       exclude: ["@resvg/resvg-js"],
     },
+    resolve: {
+      dedupe: ["react", "react-dom"],
+    },
   },
   scopedStyleStrategy: "where",
 });
