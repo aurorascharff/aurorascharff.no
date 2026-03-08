@@ -9,47 +9,40 @@ tags:
   - Tag1
   - Tag2
 description: A concise 1-2 sentence description. Used for SEO and post excerpts.
+# STYLE NOTES FOR AI:
+# - Match Aurora's writing style: flowing prose, no short punchy sentences
+# - No em dashes, use colons or commas instead
+# - No emojis in prose (only in the sign-off 🚀)
+# - Don't over-explain, let code speak for itself
+# - Simplify code examples: abstract away CSS/styling, use generic HTML when possible
+# - Use // ... or /* ... */ to collapse non-essential parts of code
+# - Don't repeat links already introduced earlier
+# - Don't repeat exact phrases or sentences across sections
+# - Avoid saying the same thing twice with different wording in adjacent paragraphs
+# - Key takeaways should be general principles, not example-specific
+# - Conclusion should add new value, not repeat earlier content
+# - Use correct terminology for the topic (check official docs if unsure)
+# - Read existing posts for reference style before writing
+# - When building multiple parallel examples, keep structure consistent but vary the prose
+#   (e.g. don't use identical transition sentences between each example's sections)
+# - Progressive sections should use generic examples; specific use cases belong in Usage sections
+# - Usage section intros should be conversational: "Let's say we wanted to X in a Y, where..."
+# IMAGES & GIFS:
+# - Place GIFs in src/assets/ (e.g. src/assets/my-demo.gif)
+# - Reference with: ![Alt text describing the demo](@assets/my-demo.gif)
+# MDX & INTERACTIVE DEMOS:
+# - This is an .mdx file: you can import and render React components inline
+# - Import components with relative paths and .tsx extensions:
+#   import MyDemo from "../../components/examples/MyDemo.tsx";
+# - Render with client:load to hydrate on the client:
+#   <MyDemo client:load />
+# - Use client:visible instead of client:load to defer hydration until scrolled into view
+# - Wrap demo internals with the DemoContainer component for CSS isolation from the prose wrapper:
+#   import DemoContainer from "../../components/examples/DemoContainer.tsx";
+# - Keep demo components in src/components/examples/
+# - Demo components should be stripped-down (no custom CSS), matching the code shown in the post
+# - The DemoContainer uses `all: revert` to restore browser defaults inside the prose context
 ---
-
-{/\* STYLE NOTES FOR AI:
-
-- Match Aurora's writing style: flowing prose, no short punchy sentences
-- No em dashes, use colons or commas instead
-- No emojis in prose (only in the sign-off 🚀)
-- Don't over-explain, let code speak for itself
-- Simplify code examples: abstract away CSS/styling, use generic HTML when possible
-- Use // ... or /_ ... _ / to collapse non-essential parts of code
-- Don't repeat links already introduced earlier
-- Don't repeat exact phrases or sentences across sections
-- Avoid saying the same thing twice with different wording in adjacent paragraphs
-- Key takeaways should be general principles, not example-specific
-- Conclusion should add new value, not repeat earlier content
-- Use correct terminology for the topic (check official docs if unsure)
-- Read existing posts for reference style before writing
-- When building multiple parallel examples, keep structure consistent but vary the prose
-  (e.g. don't use identical transition sentences between each example's sections)
-- Progressive sections should use generic examples; specific use cases belong in Usage sections
-- Usage section intros should be conversational: "Let's say we wanted to X in a Y, where..."
-
-IMAGES & GIFS:
-
-- Place GIFs in src/assets/ (e.g. src/assets/my-demo.gif)
-- Reference with: ![Alt text describing the demo](@assets/my-demo.gif)
-
-MDX & INTERACTIVE DEMOS:
-
-- This is an .mdx file: you can import and render React components inline
-- Import components with relative paths and .tsx extensions:
-  import MyDemo from "../../components/examples/MyDemo.tsx";
-- Render with client:load to hydrate on the client:
-  <MyDemo client:load />
-- Use client:visible instead of client:load to defer hydration until scrolled into view
-- Wrap demo internals with the DemoContainer component for CSS isolation from the prose wrapper:
-  import DemoContainer from "../../components/examples/DemoContainer.tsx";
-- Keep demo components in src/components/examples/
-- Demo components should be stripped-down (no custom CSS), matching the code shown in the post
-- The DemoContainer uses `all: revert` to restore browser defaults inside the prose context
-  \*/}
 
 {/* Import interactive demo components here */}
 {/* import Counter from "../../components/examples/Counter.tsx"; */}
@@ -67,20 +60,15 @@ Content and code examples...
 // code example
 ```
 
-{/\*
-Structure options depending on the post:
-
-- Linear walkthrough with sequential sections
-- Incremental build-up: start basic, add features step by step with subsections (###)
-- Multiple examples: use ## for each example, ### for sub-steps, keep structure consistent across examples
-- Problem/solution: present the issue, walk through approaches
-- Mix of prose, code, and interactive demos as needed
-
-To add an interactive demo after a code example:
-
-<Counter client:load />
-<Toggle client:load />
-*/}
+{/* Structure options depending on the post: */}
+{/* - Linear walkthrough with sequential sections */}
+{/* - Incremental build-up: start basic, add features step by step with subsections (###) */}
+{/* - Multiple examples: use ## for each example, ### for sub-steps, keep structure consistent across examples */}
+{/* - Problem/solution: present the issue, walk through approaches */}
+{/* - Mix of prose, code, and interactive demos as needed */}
+{/* To add an interactive demo after a code example: */}
+{/* <Counter client:load /> */}
+{/* <Toggle client:load /> */}
 
 ## Conclusion
 
