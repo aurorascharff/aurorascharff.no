@@ -25,10 +25,10 @@ Next.js 16 introduces a `cacheComponents` flag that enables the `'use cache'` di
 
 ```tsx
 async function ProductList() {
-  'use cache';
-  
+  "use cache";
+
   const products = await getProducts();
-  
+
   return (
     <>
       {products.map(product => (
@@ -43,7 +43,7 @@ This fundamentally changes how data fetching works in the App Router. When `cach
 
 ```ts
 const config: NextConfig = {
-  cacheComponents: true
+  cacheComponents: true,
 };
 
 export default config;
@@ -57,14 +57,14 @@ While Next.js 16 itself is supported by `next-intl@4.4`, `'use cache'` doesn't w
 
 ```tsx
 async function ProductList() {
-  'use cache';
-  
-  const t = await getTranslations('ProductPage');
+  "use cache";
+
+  const t = await getTranslations("ProductPage");
   const products = await getProducts();
-  
+
   return (
     <>
-      <h2>{t('title')}</h2>
+      <h2>{t("title")}</h2>
       {products.map(product => (
         <p key={product.id}>{product.name}</p>
       ))}
@@ -88,10 +88,10 @@ The proper solution would be the ability to read params deeply from within the c
 Until `next/root-params` arrives, there's a workaround you can use. To enable static rendering with `next-intl`, you need to follow the [static rendering setup](https://next-intl.dev/docs/routing/setup#static-rendering) from the official documentation. This requires implementing `generateStaticParams`, which returns an array of objects representing the dynamic segments to be statically generated at build time:
 
 ```tsx
-import {routing} from '@/i18n/routing';
+import { routing } from "@/i18n/routing";
 
 export function generateStaticParams() {
-  return routing.locales.map((locale) => ({locale}));
+  return routing.locales.map(locale => ({ locale }));
 }
 ```
 
@@ -102,10 +102,10 @@ import {setRequestLocale} from 'next-intl/server';
 
 export default async function LocaleLayout({children, params}: Props) {
   const {locale} = await params;
-  
+
   // Enable static rendering
   setRequestLocale(locale);
-  
+
   return (
     // ...
   );
@@ -118,12 +118,12 @@ Now you can start adding `'use cache'` to your components. If you have a compone
 
 ```tsx
 async function DynamicComponent() {
-  const t = await getTranslations('IndexPage');
+  const t = await getTranslations("IndexPage");
 
   return (
     <>
-      <h2>{t('dynamicComponent.title')}</h2>
-      <p>{t('dynamicComponent.content')}</p>
+      <h2>{t("dynamicComponent.title")}</h2>
+      <p>{t("dynamicComponent.content")}</p>
     </>
   );
 }
@@ -132,15 +132,15 @@ async function DynamicComponent() {
 For components where you want to use `'use cache'`, you would need to accept the locale as a prop and pass it explicitly to `getTranslations()`. When you pass a `locale` parameter alongside the namespace, the function will use that value instead of reading from `headers()`:
 
 ```tsx
-async function CachedComponent({locale}: {locale: Locale}) {
-  'use cache';
-  
-  const t = await getTranslations({locale, namespace: 'IndexPage'});
+async function CachedComponent({ locale }: { locale: Locale }) {
+  "use cache";
+
+  const t = await getTranslations({ locale, namespace: "IndexPage" });
 
   return (
     <>
-      <h2>{t('cachedComponent.title')}</h2>
-      <p>{t('cachedComponent.content')}</p>
+      <h2>{t("cachedComponent.title")}</h2>
+      <p>{t("cachedComponent.content")}</p>
     </>
   );
 }
@@ -149,22 +149,22 @@ async function CachedComponent({locale}: {locale: Locale}) {
 Where would we get this locale value without dynamically rendering? In your page component, you can extract the locale from params and pass it down to the `CachedComponent`:
 
 ```tsx
-export default async function IndexPage({params}: PageProps) {
-  const {locale} = await params;
+export default async function IndexPage({ params }: PageProps) {
+  const { locale } = await params;
 
   // Enable static rendering
   setRequestLocale(locale);
 
-  const t = await getTranslations({locale, namespace: 'IndexPage'});
+  const t = await getTranslations({ locale, namespace: "IndexPage" });
 
   return (
     <>
-      <h1>{t('title')}</h1>
+      <h1>{t("title")}</h1>
       <Suspense fallback={<p>Loading...</p>}>
         <DynamicComponent />
       </Suspense>
       <CachedComponent locale={locale} />
-      <p>{t('description')}</p>
+      <p>{t("description")}</p>
     </>
   );
 }
@@ -176,9 +176,79 @@ This follows a broader pattern in Next.js applications where you encode dynamic 
 
 You can find the full code for the examples in this post on [GitHub](https://github.com/aurorascharff/next-intl-cache-components).
 
+## Update: next/root-params is here (Next.js 16.2)
+
+Since writing this post, `next/root-params` has shipped! As of Next.js 16.2, you can use root params inside `"use cache"` functions thanks to [PR #91191](https://github.com/vercel/next.js/pull/91191). This means the prop-drilling workaround described above is no longer necessary.
+
+You enable it in `next.config.ts`:
+
+```ts
+const config: NextConfig = {
+  experimental: {
+    rootParams: true,
+  },
+  cacheComponents: true,
+};
+```
+
+One important requirement: your `[locale]` segment must be a root parameter, meaning there can't be a `app/layout.tsx` file above it. The root layout needs to live inside `[locale]`:
+
+```
+app/
+  [locale]/        ← root parameter
+    layout.tsx     ← root layout (renders <html> and <body>)
+    page.tsx
+```
+
+The layout reads locale from root params instead of `await params`:
+
+```tsx
+import { locale as rootLocale } from "next/root-params";
+
+export default async function LocaleLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const locale = await rootLocale();
+  // ...
+  return (
+    <html lang={locale}>
+      <body>{children}</body>
+    </html>
+  );
+}
+```
+
+And the cached component is now self-contained. It reads locale directly via `await rootLocale()` inside `"use cache"`, and the root param value automatically becomes a cache key:
+
+```tsx
+import { locale as rootLocale } from "next/root-params";
+
+async function CachedComponent() {
+  "use cache";
+
+  const locale = (await rootLocale()) as Locale;
+  const t = await getTranslations({ locale, namespace: "IndexPage" });
+
+  return (
+    <>
+      <h2>{t("cachedComponent.title")}</h2>
+      <p>{t("cachedComponent.content")}</p>
+    </>
+  );
+}
+```
+
+No locale prop needed. The page just renders `<CachedComponent />` without passing anything.
+
+Note that `setRequestLocale` is still needed in layouts and pages for now, and you still need to pass `locale` explicitly to `getTranslations({locale, namespace})` inside `"use cache"`. This is because `getTranslations('Namespace')` without explicit locale still goes through `getRequestConfig`, which reads from `headers()`. Once `next-intl` integrates root params internally, even that won't be necessary, and `getTranslations('Namespace')` will just work everywhere.
+
+I've updated the [demo repo](https://github.com/aurorascharff/next-intl-cache-components) with all of these changes.
+
 ## Conclusion
 
-In this blog post, I explored the compatibility challenges between `next-intl` and Next.js 16's `'use cache'`. The temporary workaround involves explicit locale passing, but the proper solution is `next/root-params`, which will allow i18n libraries to access params without relying on headers. The good news is that `next-intl` is already prepared for this transition, so no library changes will be necessary once the Next.js infrastructure is ready. When that happens, you'll be able to simplify your code by removing `setRequestLocale` calls and explicit locale prop passing.
+In this blog post, I explored the compatibility challenges between `next-intl` and Next.js 16's `'use cache'`. The temporary workaround involves explicit locale passing, but the proper solution is `next/root-params`, which will allow i18n libraries to access params without relying on headers. With Next.js 16.2, root params are available and work inside `"use cache"`, so the prop-drilling workaround is no longer needed. Once `next-intl` integrates root params internally, you'll be able to simplify even further by removing `setRequestLocale` calls and explicit locale arguments entirely.
 
 Thanks to [Jan Amann](https://x.com/jamannnnnn) for the [detailed explanation](https://x.com/aurorascharff/status/1985333783747285184) of the current state and future plans for `next-intl` compatibility with `'use cache'`.
 
