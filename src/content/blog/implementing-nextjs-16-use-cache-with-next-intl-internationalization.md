@@ -180,7 +180,7 @@ You can find the full code for the examples in this post on [GitHub](https://git
 
 Since writing this post, `next/root-params` has shipped! As of Next.js 16.2, you can use root params inside `"use cache"` functions thanks to [PR #91191](https://github.com/vercel/next.js/pull/91191). This means the prop-drilling workaround described above is no longer necessary.
 
-You enable it in `next.config.ts`:
+To enable it, add the `rootParams` experimental flag in `next.config.ts`:
 
 ```ts
 const config: NextConfig = {
@@ -191,7 +191,7 @@ const config: NextConfig = {
 };
 ```
 
-One important requirement: your `[locale]` segment must be a root parameter, meaning there can't be a `app/layout.tsx` file above it. The root layout needs to live inside `[locale]`:
+Your `[locale]` segment must be a root parameter, which means there can't be an `app/layout.tsx` file above it. The root layout needs to live inside `[locale]`:
 
 ```
 app/
@@ -200,7 +200,7 @@ app/
     page.tsx
 ```
 
-The layout reads locale from root params instead of `await params`:
+With this structure, you can import `locale` from `next/root-params` and call it as an async function. In the layout, this replaces `await params`:
 
 ```tsx
 import { locale as rootLocale } from "next/root-params";
@@ -211,7 +211,12 @@ export default async function LocaleLayout({
   children: React.ReactNode;
 }) {
   const locale = await rootLocale();
-  // ...
+  if (!hasLocale(routing.locales, locale)) {
+    notFound();
+  }
+
+  setRequestLocale(locale);
+
   return (
     <html lang={locale}>
       <body>{children}</body>
@@ -220,7 +225,20 @@ export default async function LocaleLayout({
 }
 ```
 
-And the cached component is now self-contained. It reads locale directly via `await rootLocale()` inside `"use cache"`, and the root param value automatically becomes a cache key:
+The `generateMetadata` function also benefits since it no longer needs to receive params:
+
+```tsx
+export async function generateMetadata() {
+  const locale = (await rootLocale()) as Locale;
+  const t = await getTranslations({ locale, namespace: "LocaleLayout" });
+
+  return {
+    title: t("title"),
+  };
+}
+```
+
+The real payoff is in cached components. Previously, the page had to extract locale from params and pass it as a prop. Now the cached component reads it directly from root params, and the value automatically becomes a cache key:
 
 ```tsx
 import { locale as rootLocale } from "next/root-params";
@@ -240,9 +258,28 @@ async function CachedComponent() {
 }
 ```
 
-No locale prop needed. The page just renders `<CachedComponent />` without passing anything.
+The page just renders `<CachedComponent />` without passing anything:
 
-Note that `setRequestLocale` is still needed in layouts and pages for now, and you still need to pass `locale` explicitly to `getTranslations({locale, namespace})` inside `"use cache"`. This is because `getTranslations('Namespace')` without explicit locale still goes through `getRequestConfig`, which reads from `headers()`. Once `next-intl` integrates root params internally, even that won't be necessary, and `getTranslations('Namespace')` will just work everywhere.
+```tsx
+export default async function IndexPage() {
+  setRequestLocale((await rootLocale()) as Locale);
+
+  const t = await getTranslations("IndexPage");
+
+  return (
+    <>
+      <h1>{t("title")}</h1>
+      <Suspense fallback={<ComponentSkeleton />}>
+        <DynamicComponent />
+      </Suspense>
+      <CachedComponent />
+      <p>{t("description")}</p>
+    </>
+  );
+}
+```
+
+Note that `setRequestLocale` is still needed in layouts and pages for now. You also still need to pass `locale` explicitly to `getTranslations({locale, namespace})` inside `"use cache"`, because `getTranslations('Namespace')` without explicit locale still goes through `getRequestConfig`, which reads from `headers()`. Once `next-intl` integrates root params internally, even that won't be necessary and `getTranslations('Namespace')` will just work everywhere.
 
 I've updated the [demo repo](https://github.com/aurorascharff/next-intl-cache-components) with all of these changes.
 
