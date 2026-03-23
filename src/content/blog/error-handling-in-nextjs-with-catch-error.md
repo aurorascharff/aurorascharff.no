@@ -142,11 +142,12 @@ export default async function UserProfile() {
 
 ## catchError: framework-aware error boundaries
 
-[`unstable_catchError`](https://nextjs.org/docs/app/api-reference/functions/catchError), introduced in Next.js 16.2, is imported from `next/error`. It's a framework-aware error boundary that solves both problems out of the box.
+[`unstable_catchError`](https://nextjs.org/docs/app/api-reference/functions/catchError), introduced in Next.js 16.2, is a framework-aware error boundary that solves both problems out of the box.
 
 You define a fallback function that receives props and an error info object with the error and a `retry()` callback:
 
 ```tsx
+// ErrorBoundary.tsx
 "use client";
 
 import { unstable_catchError as catchError, type ErrorInfo } from "next/error";
