@@ -113,7 +113,7 @@ export function ReactErrorBoundaryFixed({
 
 Two things are going on:
 
-**Rethrow from `fallbackRender`.** The digest check mirrors what Next.js emits for control flow (`NEXT_NOT_FOUND`, `NEXT_REDIRECT`, `NEXT_HTTP_ERROR_FALLBACK`, and similar). When you throw again from `fallbackRender`, that throw propagates past `react-error-boundary` (it is already in its error state) so React can pass the error to the next boundary up the tree. Next.js’s built-in boundary then handles `notFound()`, `redirect()`, and the `authInterrupts` helpers (`unauthorized()`, `forbidden()`) instead of your generic fallback.
+**Rethrow from `fallbackRender`.** The digest check mirrors what Next.js emits for control flow (`NEXT_NOT_FOUND`, `NEXT_REDIRECT`, `NEXT_HTTP_ERROR_FALLBACK`, and similar). When you throw again from `fallbackRender`, that throw propagates past `react-error-boundary` (it is already in its error state) so React can pass the error to the next boundary up the tree. Next.js’s built-in boundary then handles `notFound()`, `redirect()`, and the [`authInterrupts`](https://nextjs.org/docs/app/api-reference/config/next-config-js/authInterrupts) helpers (`unauthorized()`, `forbidden()`) instead of your generic fallback.
 
 **Recovery on retry.** `resetErrorBoundary()` alone only clears client error state and re-renders; it does not refetch Server Components, and it can revive children before new data exists. The click handler instead runs `router.refresh()` to invalidate the router cache and pull a fresh RSC payload, bumps the `ErrorBoundary` `key` so the subtree fully remounts, and wraps both in `startTransition` so the UI does not flash an inconsistent state while that work finishes.
 
