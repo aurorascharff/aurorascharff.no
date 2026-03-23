@@ -129,7 +129,7 @@ export function ReactErrorBoundaryFixed({
 }
 ```
 
-This works, but it's a lot of ceremony. Every Server Component that might call `notFound()` needs the digest detection, and every error boundary needs the refresh-plus-key pattern. You're compensating for the fact that `react-error-boundary` has no awareness of Next.js control flow.
+This works, but it's a lot of ceremony. Every Server Component that might call `notFound()` needs the digest detection, and every error boundary needs the refresh-plus-key pattern. The digest list is also fragile: `unauthorized()` and `forbidden()` (from `authInterrupts`) happen to be covered by the `NEXT_HTTP_ERROR_FALLBACK` prefix here, but it's not obvious, and any new throw-based API Next.js adds could slip through if you don't update the check. You're compensating for the fact that `react-error-boundary` has no awareness of Next.js control flow.
 
 If you're using `try/catch` directly rather than an error boundary, [`unstable_rethrow`](https://nextjs.org/docs/app/api-reference/functions/unstable_rethrow) from `next/navigation` simplifies the server-side part. Instead of the manual digest check, you call `unstable_rethrow(err)` at the top of your catch block and it re-throws any framework error automatically:
 
