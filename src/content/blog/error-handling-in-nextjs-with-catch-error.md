@@ -175,7 +175,7 @@ import ErrorBoundary from "./ErrorBoundary";
 
 export default function Page() {
   return (
-    <ErrorBoundary>
+    <ErrorBoundary title="Failed to load user profile">
       <Suspense fallback={<LoadingSkeleton />}>
         <UserProfile />
       </Suspense>
@@ -184,6 +184,8 @@ export default function Page() {
 }
 ```
 
+The `title` prop is optional and defaults to "Something went wrong". The fallback never reads `error.message`, so server error details stay on the server.
+
 Two things are different from `react-error-boundary`:
 
 1. **Framework errors propagate correctly.** When `UserProfile` calls `notFound()`, `redirect()`, or any other internal throw, `catchError` doesn't catch it. The error reaches the framework and the expected behavior executes.
@@ -191,35 +193,6 @@ Two things are different from `react-error-boundary`:
 2. **`retry()` re-fetches server data.** Instead of just clearing client state, `retry()` re-fetches and re-renders the error boundary's contents on the server. If the underlying issue is resolved (a transient database timeout, for example), the component recovers with fresh data.
 
 There's also a `reset()` function available if you only want to clear the error state without re-fetching. In most cases, `retry()` is what you want.
-
-### Passing props to the fallback
-
-The component returned by `catchError` forwards any props (except `children`) to the fallback function. This is useful for building reusable error boundaries with different configurations:
-
-```tsx
-function ErrorFallback(
-  props: { title: string },
-  { error, unstable_retry: retry }: ErrorInfo
-) {
-  return (
-    <div>
-      <h3>{props.title}</h3>
-      <p>{error.message}</p>
-      <button onClick={() => retry()}>Try again</button>
-    </div>
-  );
-}
-
-export const ErrorBoundary = catchError(ErrorFallback);
-```
-
-```tsx
-<ErrorBoundary title="Failed to load user profile">
-  <Suspense fallback={<LoadingSkeleton />}>
-    <UserProfile />
-  </Suspense>
-</ErrorBoundary>
-```
 
 ### error.tsx with retry()
 
@@ -248,7 +221,6 @@ The `error.tsx` export receives the error and an `unstable_retry` callback, just
 "use client";
 
 export default function Error({
-  error,
   unstable_retry,
 }: {
   error: Error & { digest?: string };
@@ -257,7 +229,6 @@ export default function Error({
   return (
     <div>
       <h2>Something went wrong!</h2>
-      <p>{error.message}</p>
       <button onClick={() => unstable_retry()}>Try again</button>
     </div>
   );
