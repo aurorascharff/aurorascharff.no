@@ -122,6 +122,7 @@ It works, and you can centralize this in one reusable boundary or hook. You stil
 If you're using `try/catch` directly in a Server Component rather than an error boundary, [`unstable_rethrow`](https://nextjs.org/docs/app/api-reference/functions/unstable_rethrow) from `next/navigation` simplifies the framework error detection. Instead of the manual digest check, you call `unstable_rethrow(err)` at the top of your catch block and it re-throws any framework error automatically:
 
 ```tsx
+// UserProfile.tsx
 import { notFound, unstable_rethrow } from "next/navigation";
 
 export default async function UserProfile() {
@@ -170,6 +171,7 @@ export default catchError(ErrorFallback);
 Then use it like any other component wrapper:
 
 ```tsx
+// page.tsx
 import ErrorBoundary from "./ErrorBoundary";
 
 export default function Page() {
@@ -243,6 +245,7 @@ The same `retry()` pattern works at the route level too. [`error.tsx`](https://n
 The `error.tsx` export receives the error and an `unstable_retry` callback, just like the `retry()` in `catchError`:
 
 ```tsx
+// error.tsx
 "use client";
 
 export default function Error({
