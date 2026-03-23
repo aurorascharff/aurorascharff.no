@@ -43,11 +43,17 @@ The second issue is recovery. When you click "Try again" in a `react-error-bound
 
 ## The Workaround
 
-Before `catchError`, the workaround required two things: detecting framework errors on the server and forcing a data re-fetch on the client.
+Before `catchError`, the workaround required two things: detecting framework errors in the error boundary and forcing a data re-fetch on the client.
 
-On the server side, you wrap your data fetching in a `try/catch` and check the error's digest. If it's a Next.js internal error (`NEXT_NOT_FOUND`, `NEXT_REDIRECT`, `NEXT_HTTP_ERROR_FALLBACK`), you rethrow it so the framework can handle it. Otherwise, you wrap the error so `react-error-boundary` can catch it:
+You can handle both in a single component. In `fallbackRender`, check the error's digest for Next.js internal prefixes (`NEXT_NOT_FOUND`, `NEXT_REDIRECT`, `NEXT_HTTP_ERROR_FALLBACK`). If it's a framework error, throw it — React will propagate it to the next error boundary up the tree (Next.js's built-in one), which handles `notFound()`, `redirect()`, and the `authInterrupts` functions correctly. For app errors, show the error UI and use `router.refresh()` with a key change inside `startTransition` to re-fetch server data on retry:
 
 ```tsx
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import { ErrorBoundary } from "react-error-boundary";
+
 function isNextInternalError(error: unknown): boolean {
   if (
     error &&
@@ -65,35 +71,6 @@ function isNextInternalError(error: unknown): boolean {
   return false;
 }
 
-export default async function UserProfileSafe() {
-  try {
-    const user = await getUser();
-    return (
-      <div>
-        <p>{user.name}</p>
-        <p>{user.email}</p>
-      </div>
-    );
-  } catch (error) {
-    if (isNextInternalError(error)) {
-      throw error;
-    }
-    throw new Error(
-      error instanceof Error ? error.message : "Something went wrong"
-    );
-  }
-}
-```
-
-On the client side, you replace the standard `resetErrorBoundary` with `router.refresh()` inside a transition, and bump a key to force the boundary to remount:
-
-```tsx
-"use client";
-
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
-import { ErrorBoundary } from "react-error-boundary";
-
 export function ReactErrorBoundaryFixed({
   children,
 }: {
@@ -106,22 +83,31 @@ export function ReactErrorBoundaryFixed({
   return (
     <ErrorBoundary
       key={errorKey}
-      fallbackRender={({ error }) => (
-        <div>
-          <p>{error.message}</p>
-          <button
-            disabled={isPending}
-            onClick={() => {
-              startTransition(() => {
-                router.refresh();
-                setErrorKey(prev => prev + 1);
-              });
-            }}
-          >
-            {isPending ? "Retrying…" : "Try again"}
-          </button>
-        </div>
-      )}
+      fallbackRender={({ error }) => {
+        if (isNextInternalError(error)) {
+          throw error;
+        }
+
+        const message =
+          error instanceof Error ? error.message : "Something went wrong";
+
+        return (
+          <div>
+            <p>{message}</p>
+            <button
+              disabled={isPending}
+              onClick={() => {
+                startTransition(() => {
+                  router.refresh();
+                  setErrorKey(prev => prev + 1);
+                });
+              }}
+            >
+              {isPending ? "Retrying…" : "Try again"}
+            </button>
+          </div>
+        );
+      }}
     >
       {children}
     </ErrorBoundary>
@@ -129,9 +115,15 @@ export function ReactErrorBoundaryFixed({
 }
 ```
 
-This works, but it's a lot of ceremony. Every Server Component that might call `notFound()` needs the digest detection, and every error boundary needs the refresh-plus-key pattern. The digest list is also fragile: `unauthorized()` and `forbidden()` (from `authInterrupts`) happen to be covered by the `NEXT_HTTP_ERROR_FALLBACK` prefix here, but it's not obvious, and any new throw-based API Next.js adds could slip through if you don't update the check. You're compensating for the fact that `react-error-boundary` has no awareness of Next.js control flow.
+There are a few things happening here:
 
-If you're using `try/catch` directly rather than an error boundary, [`unstable_rethrow`](https://nextjs.org/docs/app/api-reference/functions/unstable_rethrow) from `next/navigation` simplifies the server-side part. Instead of the manual digest check, you call `unstable_rethrow(err)` at the top of your catch block and it re-throws any framework error automatically:
+- **Framework errors are rethrown during render.** When `fallbackRender` throws, React looks for the next error boundary up the tree. Since `react-error-boundary` is already in its errored state, the throw propagates to Next.js's built-in error boundary, which handles `notFound()`, `redirect()`, etc. correctly.
+- **`router.refresh()` re-fetches server data.** The standard `resetErrorBoundary()` only clears client state. `router.refresh()` invalidates the router cache and triggers a fresh RSC payload from the server.
+- **The `key` change forces a remount.** `resetErrorBoundary()` clears internal state synchronously, which causes children to re-render before the new server data arrives. Changing the `key` instead forces React to unmount and remount the entire `ErrorBoundary` subtree, and `startTransition` keeps the old UI visible until the fresh data is ready.
+
+This works, but it's a lot of ceremony. Every error boundary needs the digest detection and the refresh-plus-key pattern. The digest list is also fragile: `unauthorized()` and `forbidden()` (from `authInterrupts`) happen to be covered by the `NEXT_HTTP_ERROR_FALLBACK` prefix here, but it's not obvious, and any new throw-based API Next.js adds could slip through if you don't update the check. You're compensating for the fact that `react-error-boundary` has no awareness of Next.js control flow.
+
+If you're using `try/catch` directly in a Server Component rather than an error boundary, [`unstable_rethrow`](https://nextjs.org/docs/app/api-reference/functions/unstable_rethrow) from `next/navigation` simplifies the framework error detection. Instead of the manual digest check, you call `unstable_rethrow(err)` at the top of your catch block and it re-throws any framework error automatically:
 
 ```tsx
 import { notFound, unstable_rethrow } from "next/navigation";
