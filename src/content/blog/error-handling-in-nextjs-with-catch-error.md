@@ -140,11 +140,11 @@ export default async function UserProfile() {
 
 `unstable_rethrow` is a newer addition that replaces the manual digest check, but it only solves the server-side half. The recovery side still needs the refresh-plus-key workaround.
 
-## catchError
+## catchError: framework-aware error boundaries
 
 [`unstable_catchError`](https://nextjs.org/docs/app/api-reference/functions/catchError), introduced in Next.js 16.2, is imported from `next/error`. It's a framework-aware error boundary that solves both problems out of the box.
 
-You define a fallback function that receives props and an error info object containing the error and a `retry` function:
+You define a fallback function that receives props and an error info object with the error and a `retry()` callback:
 
 ```tsx
 "use client";
@@ -190,7 +190,7 @@ Two things are different from `react-error-boundary`:
 
 There's also a `reset()` function available if you only want to clear the error state without re-fetching. In most cases, `retry()` is what you want.
 
-### Passing Props to the Fallback
+### Passing props to the fallback
 
 The component returned by `catchError` forwards any props (except `children`) to the fallback function. This is useful for building reusable error boundaries with different configurations:
 
@@ -219,11 +219,9 @@ export const ErrorBoundary = catchError(ErrorFallback);
 </ErrorBoundary>
 ```
 
-### error.tsx with retry
+### error.tsx with retry()
 
-`catchError` is for component-level error boundaries. For route-level errors, the [`error.tsx` file convention](https://nextjs.org/docs/app/api-reference/file-conventions/error) also supports `unstable_retry` for re-fetching server data.
-
-To understand where `error.tsx` sits, here's the component hierarchy Next.js creates for each route segment:
+The same `retry()` pattern works at the route level too. [`error.tsx`](https://nextjs.org/docs/app/api-reference/file-conventions/error) is the segment-wide fallback: when something throws in the segment's page tree, Next.js swaps in this component for the route content under the layout. Here is the component hierarchy Next.js creates for each route segment:
 
 ```
 <Layout>
@@ -239,7 +237,9 @@ To understand where `error.tsx` sits, here's the component hierarchy Next.js cre
 </Layout>
 ```
 
-The `error.tsx` boundary wraps `loading.tsx`, `not-found.tsx`, and `page.tsx`, but does not wrap the `layout.tsx` or `template.tsx` in the same segment. When an error is caught, the fallback replaces everything inside that boundary while the layout stays mounted. To catch errors in the root layout, use `global-error.tsx`.
+`layout.tsx` and `template.tsx` stay mounted. If the root layout itself throws, use [`global-error.tsx`](https://nextjs.org/docs/app/api-reference/file-conventions/error#global-error).
+
+The `error.tsx` export receives the error and an `unstable_retry` callback, just like the `retry()` in `catchError`:
 
 ```tsx
 "use client";
@@ -261,9 +261,7 @@ export default function Error({
 }
 ```
 
-Calling `unstable_retry()` re-fetches and re-renders the segment on the server. There's also a `reset()` function if you only need to clear the error state without re-fetching.
-
-You don't need to wrap `error.tsx` exports with `catchError` since `error.tsx` already renders inside a built-in error boundary provided by Next.js. The difference is scope: `error.tsx` handles the entire route segment, while `catchError` lets you isolate errors in specific parts of the component tree without affecting the rest of the page.
+Calling `unstable_retry()` re-fetches and re-renders the segment on the server.
 
 ## Conclusion
 
