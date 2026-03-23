@@ -196,7 +196,7 @@ export default function Page() {
 
 Two things are different from `react-error-boundary`:
 
-1. **Framework errors propagate correctly.** When `UserProfile` calls `notFound()`, `catchError` doesn't catch it. The error reaches the framework, and the nearest `not-found.tsx` renders as expected. Same for `redirect()`.
+1. **Framework errors propagate correctly.** When `UserProfile` calls `notFound()`, `redirect()`, or any other internal throw, `catchError` doesn't catch it. The error reaches the framework and the expected behavior executes.
 
 2. **`retry()` re-fetches server data.** Instead of just clearing client state, `retry()` re-fetches and re-renders the error boundary's contents on the server. If the underlying issue is resolved (a transient database timeout, for example), the component recovers with fresh data.
 
