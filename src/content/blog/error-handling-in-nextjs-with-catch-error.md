@@ -108,9 +108,7 @@ export function ReactErrorBoundaryFixed({
       key={errorKey}
       fallbackRender={({ error }) => (
         <div>
-          <p>
-            {error instanceof Error ? error.message : "Something went wrong"}
-          </p>
+          <p>{error.message}</p>
           <button
             disabled={isPending}
             onClick={() => {
