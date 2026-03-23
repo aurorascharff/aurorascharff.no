@@ -35,9 +35,9 @@ export default function Page() {
 }
 ```
 
-This works well for regular `throw` errors. But Next.js uses `throw` internally for control flow: `notFound()` and `redirect()` both throw special errors with digest prefixes that the framework is supposed to intercept. `react-error-boundary` doesn't know about these. It catches everything, including errors that were never meant for it.
+This works well for regular `throw` errors. But Next.js uses `throw` internally for control flow: `notFound()`, `redirect()`, and the `authInterrupts` functions (`unauthorized()` and `forbidden()`) all throw special errors with digest prefixes that the framework is supposed to intercept. `react-error-boundary` doesn't know about these. It catches everything, including errors that were never meant for it.
 
-When a Server Component calls `notFound()`, you expect the nearest `not-found.tsx` to render. Instead, `react-error-boundary` catches the throw and shows your error fallback. The user sees a generic error UI instead of a proper 404 page. The same happens with `redirect()`: the redirect never executes because the boundary swallows it.
+When a Server Component calls `notFound()`, you expect the nearest `not-found.tsx` to render. Instead, `react-error-boundary` catches the throw and shows your error fallback. The user sees a generic error UI instead of a proper 404 page. The same happens with `redirect()`, `unauthorized()`, and `forbidden()`: the intended behavior never executes because the boundary swallows the throw.
 
 The second issue is recovery. When you click "Try again" in a `react-error-boundary` fallback, it calls `resetErrorBoundary`, which clears the error state and re-renders the children. But for Server Components, re-rendering on the client doesn't re-fetch the data. The component renders again with the same stale or errored state. The user clicks retry and nothing changes.
 
