@@ -1,6 +1,6 @@
 ---
 author: Aurora Scharff
-pubDatetime: 2026-03-23T00:00:00Z
+pubDatetime: 2026-03-22T23:00:00Z
 title: Error Handling in Next.js with catchError
 slug: error-handling-in-nextjs-with-catch-error
 featured: false
