@@ -68,8 +68,10 @@ function isNextInternalError(error: unknown): boolean {
 }
 
 export function ReactErrorBoundaryFixed({
+  title = "Something went wrong",
   children,
 }: {
+  title?: string;
   children: React.ReactNode;
 }) {
   const router = useRouter();
@@ -84,12 +86,9 @@ export function ReactErrorBoundaryFixed({
           throw error;
         }
 
-        const message =
-          error instanceof Error ? error.message : "Something went wrong";
-
         return (
           <div>
-            <p>{message}</p>
+            <p>{title}</p>
             <button
               disabled={isPending}
               onClick={() => {
@@ -154,12 +153,12 @@ You define a fallback function that receives props and an error info object with
 import { unstable_catchError as catchError, type ErrorInfo } from "next/error";
 
 function ErrorFallback(
-  _props: object,
-  { error, unstable_retry: retry }: ErrorInfo
+  props: { title?: string },
+  { unstable_retry: retry }: ErrorInfo
 ) {
   return (
     <div>
-      <p>{error.message}</p>
+      <p>{props.title ?? "Something went wrong"}</p>
       <button onClick={() => retry()}>Try again</button>
     </div>
   );
