@@ -184,7 +184,7 @@ export default function Page() {
 }
 ```
 
-The `title` prop is optional and defaults to "Something went wrong". The fallback never reads `error.message`, so server error details stay on the server.
+The `title` prop is optional and defaults to "Something went wrong". In production, Next.js strips server error messages anyway, so `error.message` would just show a generic "An error occurred in the Server Components render" rather than anything useful. Using a `title` prop gives you a meaningful, user-facing message instead.
 
 Two things are different from `react-error-boundary`:
 
