@@ -1,6 +1,6 @@
 ---
 author: Aurora Scharff
-pubDatetime: 2026-03-22T23:00:00Z
+pubDatetime: 2026-03-23T15:00:00Z
 title: Error Handling in Next.js with catchError
 slug: error-handling-in-nextjs-with-catch-error
 featured: false
@@ -281,6 +281,6 @@ You don't need to wrap `error.tsx` exports with `catchError` since `error.tsx` a
 
 If you've been building the digest detection and refresh-plus-key workarounds yourself, `catchError` replaces all of that with a single function call. It's still `unstable_` but usable today, and worth adopting now if you need component-level error boundaries in Server Components.
 
-You can find the full demo with all three approaches (before, workaround, and after) on [GitHub](https://github.com/aurorascharff/next-16-2-error-handling).
+You can [see it live](https://next-16-2-error-handling.vercel.app/before) or find the full source with all three approaches (before, workaround, and after) on [GitHub](https://github.com/aurorascharff/next-16-2-error-handling).
 
 I hope this post has been helpful. Please let me know if you have any questions or comments, and follow me on [Bluesky](https://bsky.app/profile/aurorascharff.no) or [X](https://x.com/aurorascharff) for more updates. Happy coding! 🚀
