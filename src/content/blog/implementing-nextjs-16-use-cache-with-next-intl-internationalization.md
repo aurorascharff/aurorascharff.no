@@ -279,7 +279,7 @@ export default async function IndexPage() {
 }
 ```
 
-Note that `setRequestLocale` is still needed in layouts and pages for now. You also still need to pass `locale` explicitly to `getTranslations({locale, namespace})` inside `"use cache"`, because `getTranslations('Namespace')` without explicit locale still goes through `getRequestConfig`, which reads from `headers()`. Once `next-intl` integrates root params internally, even that won't be necessary and `getTranslations('Namespace')` will just work everywhere. You can follow the progress on `cacheComponents` support in [next-intl#1493](https://github.com/amannn/next-intl/issues/1493#issuecomment-4102841852).
+Note that `setRequestLocale` is still needed in layouts and pages for now. You also still need to pass `locale` explicitly to `getTranslations({locale, namespace})` inside `"use cache"`, because `getTranslations('Namespace')` without explicit locale still goes through `getRequestConfig`, which reads from `headers()`. Once `next-intl` integrates root params internally, even that won't be necessary and `getTranslations('Namespace')` will just work everywhere. You can follow the progress on `cacheComponents` support in [next-intl#1493](https://github.com/amannn/next-intl/issues/1493).
 
 I've updated the [demo repo](https://github.com/aurorascharff/next-intl-cache-components) with all of these changes.
 
