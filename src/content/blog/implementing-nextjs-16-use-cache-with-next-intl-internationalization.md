@@ -280,13 +280,85 @@ export default async function IndexPage() {
 }
 ```
 
-Note that `setRequestLocale` is still needed in layouts and pages for now. You also still need to pass `locale` explicitly to `getTranslations({locale, namespace})` inside `"use cache"`, because `getTranslations('Namespace')` without explicit locale still goes through `getRequestConfig`, which reads from `headers()`. Once `next-intl` integrates root params internally, even that won't be necessary and `getTranslations('Namespace')` will just work everywhere. You can follow the progress on `cacheComponents` support in [next-intl#1493](https://github.com/amannn/next-intl/issues/1493).
+Note that in the examples above, `setRequestLocale` is still needed in layouts and pages, and you still need to pass `locale` explicitly to `getTranslations({locale, namespace})` inside `"use cache"`.
+
+### Moving root params into i18n/request.ts
+
+You can go one step further by moving `next/root-params` into `i18n/request.ts`. This lets `next-intl` resolve the locale from root params automatically, removing every `rootLocale()` import and `setRequestLocale` call from your components:
+
+```ts
+// src/i18n/request.ts
+import * as rootParams from "next/root-params";
+import { hasLocale } from "next-intl";
+import { getRequestConfig } from "next-intl/server";
+import { routing } from "./routing";
+import { notFound } from "next/navigation";
+
+export default getRequestConfig(async ({ locale }) => {
+  if (!locale) {
+    const paramValue = await rootParams.locale();
+    if (hasLocale(routing.locales, paramValue)) {
+      locale = paramValue;
+    } else {
+      notFound();
+    }
+  }
+
+  return {
+    locale,
+    messages: (await import(`../../messages/${locale}.json`)).default,
+  };
+});
+```
+
+The layout no longer needs `rootLocale()` or `setRequestLocale`:
+
+```tsx
+// app/[locale]/layout.tsx
+import { getLocale } from "next-intl/server";
+import { NextIntlClientProvider } from "next-intl";
+
+export default async function LocaleLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const locale = await getLocale();
+
+  return (
+    <html lang={locale}>
+      <body>
+        <NextIntlClientProvider>{children}</NextIntlClientProvider>
+      </body>
+    </html>
+  );
+}
+```
+
+And cached components just call `getTranslations` without an explicit locale:
+
+```tsx
+async function CachedComponent() {
+  "use cache";
+
+  const t = await getTranslations("IndexPage");
+
+  return (
+    <>
+      <h2>{t("cachedComponent.title")}</h2>
+      <p>{t("cachedComponent.content")}</p>
+    </>
+  );
+}
+```
+
+Jan Amann has a [draft blog post](https://github.com/amannn/next-intl/pull/1632) covering this integration in detail. You can follow the progress on full `cacheComponents` support in [next-intl#1493](https://github.com/amannn/next-intl/issues/1493#issuecomment-4103529285).
 
 I've updated the [demo repo](https://github.com/aurorascharff/next-intl-cache-components) with all of these changes.
 
 ## Conclusion
 
-In this blog post, I explored the compatibility challenges between `next-intl` and Next.js 16's `'use cache'`. The temporary workaround involves explicit locale passing, but the proper solution is `next/root-params`, which will allow i18n libraries to access params without relying on headers. With Next.js 16.2, root params are available and work inside `"use cache"`, so the prop-drilling workaround is no longer needed. Once `next-intl` integrates root params internally, you'll be able to simplify even further by removing `setRequestLocale` calls and explicit locale arguments entirely.
+In this blog post, I explored the compatibility challenges between `next-intl` and Next.js 16's `'use cache'`. The temporary workaround involves explicit locale passing, but the proper solution is `next/root-params`, which allows i18n libraries to access params without relying on headers. With Next.js 16.2, root params are available and work inside `"use cache"`, so the prop-drilling workaround is no longer needed. By moving root params into `i18n/request.ts`, you can remove `setRequestLocale` and explicit locale arguments entirely.
 
 Thanks to [Jan Amann](https://x.com/jamannnnnn) for the [detailed explanation](https://x.com/aurorascharff/status/1985333783747285184) of the current state and future plans for `next-intl` compatibility with `'use cache'`.
 
