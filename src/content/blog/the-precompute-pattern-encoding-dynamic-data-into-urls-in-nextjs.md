@@ -14,7 +14,7 @@ tags:
 description: Before cache components, the Precompute pattern encoded request-specific data like auth state into URLs to keep pages static. This post documents how it works, where it shows up in practice, and how cache components change the picture.
 ---
 
-Before cache components in Next.js 16, pages were either fully static or fully dynamic. A single `cookies()` or `headers()` call in a layout would force every nested page into dynamic rendering. The precompute pattern was a way to work around this by encoding request-specific data into the URL, turning dynamic rendering into static generation with known variants.
+Before cache components in Next.js 16, pages were either fully static or fully dynamic. A single `cookies()` or `headers()` call in a layout would force every nested page into dynamic rendering. The Precompute pattern was a way to work around this by encoding request-specific data into the URL, turning dynamic rendering into static generation with known variants.
 
 With `cacheComponents`, this is no longer necessary for most cases, but the pattern is still used in production, especially by larger e-commerce teams. It's the same concept formalized by the [Vercel Flags SDK](https://flags-sdk.dev/docs/frameworks/next/precompute) and used by i18n libraries for locale routing. I also covered it briefly in my [Next.js Conf talk](https://www.youtube.com/watch?v=iRGc8KQDyQ8&t=147s). In this post, I'll walk through how it works using a [branch of my commerce demo](https://github.com/aurorascharff/next16-commerce/tree/request-context) and reflect on the trade-offs these teams face: high cardinality, ISR limitations, and where cache components change the picture.
 
@@ -44,7 +44,7 @@ export default async function RootLayout({
 }
 ```
 
-This `cookies()` call made every nested page dynamic: About, product listings, category pages, all hitting the server on every request. E-commerce applications are particularly affected by this because most of the page is shareable content: product details, categories, marketing. The user-specific parts, like the authentication state driving a login button or personalized recommendations, are a small fraction of the page, yet a single dynamic call cascaded through the entire route tree. Teams worked around it by splitting route groups into static and dynamic segments, or client-side fetching personalized content with API endpoints. The precompute pattern was another, more structured approach.
+This `cookies()` call made every nested page dynamic: About, product listings, category pages, all hitting the server on every request. E-commerce applications are particularly affected by this because most of the page is shareable content: product details, categories, marketing. The user-specific parts, like the authentication state driving a login button or personalized recommendations, are a small fraction of the page, yet a single dynamic call cascaded through the entire route tree. Teams worked around it by splitting route groups into static and dynamic segments, or client-side fetching personalized content with API endpoints. The Precompute pattern was another, more structured approach.
 
 Today, cache components solve this specific problem differently, which I'll get to later in this post. But the Precompute pattern predates that and remains relevant for other use cases.
 
