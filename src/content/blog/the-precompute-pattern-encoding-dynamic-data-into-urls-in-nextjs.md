@@ -11,12 +11,12 @@ tags:
   - Performance
   - Caching
   - use cache
-description: Before cache components, the Precompute pattern encoded request-specific data like auth state into URLs to keep pages static. This post documents how it works, where it shows up in practice, and how cache components change the picture.
+description: Before cache components, the Precompute pattern encoded request-specific data like auth state into URLs to keep pages static. This post documents how it works, where it shows up in practice, and what cache components mean for it.
 ---
 
 Before cache components in Next.js 16, pages were either fully static or fully dynamic. A single `cookies()` or `headers()` call in a layout would force every nested page into dynamic rendering. The Precompute pattern was a way to work around this by encoding request-specific data into the URL, turning dynamic rendering into static generation with known variants.
 
-With `cacheComponents`, this is no longer necessary for most cases, but the pattern is still used in production, especially by larger e-commerce teams. It's the same concept formalized by the [Vercel Flags SDK](https://flags-sdk.dev/docs/frameworks/next/precompute) and used by i18n libraries for locale routing. I also covered it briefly in my [Next.js Conf talk](https://www.youtube.com/watch?v=iRGc8KQDyQ8&t=147s). In this post, I'll walk through how it works using a [branch of my commerce demo](https://github.com/aurorascharff/next16-commerce/tree/request-context) and reflect on the trade-offs these teams face: high cardinality, ISR limitations, and where cache components change the picture.
+With `cacheComponents`, this is no longer necessary for most cases, but the pattern is still used in production, especially by larger e-commerce teams. It's the same concept formalized by the [Vercel Flags SDK](https://flags-sdk.dev/docs/frameworks/next/precompute) and used by i18n libraries for locale routing. I also covered it briefly in my [Next.js Conf talk](https://www.youtube.com/watch?v=iRGc8KQDyQ8&t=147s). In this post, I'll walk through how it works using a [branch of my commerce demo](https://github.com/aurorascharff/next16-commerce/tree/request-context) and reflect on the trade-offs these teams face: high cardinality, ISR limitations, and what cache components mean for it.
 
 ## Table of contents
 
@@ -44,7 +44,7 @@ export default async function RootLayout({
 }
 ```
 
-This `cookies()` call made every nested page dynamic: About, product listings, category pages, all hitting the server on every request. E-commerce applications are particularly affected by this because most of the page is shareable content: product details, categories, marketing. The user-specific parts, like the authentication state driving a login button or personalized recommendations, are a small fraction of the page, yet a single dynamic call cascaded through the entire route tree. Teams worked around it by splitting route groups into static and dynamic segments, or client-side fetching personalized content with API endpoints. The Precompute pattern was another, more structured approach.
+This `cookies()` call made every nested page dynamic, including product listings, categories, and marketing pages that are otherwise fully shareable. The only user-specific part might be a login button or personalized recommendation, but that single dynamic call cascaded through the entire route tree. Teams worked around it by splitting route groups or client-side fetching personalized content. The Precompute pattern was another, more structured approach.
 
 Today, cache components solve this specific problem differently, which I'll get to later in this post. But the Precompute pattern predates that and remains relevant for other use cases.
 
@@ -64,7 +64,7 @@ Because the page only reads from `params` and never calls `cookies()` or `header
 
 ## Implementation
 
-Here is a simplified example of the pattern from a [branch of my commerce demo](https://github.com/aurorascharff/next16-commerce/tree/request-context). The precomputed context encodes a simple `loggedIn` boolean, but in a real setup you could include locale, feature flags, A/B test variants, user type, currency, or any other request-resolvable data.
+Here is a simplified example from the [commerce demo branch](https://github.com/aurorascharff/next16-commerce/tree/request-context) linked above. The precomputed context encodes a simple `loggedIn` boolean, but in a real setup you could include locale, feature flags, A/B test variants, user type, currency, or any other request-resolvable data.
 
 ### Defining the Precomputed Context
 
@@ -149,7 +149,7 @@ export const config = {
 };
 ```
 
-The user never sees the encoded segment in their browser URL because `NextResponse.rewrite` is an internal rewrite: the browser still shows `/products` while the server routes to `/eyJsb2dnZWRJbiI6dHJ1ZX0/products`.
+The browser still shows `/products` while the server routes to `/eyJsb2dnZWRJbiI6dHJ1ZX0/products`. The encoded segment is invisible to the user.
 
 ### Reading the Context in Components
 
@@ -270,15 +270,15 @@ export default async function Page({
 }
 ```
 
-The Flags SDK also handles encryption (requiring a `FLAGS_SECRET` environment variable), `generatePermutations` for build-time rendering, and ISR for lazily caching new combinations. My implementation in the commerce demo uses plain base64url encoding to keep things simple, but the underlying idea is the same: resolve dynamic data once in the proxy, encode it into the URL, and let the page be static.
+The Flags SDK also handles encryption (requiring a `FLAGS_SECRET` environment variable), `generatePermutations` for build-time rendering, and ISR for lazily caching new combinations. My implementation uses plain base64url encoding to keep things simple, but the underlying idea is the same.
 
 ## High Cardinality and E-commerce Trade-offs
 
 The number of precomputed variants grows multiplicatively. Two authentication states times three locales is six page variants. Add a currency with four options and you're at 24. In enterprise e-commerce, you might also have region, user type (B2B vs B2C), and several feature flags or A/B test variants. Ten boolean flags alone produce 1,024 possible permutations per page. This combinatory explosion makes build-time generation impractical and drives down ISR cache hit rates.
 
-E-commerce teams I've worked with typically handle this by being selective about what goes into the precomputed context. Authentication state and locale are good candidates because they have low cardinality and affect large parts of the page. Feature flags with many variants or A/B tests with many arms are still precomputed, but teams don't pre-generate every permutation at build time. Instead, they generate the most common combinations upfront and let the rest be generated on demand through ISR.
+E-commerce teams I've worked with typically handle this by being selective about what goes into the precomputed context. Authentication state and locale are good candidates because they have low cardinality and affect large parts of the page. Feature flags with many variants or A/B tests with many arms are still precomputed, but teams only pre-generate the most common combinations and rely on ISR for the rest.
 
-The Flags SDK documentation recommends using [multiple groups](https://flags-sdk.dev/docs/frameworks/next/precompute) of flags scoped to specific pages rather than one global group, which helps contain the permutation count. You can also filter which specific combinations to pre-generate and let the rest be lazily generated through ISR.
+The Flags SDK documentation recommends using multiple groups of flags scoped to specific pages rather than one global group, which helps contain the permutation count. You can also filter which specific combinations to pre-generate and let the rest be lazily generated through ISR.
 
 ISR itself has trade-offs here. It was designed for incremental static _regeneration_, not incremental static _generation_. When a request hits a param combination that wasn't pre-generated with `generateStaticParams`, the render is blocking: the user waits for the full page to be built before seeing anything. There is no fallback shell served in the meantime. This is a known limitation, and the Next.js team is working on fallback upgrading to address it, where a generic fallback shell is served instantly and the full cached page is built in the background. Until then, on-demand generation through ISR means a cold-start penalty for every newly discovered variant.
 
@@ -339,9 +339,9 @@ export default async function FeaturedProducts() {
 }
 ```
 
-The `cookies()` call in `UserProfile` only makes that component dynamic. `FeaturedProducts`, `Hero`, `FeaturedCategories`, and other cached components become part of the statically generated shell that ships immediately, while the dynamic user profile streams in progressively. No URL encoding, no `generateStaticParams`, no proxy.
+The `cookies()` call in `UserProfile` only makes that component dynamic. `FeaturedProducts`, `Hero`, `FeaturedCategories`, and other cached components become part of the statically generated shell that ships immediately, while the dynamic user profile streams in progressively.
 
-That said, cache components solve the auth-in-layout problem specifically. In a real e-commerce setup, you might still need to vary cached content by region, currency, user type, or feature flags. Those values affect what the cached components themselves render, so you can't just suspend them as dynamic. For those cases, the Precompute pattern or the [Flags SDK](https://flags-sdk.dev/docs/frameworks/next/precompute) remain useful even alongside `'use cache'`, encoding the relevant context into the URL so that cached components produce the right variant per request.
+That said, cache components solve the auth-in-layout problem specifically. In a real e-commerce setup, you might still need to vary cached content by region, currency, user type, or feature flags. Those values affect what the cached components themselves render, so you can't just suspend them as dynamic. For those cases, the Precompute pattern or the Flags SDK remain useful even alongside `'use cache'`.
 
 ## rootParams: The Missing Piece
 
@@ -364,7 +364,7 @@ For the Precompute pattern specifically, `rootParams` would mean the precomputed
 
 ## Conclusion
 
-This post is not a recommendation to adopt the Precompute pattern. With cache components and Partial Prerendering, the original motivation for it is largely solved. But the pattern surfaces real trade-offs that are worth thinking about: how cardinality affects static generation, where ISR falls short for progressive generation, and when you still need URL-encoded variants even with `'use cache'`. For teams working with feature flags, locale routing, or cached content that varies by region or user type, the Precompute pattern remains a relevant part of the toolbox.
+This post is not a recommendation to adopt the Precompute pattern. With cache components and Partial Prerendering, the original motivation for it is largely solved. But the pattern surfaces real trade-offs worth thinking about: how cardinality affects static generation, where ISR falls short, and when URL-encoded variants are still needed alongside `'use cache'`.
 
 You can find the full implementation on [GitHub](https://github.com/aurorascharff/next16-commerce/tree/request-context), and the main branch of the [commerce demo](https://github.com/aurorascharff/next16-commerce) shows the same application with `'use cache'` instead.
 
