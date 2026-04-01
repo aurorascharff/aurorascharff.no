@@ -11,18 +11,21 @@ tags:
   - Performance
   - Caching
   - use cache
-description: The precompute pattern encodes request-specific data like auth state into URLs, letting you keep pages static even when content varies per user. Learn when this pattern is useful, how to implement it, and when 'use cache' makes it unnecessary.
+description: Before cache components, the precompute pattern encoded request-specific data like auth state into URLs to keep pages static. This post documents how it works, where it shows up in practice, and how cache components change the picture.
 ---
 
-In Next.js, a single dynamic API call like `cookies()` or `headers()` in a layout can force your entire page tree into dynamic rendering. For e-commerce applications, where most content is static but user-dependent features like authentication checks live at the root, this means every page is dynamically rendered on every request, even pages that have no user-specific content at all. The precompute pattern solves this by encoding request-specific data into the URL, turning what would be dynamic rendering into static generation with known variants.
+Before cache components in Next.js 16, pages were either fully static or fully dynamic. A single `cookies()` or `headers()` call in a layout would force every nested page into dynamic rendering. The precompute pattern was a way to work around this by encoding request-specific data into the URL, turning dynamic rendering into static generation with known variants.
+
+With `cacheComponents`, this is no longer necessary for most cases, but the pattern is still used in production, especially by larger e-commerce teams. It's the same concept formalized by the [Vercel Flags SDK](https://flags-sdk.dev/docs/frameworks/next/precompute) and used by i18n libraries for locale routing. I also covered it briefly in my [Next.js Conf talk](https://www.youtube.com/watch?v=iRGc8KQDyQ8&t=147s). In this post, I'll walk through how it works using a [branch of my commerce demo](https://github.com/aurorascharff/next16-commerce/tree/request-context) and reflect on the trade-offs these teams face: high cardinality, ISR limitations, and where cache components change the picture.
 
 ## Table of contents
 
 ## The Problem: Dynamic Layouts
 
-Consider a typical e-commerce application with a header that shows a user profile when logged in. The authentication check lives in the root layout because the header appears on every page:
+Here's what this typically looked like. An e-commerce app with a header that checks auth state in the root layout:
 
 ```tsx
+// app/layout.tsx
 export default async function RootLayout({
   children,
 }: {
@@ -41,20 +44,18 @@ export default async function RootLayout({
 }
 ```
 
-Because `isAuthenticated()` reads from `cookies()`, the entire layout becomes dynamic, and every page nested under it follows. Your About page, product listings, category pages: all dynamically rendered, all hitting the server on every request.
+This `cookies()` call made every nested page dynamic: About, product listings, category pages, all hitting the server on every request. E-commerce applications are particularly affected by this because most of the page is shareable content: product details, categories, marketing. The user-specific parts, like the authentication state driving a login button or personalized recommendations, are a small fraction of the page, yet a single dynamic call cascaded through the entire route tree. Teams worked around it by splitting route groups into static and dynamic segments, or client-side fetching personalized content with API endpoints. The precompute pattern was another, more structured approach.
 
-In e-commerce, this pattern is extremely common. Most of the page content is shared across users, things like product details, categories, and marketing content. The only truly user-specific part is often just the authentication state driving a login button or profile icon in the header. Yet that one `cookies()` call cascades through the entire route tree.
+Today, cache components solve this specific problem differently, which I'll get to later in this post. But the precompute pattern predates that and remains relevant for other use cases.
 
-Before `'use cache'` and Partial Prerendering, pages were either fully static or fully dynamic. There was no middle ground. If you needed any dynamic data anywhere in the page tree, the whole page had to be dynamic. This led teams to try various workarounds: splitting route groups into static and dynamic segments, client-side fetching user data with `useSWR`, or building separate API endpoints for personalized content.
-
-## The Request Context Pattern
+## The Precompute Pattern
 
 Instead of reading dynamic APIs like `cookies()` inside components, we can resolve the dynamic data once in middleware (now called [proxy](https://nextjs.org/docs/app/api-reference/file-conventions/proxy)) and encode it into the URL as a hidden segment. The page itself sees a regular parameter that can be statically generated for each known variant.
 
 The flow works like this:
 
 1. A request hits the proxy
-2. The proxy reads `cookies()` (or any other dynamic API) and determines the request context
+2. The proxy reads `cookies()` (or any other dynamic API) and determines the precomputed context
 3. The context is encoded and prepended to the URL as a path segment
 4. Next.js rewrites the request to include this encoded segment
 5. The page reads the context from params instead of calling dynamic APIs
@@ -63,22 +64,33 @@ Because the page only reads from `params` and never calls `cookies()` or `header
 
 ## Implementation
 
-Here is the implementation from my [Next.js 16 commerce demo](https://github.com/aurorascharff/next16-commerce/blob/request-context/proxy.ts). The request context encodes a simple `loggedIn` boolean, but you could include any request-specific data: locale, feature flags, A/B test variants, user type, or currency.
+Here is a simplified example of the pattern from a [branch of my commerce demo](https://github.com/aurorascharff/next16-commerce/tree/request-context). The precomputed context encodes a simple `loggedIn` boolean, but in a real setup you could include locale, feature flags, A/B test variants, user type, currency, or any other request-resolvable data.
 
-### Defining the Request Context
+### Defining the Precomputed Context
 
-First, define the shape of your context and the encoding/decoding utilities. The context is serialized as base64url to keep URLs clean:
+Define the shape of your context and the encoding/decoding functions. In this example, they live in a [separate file](https://github.com/aurorascharff/next16-commerce/blob/request-context/utils/request-context.ts). The context is serialized as base64url to keep URLs clean:
 
 ```ts
+// utils/request-context.ts
 export interface RequestContextData {
   loggedIn: boolean;
+  // Examples of other data you could include:
+  //   locale?: string;              // 'en', 'no', 'sv'
+  //   theme?: 'light' | 'dark';
+  //   userType?: 'b2c' | 'b2b';
+  //   featureFlags?: string[];      // ['newCheckout', 'betaFeatures']
+  //   region?: string;              // 'eu', 'us', 'asia'
+  //   currency?: string;            // 'USD', 'EUR', 'NOK'
+  //   experiments?: Record<string, string>; // A/B testing variants
 }
 
+// Serialize to base64url for clean URLs
 export function encodeRequestContext(data: RequestContextData): string {
   const jsonString = JSON.stringify(data);
   return Buffer.from(jsonString).toString("base64url");
 }
 
+// Decode with a safe fallback for invalid segments
 export function decodeRequestContext(encoded: string): RequestContextData {
   try {
     const jsonString = Buffer.from(encoded, "base64url").toString();
@@ -92,6 +104,7 @@ export function decodeRequestContext(encoded: string): RequestContextData {
   }
 }
 
+// Convenience wrapper for reading from params
 export function getRequestContext(params: {
   requestContext: string;
 }): RequestContextData {
@@ -99,13 +112,14 @@ export function getRequestContext(params: {
 }
 ```
 
-The full utility file is on [GitHub](https://github.com/aurorascharff/next16-commerce/blob/request-context/utils/request-context.ts).
+The encoding produces short URL-safe strings like `eyJsb2dnZWRJbiI6dHJ1ZX0`, which becomes the hidden path segment the proxy prepends to every request.
 
 ### Encoding in the Proxy
 
-The proxy reads the cookie and rewrites the request to include the encoded context as the first URL segment:
+The [proxy](https://github.com/aurorascharff/next16-commerce/blob/request-context/proxy.ts) reads the cookie and rewrites the request to include the encoded context as the first URL segment:
 
 ```ts
+// proxy.ts
 import { NextResponse } from "next/server";
 import { encodeRequestContext } from "@/utils/request-context";
 import type { NextRequest } from "next/server";
@@ -115,15 +129,18 @@ function isUserAuthenticated(request: NextRequest): boolean {
 }
 
 export function proxy(request: NextRequest) {
+  // Resolve dynamic data once, here
   const encodedContext = encodeRequestContext({
     loggedIn: isUserAuthenticated(request),
   });
 
+  // Prepend the encoded context as the first URL segment
   const nextUrl = new URL(
     `/${encodedContext}${request.nextUrl.pathname}${request.nextUrl.search}`,
     request.url
   );
 
+  // Internal rewrite: the browser URL stays unchanged
   return NextResponse.rewrite(nextUrl, { request });
 }
 
@@ -134,26 +151,34 @@ export const config = {
 
 The user never sees the encoded segment in their browser URL because `NextResponse.rewrite` is an internal rewrite: the browser still shows `/products` while the server routes to `/eyJsb2dnZWRJbiI6dHJ1ZX0/products`.
 
-### Reading the Context in the Layout
+### Reading the Context in Components
 
-The [layout](https://github.com/aurorascharff/next16-commerce/blob/request-context/app/%5BrequestContext%5D/layout.tsx) reads the context from params instead of calling any dynamic API. Components like `UserProfile` use the decoded context rather than checking `cookies()` directly:
+Components that previously called `cookies()` or `isAuthenticated()` now read from the decoded precomputed context instead. A page or component receives the `requestContext` param and decodes it with `getRequestContext`. Note that this means the param needs to be passed down or accessed from `params` in every component that needs it, which introduces prop drilling:
 
 ```tsx
-import { encodeRequestContext } from "@/utils/request-context";
-import type { RequestContextData } from "@/utils/request-context";
+import { getRequestContext } from "@/utils/request-context";
 
-export async function generateStaticParams() {
-  const contexts: RequestContextData[] = [
-    { loggedIn: false },
-    { loggedIn: true },
-  ];
-  return contexts.map(context => {
-    return {
-      requestContext: encodeRequestContext(context),
-    };
-  });
+export default async function UserProfile({
+  params,
+}: {
+  params: Promise<{ requestContext: string }>;
+}) {
+  // Read from params instead of cookies()
+  const { requestContext } = await params;
+  const { loggedIn } = getRequestContext({ requestContext });
+
+  if (!loggedIn) {
+    return <LoginButton />;
+  }
+
+  return <ProfileMenu />;
 }
+```
 
+No `cookies()` call, no dynamic rendering. The [layout](https://github.com/aurorascharff/next16-commerce/blob/request-context/app/%5BrequestContext%5D/layout.tsx) itself just renders the header and children without needing to resolve any auth state:
+
+```tsx
+// app/[requestContext]/layout.tsx
 export default async function RequestContextLayout({
   children,
 }: LayoutProps<"/[requestContext]">) {
@@ -166,7 +191,41 @@ export default async function RequestContextLayout({
 }
 ```
 
-The `generateStaticParams` function returns the two known variants (logged in and logged out), so Next.js can pre-generate both versions at build time. After that first generation, pages are served from the CDN cache instead of hitting the server on every request.
+The `[requestContext]` param is what makes the variants distinct, but the layout doesn't need to read it directly.
+
+### Pre-generating Variants with generateStaticParams
+
+To make the pages fully static, `generateStaticParams` returns the known variants of the precomputed context. In this case, logged in and logged out:
+
+```tsx
+import { encodeRequestContext } from "@/utils/request-context";
+import type { RequestContextData } from "@/utils/request-context";
+
+export async function generateStaticParams() {
+  // Two known variants: logged out and logged in
+  const contexts: RequestContextData[] = [
+    { loggedIn: false },
+    { loggedIn: true },
+  ];
+  // Each variant gets its own pre-generated static page
+  return contexts.map(context => {
+    return {
+      requestContext: encodeRequestContext(context),
+    };
+  });
+}
+```
+
+In the build output, you can see both variants generated as static pages:
+
+```
+Route (app)                                    Size  First Load JS
+┌ ○ /[requestContext]                          ...   ...
+├ ├ /eyJsb2dnZWRJbiI6ZmFsc2V9
+├ └ /eyJsb2dnZWRJbiI6dHJ1ZX0
+```
+
+After that first generation, pages are served from the CDN cache instead of hitting the server on every request.
 
 ## The Flags SDK Precompute
 
@@ -180,8 +239,10 @@ import { marketingFlags } from "./flags";
 export const config = { matcher: ["/"] };
 
 export async function proxy(request: NextRequest) {
+  // Evaluate all flags and encode the result as an encrypted string
   const code = await precompute(marketingFlags);
 
+  // Same rewrite pattern as the manual approach
   const nextUrl = new URL(
     `/${code}${request.nextUrl.pathname}${request.nextUrl.search}`,
     request.url
@@ -202,6 +263,7 @@ export default async function Page({
   params: Promise<{ code: string }>;
 }) {
   const { code } = await params;
+  // Read the flag value from the precomputed code, not from a live evaluation
   const banner = await showBanner(code, marketingFlags);
 
   return <div>{banner ? <p>Welcome</p> : null}</div>;
@@ -212,45 +274,78 @@ The Flags SDK also handles encryption (requiring a `FLAGS_SECRET` environment va
 
 ## High Cardinality and E-commerce Trade-offs
 
-The precompute pattern works well when the number of variants is small. Two authentication states (logged in, logged out) means two versions of each page. Add a locale with three options and you have six. Still manageable.
+The number of precomputed variants grows multiplicatively. Two authentication states times three locales is six page variants. Add a currency with four options and you're at 24. In enterprise e-commerce, you might also have region, user type (B2B vs B2C), and several feature flags or A/B test variants. Ten boolean flags alone produce 1,024 possible permutations per page. This combinatory explosion makes build-time generation impractical and drives down ISR cache hit rates.
 
-The challenge comes with high cardinality. In enterprise e-commerce, you might have authentication state, locale, currency, region, user type (B2B vs B2C), and several feature flags or A/B test variants. If you have ten boolean flags, that is 1,024 possible permutations per page. This creates a combinatory explosion where build-time generation becomes impractical and ISR cache hit rates drop significantly.
-
-E-commerce teams I've worked with typically handle this by being selective about what goes into the precomputed context. Authentication state and locale are good candidates because they have low cardinality and affect large parts of the page. Feature flags with many variants or A/B tests with many arms are better handled at the component level, either through client-side evaluation or, with Next.js 16, through `'use cache'` with Partial Prerendering.
+E-commerce teams I've worked with typically handle this by being selective about what goes into the precomputed context. Authentication state and locale are good candidates because they have low cardinality and affect large parts of the page. Feature flags with many variants or A/B tests with many arms are still precomputed, but teams don't pre-generate every permutation at build time. Instead, they generate the most common combinations upfront and let the rest be generated on demand through ISR.
 
 The Flags SDK documentation recommends using [multiple groups](https://flags-sdk.dev/docs/frameworks/next/precompute) of flags scoped to specific pages rather than one global group, which helps contain the permutation count. You can also filter which specific combinations to pre-generate and let the rest be lazily generated through ISR.
 
-ISR itself has trade-offs here. It was designed for incremental static _regeneration_, not incremental static _generation_. When used for progressively generating long-tail URLs, you end up with too many writes relative to reads, and the cache blows out on every deploy because a CSS change can affect every page. Cache components give more granular control to address this.
+ISR itself has trade-offs here. It was designed for incremental static _regeneration_, not incremental static _generation_. When a request hits a param combination that wasn't pre-generated with `generateStaticParams`, the render is blocking: the user waits for the full page to be built before seeing anything. There is no fallback shell served in the meantime. This is a known limitation, and the Next.js team is working on fallback upgrading to address it, where a generic fallback shell is served instantly and the full cached page is built in the background. Until then, on-demand generation through ISR means a cold-start penalty for every newly discovered variant.
+
+On top of that, the ISR cache blows out on every deploy because a CSS change can affect every page, leading to too many writes relative to reads when used for progressive generation. Cache components offer more granular control in theory, but there are still open questions around controlling what gets cached and evicted at the ISR level.
 
 ## When 'use cache' Makes This Unnecessary
 
-With `cacheComponents` in Next.js 16, the precompute pattern becomes unnecessary for many cases. Instead of encoding data into URLs to avoid dynamic rendering, you can use `'use cache'` on individual components and let Partial Prerendering handle the split between static and dynamic content:
+With `cacheComponents` in Next.js 16, the precompute pattern becomes unnecessary for many cases. Instead of encoding data into URLs to avoid dynamic rendering, you can use `'use cache'` on individual components and let Partial Prerendering handle the split between static and dynamic content. In the [main branch](https://github.com/aurorascharff/next16-commerce/blob/main/app/layout.tsx) of my commerce demo, the layout passes the auth check as a promise through a provider, without awaiting it:
 
 ```tsx
-async function FeaturedProducts() {
-  "use cache";
-
-  const products = await getFeaturedProducts();
+// app/layout.tsx
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const loggedIn = getIsAuthenticated(); // no await, no blocking
 
   return (
-    <>
-      {products.map(product => (
-        <ProductCard key={product.id} product={product} />
-      ))}
-    </>
+    <html lang="en">
+      <body>
+        <AuthProvider loggedIn={loggedIn}>
+          <Header />
+          <main>{children}</main>
+        </AuthProvider>
+      </body>
+    </html>
   );
 }
 ```
 
-The header with its authentication check can remain dynamic while product listings, categories, and marketing content are cached. Each cached segment becomes part of the statically generated shell that ships immediately, and dynamic content streams in progressively. There is no need to encode auth state into the URL because the page is no longer forced into being entirely static or entirely dynamic.
+The auth check is not awaited, so it doesn't block the layout from rendering. The promise flows through the `AuthProvider` and is resolved where it's needed. Server components like `UserProfile` can await the data directly through `getCurrentAccount()`, which can read cookies internally. Client components access it through a hook that unwraps the promise with `use()`:
 
-This is why the [main branch](https://github.com/aurorascharff/next16-commerce/blob/main/app/layout.tsx) of my commerce demo omits the URL encoding solution entirely. With `'use cache'`, the `cookies()` call in the layout only makes the components that depend on it dynamic, while everything else can be cached independently.
+```tsx
+// features/auth/components/AuthProvider.tsx
+export const useLoggedIn = () => {
+  const { loggedIn } = useAuth(); // returns Promise<boolean> from context
+  return use(loggedIn); // unwraps the promise, suspends if not yet resolved
+};
+```
+
+Either way, only the components that consume the auth state suspend, while the rest of the page renders immediately. This follows the [sharing data with Client Components](https://next-16-recipes.vercel.app/sharing-data-with-client-components) pattern.
+
+Components that don't depend on dynamic APIs are cached independently with `'use cache'`:
+
+```tsx
+// features/product/components/FeaturedProducts.tsx
+export default async function FeaturedProducts() {
+  "use cache";
+
+  cacheTag("featured-product");
+
+  const products = await getFeaturedProducts(4);
+
+  return (
+    <div>
+      {products.map(product => (
+        <ProductCard key={product.id} /* ... */ />
+      ))}
+    </div>
+  );
+}
+```
+
+The `cookies()` call in `UserProfile` only makes that component dynamic. `FeaturedProducts`, `Hero`, `FeaturedCategories`, and other cached components become part of the statically generated shell that ships immediately, while the dynamic user profile streams in progressively. No URL encoding, no `generateStaticParams`, no proxy.
+
+That said, cache components solve the auth-in-layout problem specifically. In a real e-commerce setup, you might still need to vary cached content by region, currency, user type, or feature flags. Those values affect what the cached components themselves render, so you can't just suspend them as dynamic. For those cases, the precompute pattern or the [Flags SDK](https://flags-sdk.dev/docs/frameworks/next/precompute) remain useful even alongside `'use cache'`, encoding the relevant context into the URL so that cached components produce the right variant per request.
 
 ## rootParams: The Missing Piece
 
-The precompute pattern encodes data into URL segments, but components still need to receive those values somehow. Either the page extracts them from `params` and passes them as props, or each component reads `params` directly. This can lead to prop drilling or coupling components to a specific URL structure.
-
-An upcoming feature called `rootParams` addresses this for the most common case: top-level dynamic segments like `[locale]` or `[requestContext]`. Instead of reading `params` and threading values through the component tree, components can import the parameter directly:
+As mentioned earlier, the prop drilling of `requestContext` through params is one of the main ergonomic pain points of this pattern. An upcoming feature called `rootParams` addresses this for top-level dynamic segments like `[locale]` or `[requestContext]`. Instead of threading values through the component tree, components can import the parameter directly:
 
 ```tsx
 import { locale } from "next/root-params";
@@ -263,16 +358,16 @@ async function CachedComponent() {
 }
 ```
 
-The value automatically becomes a cache key for `'use cache'`, so cached components can vary by locale (or any other root parameter) without manual prop passing. I covered this in detail for internationalization in my post on [implementing `'use cache'` with next-intl](/posts/implementing-nextjs-16-use-cache-with-next-intl-internationalization), where `rootParams` eliminates the need for `setRequestLocale` and explicit locale threading.
+The value automatically becomes a cache key for `'use cache'`, so cached components can vary by locale (or any other root parameter) without manual prop passing. I covered this in detail for internationalization in my [next-intl cache components post](/posts/implementing-nextjs-16-use-cache-with-next-intl-internationalization), where `rootParams` eliminates the need for `setRequestLocale` and explicit locale threading.
 
-For the precompute pattern specifically, `rootParams` would mean the request context hash could be accessed anywhere in the tree without drilling it through props, which is one of the main ergonomic downsides of the approach. Teams using precomputed feature flags, like the pattern where a hash of flag values is the first URL segment on every page, would no longer need placeholder `generateStaticParams` on every page just to satisfy the build.
+For the precompute pattern specifically, `rootParams` would mean the precomputed hash could be accessed anywhere in the tree without drilling it through props. Teams using precomputed feature flags, like the pattern where a hash of flag values is the first URL segment on every page, would no longer need placeholder `generateStaticParams` on every page just to satisfy the build.
 
 ## Conclusion
 
-The precompute pattern is a deliberate trade-off: you take on URL complexity and variant management in exchange for static rendering and CDN caching. For applications with low-cardinality request context like authentication state or a handful of feature flags, it delivers real performance gains by keeping pages static. For high-cardinality scenarios common in enterprise e-commerce, be intentional about which data you encode and scope your flag groups to specific pages.
+This post is not a recommendation to adopt the precompute pattern. It's a documentation of how it works, why it existed, and where it still shows up. The pattern was a creative workaround for a real limitation: before cache components, there was no way to mix static and dynamic rendering on the same page. Encoding precomputed context into URLs gave teams a way to keep pages static when the framework couldn't do it for them.
 
-With `cacheComponents` and Partial Prerendering in Next.js 16, many of the use cases that drove teams to the precompute pattern can now be solved more naturally at the component level. The pattern remains valuable for specific cases like feature flag precomputation with the [Flags SDK](https://flags-sdk.dev/docs/frameworks/next/precompute), but you no longer need to restructure your entire application around URL segments just to avoid dynamic rendering.
+With `cacheComponents` and Partial Prerendering in Next.js 16, the original motivation, avoiding dynamic rendering from a `cookies()` call in a layout, is no longer a problem. But the pattern persists in production for things like feature flag precomputation with the [Flags SDK](https://flags-sdk.dev/docs/frameworks/next/precompute), locale routing with i18n libraries, and e-commerce setups where cached content needs to vary by region, currency, or user type.
 
-You can find the full request context implementation on [GitHub](https://github.com/aurorascharff/next16-commerce/tree/request-context), and the main branch of the [commerce demo](https://github.com/aurorascharff/next16-commerce) shows the same application with `'use cache'` instead.
+You can find the full implementation on [GitHub](https://github.com/aurorascharff/next16-commerce/tree/request-context), and the main branch of the [commerce demo](https://github.com/aurorascharff/next16-commerce) shows the same application with `'use cache'` instead.
 
 I hope this post has been helpful. Please let me know if you have any questions or comments, and follow me on [Bluesky](https://bsky.app/profile/aurorascharff.no) or [X](https://x.com/aurorascharff) for more updates. Happy coding! 🚀
