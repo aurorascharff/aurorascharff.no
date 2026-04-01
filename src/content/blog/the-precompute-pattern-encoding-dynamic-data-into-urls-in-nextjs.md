@@ -311,8 +311,8 @@ The auth check is not awaited, so it doesn't block the layout from rendering. Th
 ```tsx
 // features/auth/components/AuthProvider.tsx
 export const useLoggedIn = () => {
-  const { loggedIn } = useAuth(); // returns Promise<boolean> from context
-  return use(loggedIn); // unwraps the promise, suspends if not yet resolved
+  const { loggedIn } = useAuth();
+  return use(loggedIn);
 };
 ```
 
