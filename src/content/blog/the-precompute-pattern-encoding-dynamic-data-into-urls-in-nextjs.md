@@ -22,7 +22,7 @@ With `cacheComponents`, this is no longer necessary for most cases, but the patt
 
 ## The Problem: Dynamic Layouts
 
-Here's what this typically looked like. An e-commerce app with a header that checks auth state in the root layout:
+Any component that calls a dynamic API like `cookies()` or `headers()` opts into dynamic rendering. When that happens in a root layout, the impact is especially wide because every page nested under it becomes dynamic too. A typical example is an e-commerce app where the root layout checks authentication state for the header:
 
 ```tsx
 // app/layout.tsx
@@ -364,9 +364,7 @@ For the Precompute pattern specifically, `rootParams` would mean the precomputed
 
 ## Conclusion
 
-This post is not a recommendation to adopt the Precompute pattern. It's a documentation of how it works, why it existed, and where it still shows up. The pattern was a creative workaround for a real limitation: before cache components, there was no way to mix static and dynamic rendering on the same page. Encoding precomputed context into URLs gave teams a way to keep pages static when the framework couldn't do it for them.
-
-With `cacheComponents` and Partial Prerendering in Next.js 16, the original motivation, avoiding dynamic rendering from a `cookies()` call in a layout, is no longer a problem. But the pattern persists in production for things like feature flag precomputation with the [Flags SDK](https://flags-sdk.dev/docs/frameworks/next/precompute), locale routing with i18n libraries, and e-commerce setups where cached content needs to vary by region, currency, or user type.
+This post is not a recommendation to adopt the Precompute pattern. With cache components and Partial Prerendering, the original motivation for it is largely solved. But the pattern surfaces real trade-offs that are worth thinking about: how cardinality affects static generation, where ISR falls short for progressive generation, and when you still need URL-encoded variants even with `'use cache'`. For teams working with feature flags, locale routing, or cached content that varies by region or user type, the Precompute pattern remains a relevant part of the toolbox.
 
 You can find the full implementation on [GitHub](https://github.com/aurorascharff/next16-commerce/tree/request-context), and the main branch of the [commerce demo](https://github.com/aurorascharff/next16-commerce) shows the same application with `'use cache'` instead.
 
