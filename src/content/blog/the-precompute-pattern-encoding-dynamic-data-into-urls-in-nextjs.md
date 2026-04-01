@@ -20,7 +20,7 @@ With `cacheComponents`, this is no longer necessary for most cases, but the patt
 
 ## Table of contents
 
-## The Problem: Dynamic Layouts
+## The Problem: Dynamic Rendering
 
 Any component that calls a dynamic API like `cookies()` or `headers()` opts into dynamic rendering. When that happens in a root layout, the impact is especially wide because every page nested under it becomes dynamic too. A typical example is an e-commerce app where the root layout checks authentication state for the header:
 
