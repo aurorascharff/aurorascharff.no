@@ -2,7 +2,7 @@
 import { LOCALE, SITE } from "@config";
 import "@styles/base.css";
 import { ViewTransitions } from "astro:transitions";
-import CertVisual from "../components/CertVisual.tsx";
+// import CertVisual from "../components/CertVisual.tsx";
 import Analytics from "@vercel/analytics/astro";
 
 const googleSiteVerification = import.meta.env.PUBLIC_GOOGLE_SITE_VERIFICATION;
@@ -98,9 +98,9 @@ const socialImageURL = new URL(
     />
 
     <!-- Preload Certificate Images -->
-    <link rel="preload" as="image" href="/assets/cert1.svg" />
+    <!-- <link rel="preload" as="image" href="/assets/cert1.svg" />
     <link rel="preload" as="image" href="/assets/cert2.svg" />
-    <link rel="preload" as="image" href="/assets/cert3.svg" />
+    <link rel="preload" as="image" href="/assets/cert3.svg" /> -->
 
     <meta name="theme-color" content="" />
 
@@ -126,7 +126,7 @@ const socialImageURL = new URL(
   </head>
   <body>
     <div id="react-free-weekend-banner"></div>
-    <CertVisual client:load />
+    <!-- <CertVisual client:load /> -->
     <slot />
     <Analytics />
   </body>
