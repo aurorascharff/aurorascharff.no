@@ -274,13 +274,38 @@ The Flags SDK also handles encryption (requiring a `FLAGS_SECRET` environment va
 
 ## High Cardinality and E-commerce Trade-offs
 
-The number of precomputed variants grows multiplicatively. Two authentication states times three locales is six page variants. Add a currency with four options and you're at 24. In enterprise e-commerce, you might also have region, user type (B2B vs B2C), and several feature flags or A/B test variants. Ten boolean flags alone produce 1,024 possible permutations per page. This combinatory explosion makes build-time generation impractical and drives down ISR cache hit rates.
+The precomputed context adds a new dimension to every route. Consider a commerce app with this route tree:
 
-E-commerce teams I've worked with typically handle this by being selective about what goes into the precomputed context. Authentication state and locale are good candidates because they have low cardinality and affect large parts of the page. Feature flags with many variants or A/B tests with many arms are still precomputed, but teams only pre-generate the most common combinations and rely on ISR for the rest.
+```
+app/
+├── [requestContext]/
+│   ├── page.tsx              # home
+│   ├── all/page.tsx          # product listing
+│   ├── product/[id]/page.tsx # product detail (thousands of products)
+│   ├── cart/page.tsx
+│   ├── about/page.tsx
+│   └── user/page.tsx
+```
 
-The Flags SDK documentation recommends using multiple groups of flags scoped to specific pages rather than one global group, which helps contain the permutation count. You can also filter which specific combinations to pre-generate and let the rest be lazily generated through ISR.
+With just auth state (logged in / logged out), each route gets two variants. For the fixed pages that's manageable: 2 × 5 = 10 pages. But `product/[id]` is a dynamic route. An e-commerce catalog with 10,000 products already means 20,000 pre-generated pages for auth alone.
 
-ISR itself has trade-offs here. It was designed for incremental static _regeneration_, not incremental static _generation_. When a request hits a param combination that wasn't pre-generated with `generateStaticParams`, the render is blocking: the user waits for the full page to be built before seeing anything. There is no fallback shell served in the meantime. This is a known limitation, and the Next.js team is working on fallback upgrading to address it, where a generic fallback shell is served instantly and the full cached page is built in the background. Until then, on-demand generation through ISR means a cold-start penalty for every newly discovered variant.
+Now add more context. Three locales and four currencies alongside auth:
+
+```
+app/
+├── [requestContext]/          # 2 auth × 3 locales × 4 currencies = 24 variants
+│   ├── page.tsx               # 24 pages
+│   ├── all/page.tsx           # 24 pages
+│   ├── product/[id]/page.tsx  # 24 × 10,000 products = 240,000 pages
+│   ├── cart/page.tsx          # 24 pages
+│   └── ...
+```
+
+The variant count grows multiplicatively across every route. Ten boolean feature flags alone produce 1,024 permutations, and each one multiplies the product catalog. Build-time generation becomes impractical, and ISR cache hit rates drop because the cache is spread thin across so many combinations.
+
+E-commerce teams I've worked with handle this by being selective about what goes into the precomputed context. Auth state and locale are good candidates because they have low cardinality and affect large parts of the page. Feature flags with many variants or A/B tests with many arms are still precomputed, but teams only pre-generate the most common combinations and rely on ISR for the rest. The Flags SDK documentation recommends using multiple groups of flags scoped to specific pages rather than one global group, which helps contain the permutation count.
+
+ISR itself has trade-offs here. It was designed for incremental static _regeneration_, not incremental static _generation_. When a request hits a param combination that wasn't pre-generated with `generateStaticParams`, the render is blocking: the user waits for the full page to be built before seeing anything. There is no fallback shell served in the meantime. This is a known limitation, and the Next.js team is working on fallback upgrading to address it, where a generic fallback shell is served instantly and the full page is built in the background. Until then, on-demand generation through ISR means a cold-start penalty for every new variant.
 
 On top of that, the ISR cache blows out on every deploy because a CSS change can affect every page, leading to too many writes relative to reads when used for progressive generation. Cache components offer more granular control in theory, but there are still open questions around controlling what gets cached and evicted at the ISR level.
 
