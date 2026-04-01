@@ -11,7 +11,7 @@ tags:
   - Performance
   - Caching
   - use cache
-description: Before cache components, the precompute pattern encoded request-specific data like auth state into URLs to keep pages static. This post documents how it works, where it shows up in practice, and how cache components change the picture.
+description: Before cache components, the Precompute pattern encoded request-specific data like auth state into URLs to keep pages static. This post documents how it works, where it shows up in practice, and how cache components change the picture.
 ---
 
 Before cache components in Next.js 16, pages were either fully static or fully dynamic. A single `cookies()` or `headers()` call in a layout would force every nested page into dynamic rendering. The precompute pattern was a way to work around this by encoding request-specific data into the URL, turning dynamic rendering into static generation with known variants.
@@ -46,7 +46,7 @@ export default async function RootLayout({
 
 This `cookies()` call made every nested page dynamic: About, product listings, category pages, all hitting the server on every request. E-commerce applications are particularly affected by this because most of the page is shareable content: product details, categories, marketing. The user-specific parts, like the authentication state driving a login button or personalized recommendations, are a small fraction of the page, yet a single dynamic call cascaded through the entire route tree. Teams worked around it by splitting route groups into static and dynamic segments, or client-side fetching personalized content with API endpoints. The precompute pattern was another, more structured approach.
 
-Today, cache components solve this specific problem differently, which I'll get to later in this post. But the precompute pattern predates that and remains relevant for other use cases.
+Today, cache components solve this specific problem differently, which I'll get to later in this post. But the Precompute pattern predates that and remains relevant for other use cases.
 
 ## The Precompute Pattern
 
@@ -286,7 +286,7 @@ On top of that, the ISR cache blows out on every deploy because a CSS change can
 
 ## When 'use cache' Makes This Unnecessary
 
-With `cacheComponents` in Next.js 16, the precompute pattern becomes unnecessary for many cases. Instead of encoding data into URLs to avoid dynamic rendering, you can use `'use cache'` on individual components and let Partial Prerendering handle the split between static and dynamic content. In the [main branch](https://github.com/aurorascharff/next16-commerce/blob/main/app/layout.tsx) of my commerce demo, the layout passes the auth check as a promise through a provider, without awaiting it:
+With `cacheComponents` in Next.js 16, the Precompute pattern becomes unnecessary for many cases. Instead of encoding data into URLs to avoid dynamic rendering, you can use `'use cache'` on individual components and let Partial Prerendering handle the split between static and dynamic content. In the [main branch](https://github.com/aurorascharff/next16-commerce/blob/main/app/layout.tsx) of my commerce demo, the layout passes the auth check as a promise through a provider, without awaiting it:
 
 ```tsx
 // app/layout.tsx
@@ -341,7 +341,7 @@ export default async function FeaturedProducts() {
 
 The `cookies()` call in `UserProfile` only makes that component dynamic. `FeaturedProducts`, `Hero`, `FeaturedCategories`, and other cached components become part of the statically generated shell that ships immediately, while the dynamic user profile streams in progressively. No URL encoding, no `generateStaticParams`, no proxy.
 
-That said, cache components solve the auth-in-layout problem specifically. In a real e-commerce setup, you might still need to vary cached content by region, currency, user type, or feature flags. Those values affect what the cached components themselves render, so you can't just suspend them as dynamic. For those cases, the precompute pattern or the [Flags SDK](https://flags-sdk.dev/docs/frameworks/next/precompute) remain useful even alongside `'use cache'`, encoding the relevant context into the URL so that cached components produce the right variant per request.
+That said, cache components solve the auth-in-layout problem specifically. In a real e-commerce setup, you might still need to vary cached content by region, currency, user type, or feature flags. Those values affect what the cached components themselves render, so you can't just suspend them as dynamic. For those cases, the Precompute pattern or the [Flags SDK](https://flags-sdk.dev/docs/frameworks/next/precompute) remain useful even alongside `'use cache'`, encoding the relevant context into the URL so that cached components produce the right variant per request.
 
 ## rootParams: The Missing Piece
 
@@ -360,11 +360,11 @@ async function CachedComponent() {
 
 The value automatically becomes a cache key for `'use cache'`, so cached components can vary by locale (or any other root parameter) without manual prop passing. I covered this in detail for internationalization in my [next-intl cache components post](/posts/implementing-nextjs-16-use-cache-with-next-intl-internationalization), where `rootParams` eliminates the need for `setRequestLocale` and explicit locale threading.
 
-For the precompute pattern specifically, `rootParams` would mean the precomputed hash could be accessed anywhere in the tree without drilling it through props. Teams using precomputed feature flags, like the pattern where a hash of flag values is the first URL segment on every page, would no longer need placeholder `generateStaticParams` on every page just to satisfy the build.
+For the Precompute pattern specifically, `rootParams` would mean the precomputed hash could be accessed anywhere in the tree without drilling it through props. Teams using precomputed feature flags, like the pattern where a hash of flag values is the first URL segment on every page, would no longer need placeholder `generateStaticParams` on every page just to satisfy the build.
 
 ## Conclusion
 
-This post is not a recommendation to adopt the precompute pattern. It's a documentation of how it works, why it existed, and where it still shows up. The pattern was a creative workaround for a real limitation: before cache components, there was no way to mix static and dynamic rendering on the same page. Encoding precomputed context into URLs gave teams a way to keep pages static when the framework couldn't do it for them.
+This post is not a recommendation to adopt the Precompute pattern. It's a documentation of how it works, why it existed, and where it still shows up. The pattern was a creative workaround for a real limitation: before cache components, there was no way to mix static and dynamic rendering on the same page. Encoding precomputed context into URLs gave teams a way to keep pages static when the framework couldn't do it for them.
 
 With `cacheComponents` and Partial Prerendering in Next.js 16, the original motivation, avoiding dynamic rendering from a `cookies()` call in a layout, is no longer a problem. But the pattern persists in production for things like feature flag precomputation with the [Flags SDK](https://flags-sdk.dev/docs/frameworks/next/precompute), locale routing with i18n libraries, and e-commerce setups where cached content needs to vary by region, currency, or user type.
 
