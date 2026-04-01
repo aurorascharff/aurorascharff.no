@@ -1,10 +1,10 @@
 ---
 author: Aurora Scharff
 pubDatetime: 2026-04-01T10:00:00Z
-title: "The Precompute Pattern: Encoding Request Context into URLs in Next.js"
-slug: the-precompute-pattern-encoding-request-context-into-urls-in-nextjs
+title: "The Precompute Pattern: Encoding Dynamic Data into URLs in Next.js"
+slug: the-precompute-pattern-encoding-dynamic-data-into-urls-in-nextjs
 featured: false
-draft: true
+draft: false
 tags:
   - Next.js 16
   - React Server Components
