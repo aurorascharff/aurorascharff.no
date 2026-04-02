@@ -274,7 +274,7 @@ The Flags SDK also handles encryption (requiring a `FLAGS_SECRET` environment va
 
 ## High Cardinality and E-commerce Trade-offs
 
-The precomputed context adds a new dimension to every route. Consider a commerce app with this route tree:
+High cardinality means having a large number of possible values for a given dimension. E-commerce routes like `product/[id]` are already high cardinality on their own — a catalog with thousands of products means thousands of pages. The Precompute pattern adds another dimension on top: each piece of encoded data (auth state, locale, currency, feature flags) multiplies every existing route variant. Consider a commerce app with this route tree:
 
 ```
 app/
