@@ -287,7 +287,7 @@ app/
 │   └── user/page.tsx
 ```
 
-With just auth state, each route gets two variants. But `product/[id]` is a dynamic route — an e-commerce catalog with 10,000 products means 20,000 pre-generated pages for auth alone. Add three locales and four currencies, and every product page now has 24 variants. Build-time generation becomes impractical, and ISR cache hit rates drop because the cache is spread across too many combinations.
+With just auth state, each route gets two variants. Add three locales and four currencies, and every product page now has 24 variants across the entire catalog. Build-time generation becomes impractical, and ISR cache hit rates drop because the cache is spread across too many combinations.
 
 E-commerce teams I've worked with handle this by being selective about what goes into the precomputed context. Auth state and locale are good candidates because they have low cardinality and affect large parts of the page. Feature flags with many variants or A/B tests with many arms are still precomputed, but teams only pre-generate the most common combinations and rely on ISR for the rest. The Flags SDK documentation recommends using multiple groups of flags scoped to specific pages rather than one global group, which helps contain the permutation count.
 
