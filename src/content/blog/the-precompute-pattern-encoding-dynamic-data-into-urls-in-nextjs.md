@@ -287,21 +287,7 @@ app/
 │   └── user/page.tsx
 ```
 
-With just auth state (logged in / logged out), each route gets two variants. For the fixed pages that's manageable: 2 × 5 = 10 pages. But `product/[id]` is a dynamic route. An e-commerce catalog with 10,000 products already means 20,000 pre-generated pages for auth alone.
-
-Now add more context. Three locales and four currencies alongside auth:
-
-```
-app/
-├── [requestContext]/          # 2 auth × 3 locales × 4 currencies = 24 variants
-│   ├── page.tsx               # 24 pages
-│   ├── all/page.tsx           # 24 pages
-│   ├── product/[id]/page.tsx  # 24 × 10,000 products = 240,000 pages
-│   ├── cart/page.tsx          # 24 pages
-│   └── ...
-```
-
-The variant count grows multiplicatively across every route. Ten boolean feature flags alone produce 1,024 permutations, and each one multiplies the product catalog. Build-time generation becomes impractical, and ISR cache hit rates drop because the cache is spread thin across so many combinations.
+With just auth state, each route gets two variants. But `product/[id]` is a dynamic route — an e-commerce catalog with 10,000 products means 20,000 pre-generated pages for auth alone. Add three locales and four currencies, and every product page now has 24 variants. Build-time generation becomes impractical, and ISR cache hit rates drop because the cache is spread across too many combinations.
 
 E-commerce teams I've worked with handle this by being selective about what goes into the precomputed context. Auth state and locale are good candidates because they have low cardinality and affect large parts of the page. Feature flags with many variants or A/B tests with many arms are still precomputed, but teams only pre-generate the most common combinations and rely on ISR for the rest. The Flags SDK documentation recommends using multiple groups of flags scoped to specific pages rather than one global group, which helps contain the permutation count.
 
