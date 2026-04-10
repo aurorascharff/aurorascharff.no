@@ -373,6 +373,8 @@ The value automatically becomes a cache key for `'use cache'`, so cached compone
 
 For the Precompute pattern specifically, `rootParams` would mean the precomputed hash could be accessed anywhere in the tree without drilling it through props. Teams using precomputed feature flags, like the pattern where a hash of flag values is the first URL segment on every page, would no longer need placeholder `generateStaticParams` on every page just to satisfy the build.
 
+## Links
+
 You can find the full implementation on [GitHub](https://github.com/aurorascharff/next16-commerce/tree/request-context), and the main branch of the [commerce demo](https://github.com/aurorascharff/next16-commerce) shows the same application with `'use cache'` instead.
 
 I hope this post has been helpful. Please let me know if you have any questions or comments, and follow me on [Bluesky](https://bsky.app/profile/aurorascharff.no) or [X](https://x.com/aurorascharff) for more updates. Happy coding! 🚀
