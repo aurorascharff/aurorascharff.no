@@ -11,7 +11,7 @@ tags:
   - Performance
   - Caching
   - use cache
-description: Before cache components, the Precompute pattern encoded request-specific data like auth state into URLs to keep pages static. This post documents how it works, where it shows up in practice, and what cache components mean for it.
+description: The Precompute pattern encodes request-specific data like auth state, locale, and feature flags into URLs to keep pages statically generated. This post walks through how it works, where it shows up in production, and how it relates to cache components.
 ---
 
 Before cache components in Next.js 16, pages were either fully static or fully dynamic. A single `cookies()` or `headers()` call in a layout would force every nested page into dynamic rendering. The Precompute pattern was a way to work around this by encoding request-specific data into the URL, turning dynamic rendering into static generation with known variants.
