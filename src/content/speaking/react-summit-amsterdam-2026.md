@@ -1,7 +1,7 @@
 ---
 organizer: React Summit Amsterdam 2026
 date: 2026-06-12T08:00:00Z
-name: "Talk: TBD"
+name: "Talk: What RSCs can do in Next.js today"
 completed: false
 address: "Amsterdam, Netherlands"
 websiteLink: "https://reactsummit.com"
