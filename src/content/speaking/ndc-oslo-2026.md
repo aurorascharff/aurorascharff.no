@@ -1,6 +1,6 @@
 ---
 organizer: NDC Oslo 2026
-date: 2026-05-03T08:00:00Z
+date: 2026-07-17T08:00:00Z
 name: "Lightning Talk: Designing the In-Between States with Async React"
 completed: false
 address: "Oslo, Norway"
