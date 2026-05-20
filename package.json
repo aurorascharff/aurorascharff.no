@@ -69,5 +69,6 @@
     "*.{js,jsx,ts,tsx,md,mdx,json,astro}": [
       "prettier --write --plugin=prettier-plugin-astro"
     ]
-  }
+  },
+  "packageManager": "pnpm@10.33.0"
 }
