@@ -1,0 +1,8 @@
+packages:
+  - .
+
+minimumReleaseAge: 2880 # 48 hrs
+onlyBuiltDependencies:
+  - '@swc/core'
+  - esbuild
+  - sharp
