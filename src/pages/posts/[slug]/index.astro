@@ -5,6 +5,7 @@ import PostDetails from "@layouts/PostDetails.astro";
 import getSortedPosts from "@utils/getSortedPosts";
 import getPageNumbers from "@utils/getPageNumbers";
 import getPagination from "@utils/getPagination";
+import getPostSlug from "@utils/getPostSlug";
 
 export interface Props {
   post: CollectionEntry<"blog">;
@@ -14,7 +15,7 @@ export async function getStaticPaths() {
   const posts = await getCollection("blog", ({ data }) => !data.draft);
 
   const postResult = posts.map(post => ({
-    params: { slug: post.slug },
+    params: { slug: getPostSlug(post) },
     props: { post },
   }));
 
