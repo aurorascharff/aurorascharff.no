@@ -1,5 +1,7 @@
 import type { CollectionEntry } from "astro:content";
 
 export default function getPostSlug(post: CollectionEntry<"blog">) {
-  return post.data.slug ?? post.id;
+  const slug = post.data.slug?.trim();
+
+  return slug ? slug : post.id;
 }
