@@ -9,6 +9,7 @@ import Card from "@components/Card";
 import BuyMeACoffee from "@components/BuyMeACoffee";
 import Socials from "@components/Socials.astro";
 import getSortedPosts from "@utils/getSortedPosts";
+import getPostSlug from "@utils/getPostSlug";
 import { SOCIALS } from "@config";
 
 const posts = await getCollection("blog");
@@ -72,10 +73,10 @@ const socialCount = SOCIALS.filter(social => social.active).length;
           <section id="featured">
             <h2>Featured</h2>
             <ul>
-              {featuredPosts.map(({ data, slug }) => (
+              {featuredPosts.map(post => (
                 <Card
-                  href={`/posts/${slug}/`}
-                  frontmatter={data}
+                  href={`/posts/${getPostSlug(post)}/`}
+                  frontmatter={post.data}
                   secHeading={false}
                 />
               ))}
@@ -92,11 +93,11 @@ const socialCount = SOCIALS.filter(social => social.active).length;
           <h2>Recent Posts</h2>
           <ul>
             {recentPosts.map(
-              ({ data, slug }, index) =>
+              (post, index) =>
                 index < 4 && (
                   <Card
-                    href={`/posts/${slug}/`}
-                    frontmatter={data}
+                    href={`/posts/${getPostSlug(post)}/`}
+                    frontmatter={post.data}
                     secHeading={false}
                   />
                 )

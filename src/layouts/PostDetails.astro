@@ -4,11 +4,12 @@ import Header from "@components/Header.astro";
 import Footer from "@components/Footer.astro";
 import Tag from "@components/Tag.astro";
 import Datetime from "@components/Datetime";
-import type { CollectionEntry } from "astro:content";
+import { render, type CollectionEntry } from "astro:content";
 import { slugifyStr } from "@utils/slugify";
 import ShareLinks from "@components/ShareLinks.astro";
 import { SITE } from "@config";
 import BuyMeACoffee from "@components/BuyMeACoffee";
+import getPostSlug from "@utils/getPostSlug";
 
 export interface Props {
   post: CollectionEntry<"blog">;
@@ -27,11 +28,11 @@ const {
   tags,
 } = post.data;
 
-const { Content } = await post.render();
+const { Content } = await render(post);
 
 const ogImageUrl = typeof ogImage === "string" ? ogImage : ogImage?.src;
 const ogUrl = new URL(
-  ogImageUrl ?? `/posts/${post.slug}/index.png`,
+  ogImageUrl ?? `/posts/${getPostSlug(post)}/index.png`,
   Astro.url.origin
 ).href;
 
