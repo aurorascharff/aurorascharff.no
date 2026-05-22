@@ -454,7 +454,23 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 }
 ```
 
-This works, but it makes the page `async`, which means it has to wait for `params` to resolve before rendering anything. We could extract the content into a smaller component to keep the page synchronous, but we don't need to. Instead, we can use `.then()`:
+This works, but it makes the page `async`, which means it has to wait for `params` to resolve before rendering anything. One option is to extract a small async component whose only job is to read `params`:
+
+```tsx
+async function PostContent({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  return (
+    <>
+      <PostDetail id={id} />
+      <Suspense fallback={<RepliesSkeleton />}>
+        <Replies postId={id} />
+      </Suspense>
+    </>
+  );
+}
+```
+
+That keeps the page synchronous, but adds a wrapper component just to unwrap a Promise. Instead, we can use `.then()` directly:
 
 ```tsx
 export default function Page({ params }: { params: Promise<{ id: string }> }) {
@@ -479,7 +495,9 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
 }
 ```
 
-The `.then()` resolves `params` so that `PostDetail` and `Replies` still receive a plain `id` string as a prop, and the page stays synchronous and readable. The loading sequence follows the same thinking as on the home feed: the header is part of the static shell, the post detail streams in behind a `Suspense` boundary, and `Replies` has its own boundary inside so it can resolve independently from the post. This pattern also sets us up nicely for [cache components](#a-note-on-cache-components) later, where keeping pages synchronous matters even more.
+The `.then()` resolves `params` so that `PostDetail` and `Replies` still receive a plain `id` string as a prop, and the page stays synchronous and readable. This pattern also sets us up nicely for [cache components](#a-note-on-cache-components) later, where keeping pages synchronous matters even more.
+
+The loading sequence follows the same thinking as on the home feed: the header is part of the static shell, the post detail streams in behind a `Suspense` boundary, and `Replies` has its own boundary inside so it can resolve independently from the post.
 
 ### Adding Interactivity
 
