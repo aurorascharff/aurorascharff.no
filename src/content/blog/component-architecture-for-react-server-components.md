@@ -17,22 +17,7 @@ description: React Server Components let each component fetch the data it needs.
 
 For most of React's history, the conventional way to load data on a page has been to fetch at the top of a route and pass it down through props. Most React developers still reach for that model first, even when working in the Next.js App Router.
 
-In this blog post, we will look at why that habit ends up producing tightly coupled components and clumsy loading states, and explore how React Server Components let us architect a page where the end result looks something like this:
-
-```tsx
-export default function HomePage() {
-  return (
-    <Layout>
-      <PageHeader title="Home" />
-      <Suspense fallback={<FeedSkeleton />}>
-        <Feed />
-      </Suspense>
-    </Layout>
-  );
-}
-```
-
-No data fetching at the top. No prop drilling. The page describes the experience, and the components handle the rest.
+In this blog post, we will look at why that habit ends up producing tightly coupled components and clumsy loading states, and explore how React Server Components let us architect a page differently. We will walk through the progression from `useEffect` to React Query to loaders to RSCs, and then put together a page that describes the loading experience rather than managing all the data.
 
 ## Table of contents
 
@@ -44,9 +29,29 @@ This is why loaders in frameworks like the old [Remix](https://remix.run/) (v1 a
 
 The question is what we lose in the process, and whether RSCs let us keep the server-side wins without the trade-offs. For a deeper look at the performance side of this, Nadia Makarevich's article [React Server Components: Do They Really Improve Performance?](https://www.developerway.com/posts/react-server-components-performance) is a great companion to this post. She measures the same app across CSR, SSR with loaders, and RSCs, and shows that the real performance gains only land once we rewrite data fetching to be server-first and add deliberate Suspense boundaries.
 
-## The Approaches
+## The Use Case
 
-Let's look at a few common patterns for handling data on a page and what trade-offs each one brings.
+For the rest of this post, let's imagine we are building a social feed page. The UI has a sidebar, a feed of posts, a section of user suggestions, and a list of trending tags. In plain JSX, the page looks something like this:
+
+```tsx
+function Page() {
+  return (
+    <Layout>
+      <Sidebar />
+      <main>
+        <PageHeader title="Home" />
+        <Feed />
+      </main>
+      <aside>
+        <TrendingTags />
+        <UserSuggestions />
+      </aside>
+    </Layout>
+  );
+}
+```
+
+This is just the layout. No data yet, no fetching, no loading states. Every component here will eventually need data, but right now we are just describing what the page looks like. From here, we can explore how different approaches to data fetching change the shape of this page.
 
 ### 1. Local Data Fetching
 
@@ -69,7 +74,38 @@ function Feed() {
 }
 ```
 
-This works for a single component, but the moment another part of the tree needs the same data, we have to hoist `posts` and `setPosts` up to a common ancestor and pass them down. Mutations follow the same pattern: if `Post` wants to like itself and have the count update elsewhere, the `like` handler has to live somewhere both components can reach, which is usually higher than either of them needs to be. We end up lifting state for reasons that have nothing to do with the UI structure.
+This works for a single component, but the moment another part of the tree needs the same data, we have to hoist `posts` and `setPosts` up to a common ancestor and pass them down. Mutations follow the same pattern: if `Post` wants to like itself and have the count update elsewhere, the `like` handler has to live somewhere both components can reach, which is usually higher than either of them needs to be. We end up lifting state for reasons that have nothing to do with the UI structure:
+
+```tsx
+function Page() {
+  const [posts, setPosts] = useState<PostT[]>([]);
+  // ...fetch logic...
+
+  function handleLike(postId: string) {
+    likePost(postId).then(() => {
+      fetchFeed().then(setPosts);
+    });
+  }
+
+  return (
+    <Feed posts={posts} onLike={handleLike} />
+  );
+}
+
+function Feed({ posts, onLike }: Props) {
+  return (
+    <ul>
+      {posts.map(post => (
+        <Post key={post.id} post={post}>
+          <LikeButton onClick={() => onLike(post.id)} />
+        </Post>
+      ))}
+    </ul>
+  );
+}
+```
+
+The `like` handler lives in `App` because it needs to update `posts`. `Feed` receives both the data and the callback. `LikeButton` has no idea where the handler comes from. Everything flows through props.
 
 React Query and similar libraries cleaned this up significantly. The data is keyed and cached centrally, so any component can ask for it without prop drilling, and mutations can invalidate or update entries from anywhere:
 
@@ -110,29 +146,29 @@ export async function loader() {
   return { user, feed, suggestedUsers, trendingTags };
 }
 
-export default function HomePage() {
+export default function Page() {
   const { user, feed, suggestedUsers, trendingTags } = useLoaderData<typeof loader>();
 
   return (
     <Layout>
       <Sidebar user={user} />
       <Feed posts={feed.posts} currentUser={user} />
-      <Aside>
-        <UserSuggestions users={suggestedUsers} currentUser={user} />
+      <aside>
         <TrendingTags tags={trendingTags} />
-      </Aside>
+        <UserSuggestions users={suggestedUsers} currentUser={user} />
+      </aside>
     </Layout>
   );
 }
 ```
 
-The equivalent in the old Next.js Pages Router would be `getServerSideProps`, which passes the data as props to the page. Either way, the loader sits at the route boundary and the components below it receive concrete data shapes.
+The equivalent in the old Next.js Pages Router would be `getServerSideProps`, which passes the data as props to the page. Either way, the loader sits at the route boundary and the components below it receive concrete data shapes. Notice that mutations like the `LikeButton` from earlier are no longer visible at the page level: the loader only handles reads, and writes typically go through separate API calls or form submissions that trigger a page reload or revalidation.
 
 The same mindset is easy to recreate at the page component level in the Next.js App Router. We just make the page itself `async` and `await` everything at the top:
 
 ```tsx
 // Next.js App Router, loader mindset
-export default async function HomePage() {
+export default async function Page() {
   const user = await getCurrentUser();
   const [feed, suggestedUsers, trendingTags] = await Promise.all([
     getFeed(user.handle),
@@ -144,10 +180,10 @@ export default async function HomePage() {
     <Layout>
       <Sidebar user={user} />
       <Feed posts={feed.posts} currentUser={user} />
-      <Aside>
-        <UserSuggestions users={suggestedUsers} currentUser={user} />
+      <aside>
         <TrendingTags tags={trendingTags} />
-      </Aside>
+        <UserSuggestions users={suggestedUsers} currentUser={user} />
+      </aside>
     </Layout>
   );
 }
@@ -155,27 +191,7 @@ export default async function HomePage() {
 
 The framework is different, but the shape is identical. The page is still the data owner, and the components are still views that receive whatever the page chose to fetch.
 
-This feels organized, but it has a couple of costs. The first is that components are coupled to a specific data shape. Let's say `Feed` now also wants to show whether the current user has liked each post. That means a new query, a new field on the prop, and changes in two or three places:
-
-```tsx
-// page change
-const [user, feed, likes /* new */] = await Promise.all([
-  getCurrentUser(),
-  getFeed(/* ... */),
-  getLikedPostIds(/* ... */), // new
-]);
-
-<Feed posts={feed.posts} likes={likes} currentUser={user} />;
-
-// Feed change
-function Feed({ posts, likes, currentUser }: Props) {
-  // now we have to consume `likes` too
-}
-```
-
-The data and the rendering live in different files, so a small piece of UI ends up touching the page and the component at once. On top of that, the page can't render anything until every fetch has resolved. If any of them are slow, everything is slow.
-
-The coupling becomes really painful the moment we want to move things around. Let's say we have a `UserSuggestions` component that just renders whatever it receives:
+This feels organized, but the components are now coupled to whatever the page chose to fetch for them. Our `UserSuggestions` component just renders whatever it receives:
 
 ```tsx
 function UserSuggestions({ users, currentUser }: Props) {
@@ -209,33 +225,15 @@ const [user, profile, suggestedUsers] = await Promise.all([
 <UserSuggestions users={suggestedUsers} currentUser={user} />;
 ```
 
-The component itself didn't change, but every new page that wants to use it has to fetch the same data, in the same shape, and thread the same props through every wrapper above it. This is not specific to the App Router: it's the same problem in any loader-based framework. The component is essentially welded to whichever route happens to be fetching its data.
-
-We can work around the slow-loader part with `Promise.all` or by splitting into route segments, but neither addresses the underlying coupling. What we really want is the best of both: data fetching as local as possible, so each component asks for what it needs, and loading orchestration as global as the page, so the page decides where the boundaries are and what the user sees while content loads.
+The component itself didn't change, but every new route that wants to use it has to fetch the same data, in the same shape, and thread the same props through every wrapper above it. The component is essentially welded to whichever loader happens to be fetching its data. This is inherent to the loader pattern in any framework: the data lives at the route boundary, and everything below it is a view that receives props.
 
 ### 3. Async Server Components
 
-[React Server Components](https://react.dev/reference/rsc/server-components) can be `async`. They run on the server, can read from the database directly, and never execute in the browser. There is no API boundary, no client roundtrip, and no `useEffect`. If a component needs a piece of data, it can simply ask for it.
+What if each component could fetch its own data on the server, without needing a loader to hand it down? That is exactly what [React Server Components](https://react.dev/reference/rsc/server-components) enable. They can be `async`, they run on the server, they can read from the database directly, and they never execute in the browser. This is what lets us keep the composability of the [`useEffect` approach](#1-local-data-fetching) while still fetching on the server like with [loaders](#2-route-level-loaders): each component owns its data, but the fetch happens during server rendering and the result is sent to the client as rendered HTML.
 
-For the rest of this post we will use the Next.js App Router as our example, where components are server-first by default: every component is a server component unless we explicitly mark it with `"use client"`. The patterns themselves are not specific to Next.js, but the App Router is where most developers encounter RSCs today.
+The Next.js App Router is where most developers encounter RSCs today, and it makes this the default: every component is a server component unless we explicitly mark it with `"use client"`.
 
-This is what lets us keep the local data fetching pattern from the [`useEffect` approach](#1-local-data-fetching), where each component asks for what it needs, while still running everything on the server like with [loaders](#2-route-level-loaders). The component fetches its own data, but that fetch happens during server rendering, not in a client-side `useEffect`. There is no extra roundtrip and no JavaScript dependency. The result is sent to the client as rendered HTML.
-
-Instead of the page fetching everything and passing it down, each component fetches what it needs based on minimal props, usually just an identifier. The component is self-contained: the consumer passes the minimum it needs to know (often just an ID or a handle), and the component resolves whatever else it requires internally. Let's say we take the `UserSuggestions` component from the [loader example](#2-route-level-loaders), which had to receive `users` and `currentUser` as props from the page:
-
-```tsx
-function UserSuggestions({ users, currentUser }: Props) {
-  return (
-    <ul>
-      {users.map(user => (
-        <UserRow key={user.handle} user={user} currentUser={currentUser} />
-      ))}
-    </ul>
-  );
-}
-```
-
-As a server component, it doesn't need any of those props. It can resolve the current user and fetch the suggestions itself:
+Instead of the page fetching everything and passing it down, each component fetches what it needs based on minimal props, usually just an identifier. The component is self-contained: the consumer passes the minimum it needs to know (often just an ID or a handle), and the component resolves whatever else it requires internally. Let's take `UserSuggestions` from the [loader example](#2-route-level-loaders). As a server component, it doesn't need the `users` and `currentUser` props the page was handing it. It can resolve the current user and fetch the suggestions itself:
 
 ```tsx
 export async function UserSuggestions() {
@@ -251,204 +249,338 @@ export async function UserSuggestions() {
 }
 ```
 
-Dropping this into any page is just one tag. No props to thread, no data to fetch upstream. The component we had to rewire across two pages earlier is now freely portable.
+Now we can use `<UserSuggestions />` on any page without wiring up the data from above. The same component that needed two separate loaders earlier just works.
 
-The same principle applies deeper in the tree. A `UserAvatar` can take just a handle and resolve everything it needs internally:
+The same applies to `Feed`. In the loader version, it received `posts` and `currentUser` as props. As a server component, it fetches its own data:
 
 ```tsx
-export async function UserAvatar({ handle }: { handle: string }) {
-  const user = await getUserByHandle(handle);
-  return (
-    <div className={user.avatarColor}>
-      {user.displayName.charAt(0).toUpperCase()}
-    </div>
-  );
+export async function Feed() {
+  const handle = await getCurrentUserHandle();
+  const { posts } = await getFeed(handle);
+  return <ul>{posts.map(post => <Post key={post.id} id={post.id} />)}</ul>;
 }
 ```
 
-The consumer never has to know what data the avatar actually needs. And these components compose freely:
+The page just renders `<Feed />`.
+
+With every component fetching its own data, the page itself goes back to looking like this:
 
 ```tsx
-export async function Post({ id }: { id: string }) {
-  const post = await getPost(id);
-  return (
-    <article>
-      <UserAvatar handle={post.authorHandle} />
-      <PostBody body={post.body} />
-      <PostActions postId={id} />
-    </article>
-  );
-}
-```
-
-`Post` takes an ID and fetches what it needs. It composes `UserAvatar`, which in turn fetches its own data. The page that renders `<Post id={id} />` doesn't know or care about any of this. Each component is responsible for its own data, and composition works the way React has always intended.
-
-You might be worried about duplicate fetches at this point. The same `getUserByHandle` could be called from `UserAvatar`, from a `UserRow` next to it, and from the post's author link in the header, all on the same render. React's [`cache()`](https://react.dev/reference/react/cache) function deduplicates these per request, so calling it ten times with the same argument hits the database once. This is similar to what React Query's centralized cache does on the client, but built into the server render itself. I covered this in more depth in my previous post on [Avoiding Server Component Waterfall Fetching with React 19 cache()](/posts/avoiding-server-component-waterfall-fetching-with-react-19-cache). The local-fetching pattern is only really practical because of this deduplication. Once we have it, asking for data wherever we need it is essentially free.
-
-## Architecting with Server Components
-
-So we have components that fetch their own data, run on the server, and compose freely. The individual pieces work. But what does the page itself look like once we commit to this? What happens to loading states, file organization, and client interactivity when the page is no longer responsible for fetching data?
-
-### The Page as Composition
-
-This is the part where it all comes together. Once components own their data, the page's job becomes mostly structural. It lays out which components go where, decides which ones share a loading boundary, and provides the fallback UI. The page itself doesn't even have to be `async`, because it isn't doing any data work:
-
-```tsx
-export default function HomePage() {
+export default function Page() {
   return (
     <Layout>
       <Sidebar />
       <main>
         <PageHeader title="Home" />
-        <Suspense fallback={<PostListSkeleton />}>
-          <Feed />
-        </Suspense>
+        <Feed />
       </main>
-      <Aside>
-        <Suspense fallback={<UserSuggestionsSkeleton />}>
-          <UserSuggestions />
-        </Suspense>
-        <Suspense fallback={<TrendingTagsListSkeleton />}>
-          <TrendingTagsList />
-        </Suspense>
-      </Aside>
+      <aside>
+        <TrendingTags />
+        <UserSuggestions />
+      </aside>
     </Layout>
   );
 }
 ```
 
-This is really the heart of the pattern, and the discovery we have been working toward. The page reads almost like a description of the user experience: a sidebar in the static shell, a header that is always there, a feed that may take a moment to load, and two aside sections that stream independently. Each `Suspense` boundary is a deliberate decision about what should be visible immediately and what can stream in. The result feels much more like an SPA than a traditional server-rendered page, without us pushing all the data to the client to get there.
+The structure is the same as the [use case](#the-use-case). The difference is that every component in this tree is now fetching its own data on the server.
 
-Notice what's gone. There is no `getCurrentUser` at the top, no waiting for the feed before rendering the header, and no prop drilling. If `UserSuggestions` decides next week that it also wants to show mutual followers per user, that change happens entirely inside the feature: a tweak to the query, a tweak to the row component, no upstream coordination. The page itself doesn't change.
+You might be worried about duplicate fetches at this point. With each component fetching its own data, the same `getUserByHandle` could be called from multiple places in the same render. React's [`cache()`](https://react.dev/reference/react/cache) function deduplicates these per request, so calling it ten times with the same argument hits the database once. This is similar to what React Query's centralized cache does on the client, but built into the server render itself. I covered this in more depth in my previous post on [Avoiding Server Component Waterfall Fetching with React 19 cache()](/posts/avoiding-server-component-waterfall-fetching-with-react-19-cache).
 
-This is also where the loading experience gets designed instead of being emergent. Suspense lets us say something like: "the feed and the sidebar lists stream independently, but everything inside each one appears together". That is the opposite of *popcorn UI*. The user sees structure first, and then sees each region resolve as a coherent unit. If we want the entire above-the-fold to appear at once, we put one Suspense around it. If we want the feed to stream item-by-item, we move the boundary deeper. The page makes those decisions.
+This composability is also why AI coding agents work so well with React in general, and RSCs extend that composability model to the server. A self-contained component can be moved to a new page, reused in a different layout, or refactored without touching anything outside its own file. The agent doesn't need to trace data through loaders or prop chains to understand what a component needs.
 
-The same composition model extends to other concerns the page wants to coordinate. An `ErrorBoundary` next to a `Suspense` lets us decide what happens when a region fails: instead of taking down the whole page, the failure stays inside its boundary and we render a recovery UI in place. A `ViewTransition` wrapper lets us animate one region between renders without affecting the rest. The page becomes the place where all of these concerns are described together:
+## Building the App
 
-```tsx
-<ErrorBoundary fallback={<FeedError />}>
-  <Suspense fallback={<PostListSkeleton />}>
-    <ViewTransition>
-      <Feed />
-    </ViewTransition>
-  </Suspense>
-</ErrorBoundary>
+Now that we have components that fetch their own data and can be reused across pages without loaders, the next question is: how do we build real apps with this? Let's say our social feed app has more than one page:
+
+```
+app/
+  layout.tsx            // root shell: nav, sidebar
+  page.tsx              // home feed
+  explore/
+    page.tsx            // discover feed
+  post/
+    [id]/
+      page.tsx          // single post with replies
 ```
 
-It's the same idea as Suspense at a different layer. Composable wrappers let the page decide what happens when a region is loading, what happens when it fails, and how it animates, all without the components themselves having to know.
+A component like `<UserSuggestions />` works on any of these pages without the page having to fetch anything for it. The page is free to focus on what the user actually sees while things load.
 
-### Co-locating Skeletons
+### Avoiding Blocking Renders
 
-The fallback shape matters as much as the boundary placement. A skeleton has to match the layout of the thing it is standing in for, otherwise the page jumps when the real content arrives. The best way to keep them in sync is to export the skeleton from the same file as the component it represents:
+Server components render on the server as a stream, which means React can start sending HTML to the client before every async component has finished fetching. [`Suspense`](https://react.dev/reference/react/Suspense) is what makes this work. Wrapping an async component in a `Suspense` boundary with a `fallback` tells React to send the fallback immediately while the component resolves in the background. Once it is ready, React streams the real content in and swaps it into place:
 
 ```tsx
-// features/post/components/post.tsx
-export async function Post({ post }: { post: PostT }) {
-  // ...
+<Suspense fallback={<FeedSkeleton />}>
+  <Feed />
+</Suspense>
+```
+
+Without `Suspense`, the page waits for every async component to finish before sending anything. Adding a boundary is how we avoid that, and it is also what unlocks the real performance gains that [Nadia's article](#background) measures.
+
+### Making Skeletons That Stay in Sync
+
+The fallback we pass to `Suspense` is what the user sees while an async component is fetching. Usually this is a skeleton: a lightweight placeholder that matches the shape of the content it stands in for, with the same dimensions and layout but no real data. Sometimes a spinner is enough instead. Either way, it is just HTML and CSS, and the goal is to avoid layout shift when the real content arrives.
+
+A way I prefer to keep a skeleton in sync with its component is to export both from the same file:
+
+```tsx
+// features/post/components/feed.tsx
+export async function Feed() {
+  const handle = await getCurrentUserHandle();
+  const { posts } = await getFeed(handle);
+  return <ul>{posts.map(post => <Post key={post.id} id={post.id} />)}</ul>;
 }
 
-export function PostListSkeleton({ count = 5 }: { count?: number }) {
+export function FeedSkeleton({ count = 5 }: { count?: number }) {
   return (
     <ul>
       {Array.from({ length: count }).map((_, i) => (
-        <li key={i}>
-          <article>
-            <Skeleton className="h-10 w-10 rounded-full" />
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="h-16 w-full" />
-          </article>
-        </li>
+        <PostSkeleton key={i} />
       ))}
     </ul>
   );
 }
 ```
 
-Pages then import both from the same place:
+Notice that `FeedSkeleton` is composed from `PostSkeleton`, the same way `Feed` is composed from `Post`. The skeletons mirror the component tree. When we edit `Post` to add a new line of metadata or change the avatar size, `PostSkeleton` is right there in the same file. Drift between the loading state and the rendered state, which is the most common cause of layout jank, gets caught at the time the change is made instead of in a QA pass later. An AI coding agent editing the component will see it too and remember to update the skeleton to match. When we compose a page, we know where to find the right fallback shape for each component.
+
+### Designing the Loading Experience
+
+With `Suspense` and skeletons in place, the question becomes: how do we want the page to load? We could wrap the entire content area in a single boundary:
 
 ```tsx
-import { Post, PostListSkeleton } from "@/features/post/components/post";
-```
-
-This is more than just a tidy import statement. When we edit `Post` to add a new line of metadata or change the avatar size, the skeleton is right there in the same file. We can't really miss it. Drift between the loading state and the rendered state, which is the most common cause of layout jank, gets caught at the time the change is made instead of in a QA pass later.
-
-This is also one of the reasons AI coding agents work so well with React's composition model. When components are self-contained and skeletons live in the same file, an agent can move a component to a new page, update its skeleton, or compose it into a different layout without touching anything outside the file it's working in.
-
-The same applies to compound shapes. A `UserSuggestions` exports `UserSuggestionsSkeleton`, a `TrendingTagsList` exports `TrendingTagsListSkeleton`. The page picks which one to use as a `Suspense` fallback, and the feature is responsible for keeping the two in sync. It's composition all the way down: the page composes a loading UI out of skeletons, the same way it composes a rendered UI out of components.
-
-### Where Things Go
-
-Something we may have already noticed along the way is that this architecture quietly answers the question of where to put a new piece of code. Once components fetch their own data, queries, actions, and components naturally cluster together by domain, and the folder structure ends up reflecting that:
-
-```
-features/
-  post/
-    post-queries.ts
-    post-actions.ts
-    components/
-      post.tsx         // <Post /> + <PostListSkeleton />
-      feed.tsx         // <Feed />
-      composer.tsx     // <PostComposer /> ("use client")
-  user/
-    user-queries.ts
-    user-actions.ts
-    components/
-      user-avatar.tsx  // <UserAvatar /> + <UserAvatarSkeleton />
-      user-suggestions.tsx
-      follow-button.tsx ("use client")
-```
-
-A new query lives next to the other queries for that domain. A new action lives next to the existing actions, alongside the query whose cache it invalidates. A new component goes into `components/` and pulls from those queries directly. Anyone (human or agent) coming into the codebase can locate the right file without much hunting, and a refactor that moves a component to a new page doesn't touch anything outside its feature folder.
-
-This isn't strict feature slicing, and we don't need a methodology to follow it. The structure falls out of the pattern: a component that owns its data wants to live near the query it calls, and the query wants to live near the action that invalidates its cache. Pages stay thin because they don't import data, they import components.
-
-### Client Islands
-
-The composition style holds when we need interactivity too. A common worry with RSCs is that the moment we need client behavior, we are back in client-land for the whole tree, but that's not actually the case. A `"use client"` component lives wherever JavaScript actually has to run, usually a leaf like a button, a tab switcher, or a form. It doesn't pull the rest of the tree client-side.
-
-```tsx
-"use client";
-
-import { useRouter } from "next/navigation";
-
-export function FeedTabs({ active }: { active: "following" | "discover" }) {
-  const router = useRouter();
+export default function Page() {
   return (
-    <Tabs
-      tabs={[
-        { label: "Following", value: "following" },
-        { label: "Discover", value: "discover" },
-      ]}
-      active={active}
-      action={value => router.push(value === "following" ? "/" : "/?tab=discover")}
-    />
+    <Layout>
+      <Sidebar />
+      <Suspense fallback={<PageSkeleton />}>
+        <main>
+          <PageHeader title="Home" />
+          <Feed />
+        </main>
+        <aside>
+          <TrendingTags />
+          <UserSuggestions />
+        </aside>
+      </Suspense>
+    </Layout>
   );
 }
 ```
 
-This sits next to the server-rendered feed in the same feature folder. The page renders both, and from the page's point of view there is no real distinction:
+The sidebar shows up immediately. Everything else waits behind one boundary and appears at once. Simple, but the user stares at a single skeleton until the slowest component finishes.
+
+Or we can split the boundaries so that each section streams independently:
 
 ```tsx
-<Suspense fallback={<TabsSkeleton />}>
-  <FeedTabs active={tab} />
-</Suspense>
-<Suspense fallback={<PostListSkeleton />}>
-  <Feed tab={tab} />
-</Suspense>
+export default function Page() {
+  return (
+    <Layout>
+      <Sidebar />
+      <main>
+        <PageHeader title="Home" />
+        <Suspense fallback={<FeedSkeleton />}>
+          <Feed />
+        </Suspense>
+      </main>
+      <aside>
+        <Suspense fallback={<TrendingTagsSkeleton />}>
+          <TrendingTags />
+        </Suspense>
+        <Suspense fallback={<UserSuggestionsSkeleton />}>
+          <UserSuggestions />
+        </Suspense>
+      </aside>
+    </Layout>
+  );
+}
 ```
 
-My previous blog post on [server and client component composition in practice](/posts/server-client-component-composition-in-practice) covers this in more depth: client wrappers take server components as children, server components stay server, and our JS bundles stay small. The architecture in this post simply continues that pattern at the page level.
+Now the sidebar and header are part of the static shell. The feed, user suggestions, and trending tags each resolve on their own. If user suggestions are fast and the feed is slow, the user sees suggestions first. But this can also feel fragmented: three separate regions popping in at different times is not always a better experience.
+
+We could also group the aside behind a single boundary:
+
+```tsx
+export default function Page() {
+  return (
+    <Layout>
+      <Sidebar />
+      <main>
+        <PageHeader title="Home" />
+        <Suspense fallback={<FeedSkeleton />}>
+          <Feed />
+        </Suspense>
+      </main>
+      <Suspense fallback={<TrendingTagsSkeleton />}>
+        <aside>
+          <TrendingTags />
+          <UserSuggestions />
+        </aside>
+      </Suspense>
+    </Layout>
+  );
+}
+```
+
+The page now loads in two groups instead of three. Notice that the fallback is only `<TrendingTagsSkeleton />`. TrendingTags can return a variable number of items, so we don't know how tall it will be. If we also showed a `<UserSuggestionsSkeleton />` below it, the skeleton would likely be at the wrong vertical position once the real trending tags resolve. By only showing the trending tags skeleton, we avoid that mismatch. The entire aside appears at once when both components are ready.
+
+This is the control we didn't have with [local data fetching](#1-local-data-fetching). When every component manages its own loading state on the client, the page has no say in what appears when. With `Suspense`, the page decides where the user waits. There is no formula for the perfect boundary placement; it comes down to trying different groupings, seeing how they feel, and iterating.
+
+Notice how readable the page is at this point. We can look at the JSX and see exactly what renders, what shows a skeleton, and what is part of the static shell.
+
+### Building a Parameterized Page
+
+Our route tree also has a parameterized route at `post/[id]/page.tsx`. In the Next.js App Router, `params` is a Promise (since Next.js 15), so we need to resolve it. We could `await` it at the page level:
+
+```tsx
+export default async function Page({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  return (
+    <div>
+      <PageHeader back title="Post" />
+      <Suspense fallback={<PostDetailSkeleton />}>
+        <PostDetail id={id} />
+      </Suspense>
+      <Suspense fallback={<RepliesSkeleton />}>
+        <Replies postId={id} />
+      </Suspense>
+    </div>
+  );
+}
+```
+
+This works, but it makes the page `async`, which means it has to wait for `params` to resolve before rendering anything. We could extract the content into a separate component to keep the page synchronous, but that would break up the readability for no real reason. Instead, we can use `.then()`:
+
+```tsx
+export default function Page({ params }: { params: Promise<{ id: string }> }) {
+  return (
+    <div>
+      <PageHeader back title="Post" />
+      <Suspense fallback={<PostDetailSkeleton />}>
+        {params.then(({ id }) => (
+          <>
+            <PostDetail id={id} />
+            <section>
+              <SectionHeader>Replies</SectionHeader>
+              <Suspense fallback={<RepliesSkeleton />}>
+                <Replies postId={id} />
+              </Suspense>
+            </section>
+          </>
+        ))}
+      </Suspense>
+    </div>
+  );
+}
+```
+
+With this pattern, we can preserve the same readability across pages that have dependencies we need to resolve before we can use our reusable async server components. The `.then()` resolves `params` so that `PostDetail` and `Replies` still receive a plain `id` string as a prop, preserving the same composability we had on the home feed page.
+
+### Adding Interactivity
+
+So far we have only looked at server components. But the feed itself has interactive parts: the like button on every post needs JavaScript on the client. Client components can compose the same way. Here is a `LikeButton` that uses a [form action](https://react.dev/reference/react-dom/components/form#props) to call a [Server Function](https://react.dev/reference/rsc/server-functions) (`likePost`), with `useOptimistic` for instant feedback:
+
+```tsx
+'use client';
+
+export function LikeButton({ postId, liked, count }: Props) {
+  const [optimistic, setOptimistic] = useOptimistic({ liked, count });
+  const [, startTransition] = useTransition();
+
+  const likeAction = () => {
+    startTransition(async () => {
+      setOptimistic({
+        liked: !optimistic.liked,
+        count: optimistic.count + (optimistic.liked ? -1 : 1),
+      });
+      await likePost(postId);
+    });
+  };
+
+  return (
+    <form action={likeAction}>
+      <Button>{optimistic.liked ? "♥" : "♡"} {optimistic.count}</Button>
+    </form>
+  );
+}
+```
+
+The form calls `likePost` directly across the server boundary, and `useOptimistic` handles the instant feedback. Every `Post` in the feed composes it alongside the rest of the server-rendered content without any special treatment:
+
+```tsx
+<article>
+  <PostHeader post={post} />
+  <PostBody post={post} />
+  <LikeButton postId={post.id} liked={post.liked} count={post.likes} />
+</article>
+```
+
+My previous blog posts on [server and client component composition in practice](/posts/server-client-component-composition-in-practice) and [building design components with action props using async React](/posts/building-design-components-with-action-props-using-async-react) cover the client side of this in more depth.
+
+### Organizing the Codebase
+
+Because our components only accept minimal props like an identifier and fetch their own data, we can reuse them across any page in the codebase. The same `<UserSuggestions />` works on the home feed, the explore page, and the post detail page without changes. This means queries, components, skeletons, and client components naturally cluster by domain. A feature folder structure is a suitable pattern for this:
+
+```
+features/
+  post/
+    components/
+      post.tsx                   // server component + skeleton
+      feed.tsx                   // server component + skeleton
+      feed-tabs.tsx              // "use client"
+  user/
+    components/
+      user-avatar.tsx            // server component + skeleton
+      user-suggestions.tsx       // server component
+```
+
+Server components, client components, and skeletons all live together by domain. A refactor that moves a component to a new page doesn't touch anything outside its feature folder. This isn't strict feature slicing, and we don't need a methodology to follow it. Pages stay thin because they don't import data, they import components.
+
+The same composition model extends to error handling and animations. We can wrap a region in a React [`ErrorBoundary`](https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary) to render a fallback when something fails (in Next.js, [`catchError`](https://nextjs.org/docs/app/api-reference/functions/unstable_catchError) gives us a retry button on top of that, which I covered in [Error Handling in Next.js with catchError](/posts/error-handling-in-nextjs-with-catch-error)), and React's [`ViewTransition`](https://react.dev/reference/react/ViewTransition) to animate the content as it streams in. The page composes them around its async components, and the components themselves stay unaware of any of it.
+
+Pulling everything from this post into one place, the home feed page might end up looking something like this:
+
+```tsx
+export default function Page() {
+  return (
+    <Layout>
+      <Sidebar />
+      <main>
+        <PageHeader title="Home" />
+        <ErrorBoundary title="Failed to load feed">
+          <Suspense fallback={<FeedSkeleton />}>
+            <ViewTransition>
+              <Feed />
+            </ViewTransition>
+          </Suspense>
+        </ErrorBoundary>
+      </main>
+      <ErrorBoundary title="Failed to load suggestions">
+        <Suspense fallback={<TrendingTagsSkeleton />}>
+          <aside>
+            <TrendingTags />
+            <UserSuggestions />
+          </aside>
+        </Suspense>
+      </ErrorBoundary>
+    </Layout>
+  );
+}
+```
+
+Each region now has its own error boundary, so a failure in one section doesn't take down the rest of the page. The components stay focused on rendering their own content, and the page handles the orchestration.
 
 ## A Note on Cache Components
 
-This architecture pays off even more once we turn on `cacheComponents` in Next.js 16. With it enabled, anything that fetches dynamic data has to live behind a `Suspense` boundary, and everything outside those boundaries becomes part of the static shell that can be prerendered and served instantly. The constraint sounds aggressive, but it's exactly the discipline we have already been applying: components fetch their own data, pages place deliberate Suspense boundaries, and we choose what shows up immediately versus what streams.
+With `cacheComponents` enabled in Next.js 16, any component that fetches dynamic data has to live behind a `Suspense` boundary, and everything outside those boundaries becomes part of the static shell that can be prerendered and served instantly. The architecture we have been building throughout this post fits naturally into that model: components fetch their own data, pages place deliberate `Suspense` boundaries, and we get the optimal performance from the larger static shell and the smaller, more intentional dynamic regions. With [`'use cache'`](https://nextjs.org/docs/app/api-reference/directives/use-cache), we can also cache individual components or data fetches, which means some regions that previously needed a `Suspense` fallback can resolve instantly and the loading states disappear entirely.
 
-The benefit is that the static shell gets larger and the dynamic regions get smaller and more intentional. We are no longer relying on convention to keep the loading experience coherent. The framework refuses to build the app unless we have decided where the boundaries are. It's the same architecture either way, but `cacheComponents` makes it the only architecture, which is what we want for a snappy, app-like feel by default. None of this is mandatory to get the benefits in this post, but it's the natural next step once we are committed to this style.
+The `.then()` pattern we used on the [parameterized page](#building-a-parameterized-page) matters even more here. With `cacheComponents`, awaiting `params` at the page level is actually an error, because it blocks the static shell from being prerendered. Passing the Promise down with `.then()` keeps the shell synchronous and lets the framework prerender as much as it can.
 
 ## Conclusion
 
-The trip from `useEffect` to React Query to loaders to RSCs has really been about resolving the same tension. Components want to own their data so they can compose freely, but the page wants to own the loading experience so it doesn't fragment. Every step before RSCs forced us to pick one and give up the other. RSCs combined with Suspense finally give us both. Components ask for the data they need, share a per-request cache, and stream into deliberate boundaries that the page controls. Skeletons live next to the things they represent.
+The trip from `useEffect` to React Query to loaders to RSCs has really been about getting data fetching to the server while keeping components composable. RSCs are not the only way to get there, but they compose beautifully with React's component model, and `Suspense` gives us a way to design the loading experience on top of that.
 
-If you are still reflexively writing `async function Page` and `await`ing five queries at the top, consider trying the inversion. Push the data fetches into the components that use them, make the page non-async, and let Suspense handle the orchestration. The components get smaller, the page gets clearer, and the user gets a faster, more coherent first paint.
+If you are still reflexively writing `async function Page` and `await`ing five queries at the top, try the inversion. Many of us learned that habit from loaders and `getServerSideProps`, and AI coding agents have been trained on the same patterns. Push the data fetches into the components that use them, and let `Suspense` handle the orchestration. The result is a codebase that is easier to read, easier to move around in, and easier for both humans and agents to work with.
 
-I hope this post has been helpful. Please let me know if you have any questions or comments, and follow me on [Bluesky](https://bsky.app/profile/aurorascharff.no) or [X](https://x.com/aurorascharff) for more updates. Happy coding! 🚀
+I hope this post has been helpful. Thanks to [Nadia Makarevich](https://x.com/adevnadia) for benchmarking RSC performance in her article, so you don't have to take my word for it. Please let me know if you have any questions or comments, and follow me on [Bluesky](https://bsky.app/profile/aurorascharff.no) or [X](https://x.com/aurorascharff) for more updates. Happy coding! 🚀
