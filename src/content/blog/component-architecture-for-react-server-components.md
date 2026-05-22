@@ -34,7 +34,7 @@ The question is what we lose in the process, and whether RSCs let us keep the se
 For the rest of this post, let's imagine we are building a social feed page. The UI has a sidebar, a feed of posts, a section of user suggestions, and a list of trending tags. In plain JSX, the page looks something like this:
 
 ```tsx
-function Page() {
+function HomePage() {
   return (
     <Layout>
       <Sidebar />
@@ -77,7 +77,7 @@ function Feed() {
 This works for a single component, but the moment another part of the tree needs the same data, we have to hoist `posts` and `setPosts` up to a common ancestor and pass them down. Mutations follow the same pattern: if `Post` wants to like itself and have the count update elsewhere, the `like` handler has to live somewhere both components can reach, which is usually higher than either of them needs to be. We end up lifting state for reasons that have nothing to do with the UI structure:
 
 ```tsx
-function Page() {
+function HomePage() {
   const [posts, setPosts] = useState<PostT[]>([]);
   // ...fetch logic...
 
@@ -105,7 +105,7 @@ function Feed({ posts, onLike }: Props) {
 }
 ```
 
-The `like` handler lives in `App` because it needs to update `posts`. `Feed` receives both the data and the callback. `LikeButton` has no idea where the handler comes from. Everything flows through props.
+The `like` handler lives in `HomePage` because it needs to update `posts`. `Feed` receives both the data and the callback. `LikeButton` has no idea where the handler comes from. Everything flows through props.
 
 React Query and similar libraries cleaned this up significantly. The data is keyed and cached centrally, so any component can ask for it without prop drilling, and mutations can invalidate or update entries from anywhere:
 
@@ -146,7 +146,7 @@ export async function loader() {
   return { user, feed, suggestedUsers, trendingTags };
 }
 
-export default function Page() {
+export default function HomePage() {
   const { user, feed, suggestedUsers, trendingTags } = useLoaderData<typeof loader>();
 
   return (
@@ -168,7 +168,7 @@ The same mindset is easy to recreate at the page component level in the Next.js 
 
 ```tsx
 // Next.js App Router, loader mindset
-export default async function Page() {
+export default async function HomePage() {
   const user = await getCurrentUser();
   const [feed, suggestedUsers, trendingTags] = await Promise.all([
     getFeed(user.handle),
@@ -266,7 +266,7 @@ The page just renders `<Feed />`. Notice that `Feed` passes the whole `post` obj
 With every component fetching its own data, the page itself goes back to looking like this:
 
 ```tsx
-export default function Page() {
+export default function HomePage() {
   return (
     <Layout>
       <Sidebar />
@@ -377,7 +377,8 @@ Notice that `FeedSkeleton` is composed from `PostSkeleton`, the same way `Feed` 
 With `Suspense` and skeletons in place, the question becomes: how do we want the page to load? We could wrap the entire content area in a single boundary:
 
 ```tsx
-export default function Page() {
+// app/page.tsx
+export default function HomePage() {
   return (
     <Layout>
       <Sidebar />
@@ -401,7 +402,8 @@ The sidebar shows up immediately. Everything else waits behind one boundary and 
 Or we can split the boundaries so that each section streams independently:
 
 ```tsx
-export default function Page() {
+// app/page.tsx
+export default function HomePage() {
   return (
     <Layout>
       <Sidebar />
@@ -429,7 +431,8 @@ Now the sidebar and header are part of the static shell, and the feed, user sugg
 We could also group the aside behind a single boundary:
 
 ```tsx
-export default function Page() {
+// app/page.tsx
+export default function HomePage() {
   return (
     <Layout>
       <Sidebar />
@@ -465,11 +468,12 @@ Our route tree also has a parameterized route at `post/[id]/page.tsx`. This page
 In the Next.js App Router, `params` is a Promise (since Next.js 15), so we need to resolve it. We could `await` it at the page level:
 
 ```tsx
-export default async function Page({ params }: { params: Promise<{ id: string }> }) {
+// app/post/[id]/page.tsx
+export default async function PostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   return (
     <div>
-      <PageHeader back title="Post" />
+      <PageHeader title="Post" />
       <Suspense fallback={<PostDetailSkeleton />}>
         <PostDetail id={id} />
         <section>
@@ -506,10 +510,11 @@ async function PostContent({ params }: { params: Promise<{ id: string }> }) {
 That keeps the page synchronous, but adds a wrapper component just to unwrap a Promise. Instead, we can use `.then()` directly:
 
 ```tsx
-export default function Page({ params }: { params: Promise<{ id: string }> }) {
+// app/post/[id]/page.tsx
+export default function PostPage({ params }: { params: Promise<{ id: string }> }) {
   return (
     <div>
-      <PageHeader back title="Post" />
+      <PageHeader title="Post" />
       <Suspense fallback={<PostDetailSkeleton />}>
         {params.then(({ id }) => (
           <>
@@ -589,8 +594,10 @@ features/
   post/
     components/
       post.tsx                   // server component + skeleton
+      post-detail.tsx            // server component + skeleton
       feed.tsx                   // server component + skeleton
       feed-tabs.tsx              // "use client"
+      replies.tsx                // server component + skeleton
   user/
     components/
       user-avatar.tsx            // server component + skeleton
@@ -606,7 +613,8 @@ Along the same lines, we can also add error handling and animations to a region 
 Pulling everything from this post into one place, the home feed page might end up looking something like this:
 
 ```tsx
-export default function Page() {
+// app/page.tsx
+export default function HomePage() {
   return (
     <Layout>
       <Sidebar />
@@ -635,7 +643,37 @@ export default function Page() {
 
 Each region has its own error boundary, so a failure in one part of the page doesn't take down the rest. The `ViewTransition` around the feed animates the content into place as it streams in, so the swap from skeleton to real posts feels smooth instead of abrupt.
 
-In a real Next.js App Router project, the layout markup and `<Sidebar>` would likely live directly in the root `layout.tsx` so they wrap every page, and the page file itself would only contain the content inside.
+The post detail page can follow the same pattern, with a view transition and an inner error boundary around replies so they can fail independently of the post. The outer route-level error can be handled by Next.js's [`error.tsx`](https://nextjs.org/docs/app/api-reference/file-conventions/error), so we don't need to wrap the whole page ourselves:
+
+```tsx
+// app/post/[id]/page.tsx
+export default function PostPage({ params }: { params: Promise<{ id: string }> }) {
+  return (
+    <div>
+      <PageHeader title="Post" />
+      <Suspense fallback={<PostDetailSkeleton />}>
+        <ViewTransition>
+          {params.then(({ id }) => (
+            <>
+              <PostDetail id={id} />
+              <section>
+                <SectionHeader>Replies</SectionHeader>
+                <ErrorBoundary title="Failed to load replies">
+                  <Suspense fallback={<RepliesSkeleton />}>
+                    <Replies postId={id} />
+                  </Suspense>
+                </ErrorBoundary>
+              </section>
+            </>
+          ))}
+        </ViewTransition>
+      </Suspense>
+    </div>
+  );
+}
+```
+
+In a real Next.js App Router project, `<Layout>` and `<Sidebar>` would likely live directly in the root `layout.tsx` so they wrap every page, and the page file itself would only contain the content inside.
 
 ## A Note on Cache Components
 
