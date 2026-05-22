@@ -17,7 +17,7 @@ description: React Server Components let each component fetch the data it needs.
 
 For most of React's history, the conventional way to load data on a page has been to fetch at the top of a route and pass it down through props. Most React developers still reach for that model first, even when working in the Next.js App Router.
 
-In this blog post, we will look at why that habit ends up producing tightly coupled components and clumsy loading states, and explore how React Server Components let us architect a page differently. We will walk through the progression from `useEffect` to React Query to loaders to RSCs, and then put together a page that describes the loading experience rather than managing all the data.
+In this blog post, we will look at why that habit ends up producing tightly coupled components and clumsy loading states, and explore how React Server Components let us architect a page differently. We will walk through the progression from `useEffect` to [React Query](https://tanstack.com/query) to loaders to RSCs, and then put together a page that describes the loading experience rather than managing all the data.
 
 ## Table of contents
 
@@ -55,7 +55,7 @@ This is just the layout. No data yet, no fetching, no loading states. Every comp
 
 ### 1. Local Data Fetching
 
-The original way to handle data in React was with `useEffect` and `useState`. Each component fetches its own data, owns its own loading flag, and lifts state up when something else needs to know:
+The original way to handle data in React was with [`useEffect`](https://react.dev/reference/react/useEffect) and [`useState`](https://react.dev/reference/react/useState). Each component fetches its own data, owns its own loading flag, and lifts state up when something else needs to know:
 
 ```tsx
 function Feed() {
@@ -162,7 +162,7 @@ export default function Page() {
 }
 ```
 
-The equivalent in the old Next.js Pages Router would be `getServerSideProps`, which passes the data as props to the page. Either way, the loader sits at the route boundary and the components below it receive concrete data shapes. Notice that mutations like the `LikeButton` from earlier are no longer visible at the page level: the loader only handles reads, and writes typically go through separate API calls or form submissions that trigger a page reload or revalidation.
+The equivalent in the old Next.js Pages Router would be [`getServerSideProps`](https://nextjs.org/docs/pages/api-reference/functions/get-server-side-props), which passes the data as props to the page. Either way, the loader sits at the route boundary and the components below it receive concrete data shapes. Notice that mutations like the `LikeButton` from earlier are no longer visible at the page level: the loader only handles reads, and writes typically go through separate API calls or form submissions that trigger a page reload or revalidation.
 
 The same mindset is easy to recreate at the page component level in the Next.js App Router. We just make the page itself `async` and `await` everything at the top:
 
@@ -481,7 +481,7 @@ The `.then()` resolves `params` so that `PostDetail` and `Replies` still receive
 
 ### Adding Interactivity
 
-The feed itself has interactive parts: the like button on every post needs JavaScript on the client. Client components can compose the same way. Here is a `LikeButton` that uses a [form action](https://react.dev/reference/react-dom/components/form#props) to call a [Server Function](https://react.dev/reference/rsc/server-functions) (`likePost`), with `useOptimistic` for instant feedback:
+The feed itself has interactive parts: the like button on every post needs JavaScript on the client. Client components can compose the same way. Here is a `LikeButton` that uses a [form action](https://react.dev/reference/react-dom/components/form#props) to call a [Server Function](https://react.dev/reference/rsc/server-functions) (`likePost`), with [`useOptimistic`](https://react.dev/reference/react/useOptimistic) and [`useTransition`](https://react.dev/reference/react/useTransition) for instant feedback:
 
 ```tsx
 'use client';
