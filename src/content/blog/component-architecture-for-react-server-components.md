@@ -429,6 +429,8 @@ When every component manages its own loading state on the client, the page has n
 
 Notice how readable the page is at this point. We can look at the JSX and see exactly what renders, what shows a skeleton, and what is part of the static shell.
 
+> Modern loaders can stream too. In [React Router v7](https://reactrouter.com/how-to/suspense), returning a promise from a loader lets that data resolve behind a `Suspense` boundary while the rest of the route renders. The page still receives the data as props through `useLoaderData`, though, so we are back to passing data down from the route boundary, which is what we are trying to avoid here.
+
 ### Building a Parameterized Page
 
 Our route tree also has a parameterized route at `post/[id]/page.tsx`. In the Next.js App Router, `params` is a Promise (since Next.js 15), so we need to resolve it. We could `await` it at the page level:
