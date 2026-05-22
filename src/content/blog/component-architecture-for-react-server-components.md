@@ -505,7 +505,11 @@ export function LikeButton({ postId, liked, count }: Props) {
 }
 ```
 
-The form calls `likePost` directly across the server boundary, and `useOptimistic` updates the UI before the server responds. Every `Post` in the feed composes it alongside the rest of the server-rendered content:
+The form calls `likePost` directly across the server boundary, and `useOptimistic` updates the UI before the server responds.
+
+> `useOptimistic` is local to the component that uses it. If the update only affects the local component, that is enough. When another part of the page needs to react to the same update (a follower count, a notification badge), we can either lift the optimistic state into a context or let the framework revalidate.
+
+Every `Post` in the feed composes it alongside the rest of the server-rendered content:
 
 ```tsx
 <article>
