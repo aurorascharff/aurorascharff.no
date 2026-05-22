@@ -1,6 +1,6 @@
 ---
 author: Aurora Scharff
-pubDatetime: 2026-05-22T14:00:00Z
+pubDatetime: 2026-05-22T12:00:00Z
 title: Component Architecture for React Server Components
 slug: component-architecture-for-react-server-components
 featured: true
@@ -285,7 +285,7 @@ export default function Page() {
 
 The structure is the same as the [use case](#the-use-case). The difference is that every component in this tree is now fetching its own data on the server.
 
-You might be worried about duplicate fetches at this point. With each component fetching its own data, the same `getUserByHandle` could be called from multiple places in the same render. React's [`cache()`](https://react.dev/reference/react/cache) function deduplicates these per request, so calling it ten times with the same argument hits the database once. This is similar to what React Query's centralized cache does on the client, but built into the server render itself. I covered this in more depth in my previous post on [Avoiding Server Component Waterfall Fetching with React 19 cache()](/posts/avoiding-server-component-waterfall-fetching-with-react-19-cache).
+You might be worried about duplicate fetches at this point. With each component fetching its own data, the same `getCurrentUserHandle` could be called from multiple places in the same render. React's [`cache()`](https://react.dev/reference/react/cache) function deduplicates these per request, so calling it ten times in the same render hits the source once. This is similar to what React Query's centralized cache does on the client, but built into the server render itself. I covered this in more depth in my previous post on [Avoiding Server Component Waterfall Fetching with React 19 cache()](/posts/avoiding-server-component-waterfall-fetching-with-react-19-cache).
 
 This composability is also why AI coding agents work so well with React in general, and RSCs extend that composability model to the server. A self-contained component can be moved to a new page, reused in a different layout, or refactored without touching anything outside its own file. The agent doesn't need to trace data through loaders or prop chains to understand what a component needs.
 
@@ -397,7 +397,7 @@ export default function Page() {
 }
 ```
 
-Now the sidebar and header are part of the static shell. The feed, user suggestions, and trending tags each resolve on their own. If user suggestions are fast and the feed is slow, the user sees suggestions first. But this can also feel fragmented: three separate regions popping in at different times is not always a better experience.
+Now the sidebar and header are part of the static shell, and the feed, user suggestions, and trending tags each resolve on their own. If user suggestions are fast and the feed is slow, the user sees suggestions first. This can also feel fragmented: three separate regions popping in at different times is not always a better experience.
 
 We could also group the aside behind a single boundary:
 
@@ -425,7 +425,7 @@ export default function Page() {
 
 The page now loads in two groups instead of three. Notice that the fallback is only `<TrendingTagsSkeleton />`. TrendingTags can return a variable number of items, so we don't know how tall it will be. If we also showed a `<UserSuggestionsSkeleton />` below it, the skeleton would likely be at the wrong vertical position once the real trending tags resolve. By only showing the trending tags skeleton, we avoid that mismatch. The entire aside appears at once when both components are ready.
 
-This is the control we didn't have with [local data fetching](#1-local-data-fetching). When every component manages its own loading state on the client, the page has no say in what appears when. With `Suspense`, the page decides where the user waits. There is no formula for the perfect boundary placement; it comes down to trying different groupings, seeing how they feel, and iterating.
+When every component manages its own loading state on the client, the page has no say in what appears when. With `Suspense`, the page decides where the user waits. There is no formula for the perfect boundary placement; it comes down to trying different groupings, seeing how they feel, and iterating.
 
 Notice how readable the page is at this point. We can look at the JSX and see exactly what renders, what shows a skeleton, and what is part of the static shell.
 
@@ -475,11 +475,11 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
 }
 ```
 
-With this pattern, we can preserve the same readability across pages that have dependencies we need to resolve before we can use our reusable async server components. The `.then()` resolves `params` so that `PostDetail` and `Replies` still receive a plain `id` string as a prop, preserving the same composability we had on the home feed page.
+The `.then()` resolves `params` so that `PostDetail` and `Replies` still receive a plain `id` string as a prop, and the page stays synchronous and readable.
 
 ### Adding Interactivity
 
-So far we have only looked at server components. But the feed itself has interactive parts: the like button on every post needs JavaScript on the client. Client components can compose the same way. Here is a `LikeButton` that uses a [form action](https://react.dev/reference/react-dom/components/form#props) to call a [Server Function](https://react.dev/reference/rsc/server-functions) (`likePost`), with `useOptimistic` for instant feedback:
+The feed itself has interactive parts: the like button on every post needs JavaScript on the client. Client components can compose the same way. Here is a `LikeButton` that uses a [form action](https://react.dev/reference/react-dom/components/form#props) to call a [Server Function](https://react.dev/reference/rsc/server-functions) (`likePost`), with `useOptimistic` for instant feedback:
 
 ```tsx
 'use client';
@@ -506,7 +506,7 @@ export function LikeButton({ postId, liked, count }: Props) {
 }
 ```
 
-The form calls `likePost` directly across the server boundary, and `useOptimistic` handles the instant feedback. Every `Post` in the feed composes it alongside the rest of the server-rendered content without any special treatment:
+The form calls `likePost` directly across the server boundary, and `useOptimistic` handles the instant feedback. Every `Post` in the feed composes it alongside the rest of the server-rendered content:
 
 ```tsx
 <article>
@@ -535,9 +535,9 @@ features/
       user-suggestions.tsx       // server component
 ```
 
-Server components, client components, and skeletons all live together by domain. A refactor that moves a component to a new page doesn't touch anything outside its feature folder. This isn't strict feature slicing, and we don't need a methodology to follow it. Pages stay thin because they don't import data, they import components.
+Server components, client components, and skeletons live together by domain. A refactor that moves a component to a new page doesn't touch anything outside its feature folder. This isn't strict feature slicing, and we don't need a methodology to follow it; pages import components, not data.
 
-The same composition model extends to error handling and animations. We can wrap a region in a React [`ErrorBoundary`](https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary) to render a fallback when something fails (in Next.js, [`catchError`](https://nextjs.org/docs/app/api-reference/functions/unstable_catchError) gives us a retry button on top of that, which I covered in [Error Handling in Next.js with catchError](/posts/error-handling-in-nextjs-with-catch-error)), and React's [`ViewTransition`](https://react.dev/reference/react/ViewTransition) to animate the content as it streams in. The page composes them around its async components, and the components themselves stay unaware of any of it.
+Along the same lines, we can also add error handling and animations to a region by wrapping it in a React [`ErrorBoundary`](https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary) (in Next.js, [`catchError`](https://nextjs.org/docs/app/api-reference/functions/unstable_catchError) gives us a retry button on top of that, which I covered in [Error Handling in Next.js with catchError](/posts/error-handling-in-nextjs-with-catch-error)) or in a [`ViewTransition`](https://react.dev/reference/react/ViewTransition) to animate the content as it streams in. The page composes them around its async components.
 
 Pulling everything from this post into one place, the home feed page might end up looking something like this:
 
@@ -569,7 +569,7 @@ export default function Page() {
 }
 ```
 
-Each region now has its own error boundary, so a failure in one section doesn't take down the rest of the page. The components stay focused on rendering their own content, and the page handles the orchestration.
+Each region has its own error boundary, so a failure in one part of the page doesn't take down the rest.
 
 ## A Note on Cache Components
 
