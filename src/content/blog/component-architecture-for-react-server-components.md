@@ -324,23 +324,48 @@ Without `Suspense`, the page waits for every async component to finish before se
 
 The fallback we pass to `Suspense` is what the user sees while an async component is fetching. Usually this is a skeleton: a lightweight placeholder that matches the shape of the content it stands in for, with the same dimensions and layout but no real data. Sometimes a spinner is enough instead. Either way, it is just HTML and CSS, and the goal is to avoid layout shift when the real content arrives.
 
-A way I prefer to keep a skeleton in sync with its component is to export both from the same file:
+To keep the skeleton in sync with its component, I like to export both from the same file:
 
 ```tsx
 // features/post/components/feed.tsx
 export async function Feed() {
   const handle = await getCurrentUserHandle();
   const { posts } = await getFeed(handle);
-  return <ul>{posts.map(post => <Post key={post.id} post={post} />)}</ul>;
+  return (
+    <ul className="flex flex-col gap-4">
+      {posts.map(post => <Post key={post.id} post={post} />)}
+    </ul>
+  );
 }
 
 export function FeedSkeleton({ count = 5 }: { count?: number }) {
   return (
-    <ul>
+    <ul className="flex flex-col gap-4">
       {Array.from({ length: count }).map((_, i) => (
         <PostSkeleton key={i} />
       ))}
     </ul>
+  );
+}
+```
+
+`PostSkeleton` can use the same outer classes as `Post` so the box reserves the same space, with pulsing rectangles standing in for the text:
+
+```tsx
+// features/post/components/post.tsx
+export function Post({ post }: { post: PostT }) {
+  return (
+    <li className="h-24 rounded-lg border p-4">
+      <p>{post.body}</p>
+    </li>
+  );
+}
+
+export function PostSkeleton() {
+  return (
+    <li className="h-24 rounded-lg border p-4">
+      <div className="h-4 w-32 animate-pulse rounded bg-muted" />
+    </li>
   );
 }
 ```
@@ -435,7 +460,7 @@ Notice how readable the page is at this point. We can look at the JSX and see ex
 
 ### Building a Parameterized Page
 
-Our route tree also has a parameterized route at `post/[id]/page.tsx`. This page renders a single post with its replies underneath. `PostDetail` takes an `id`, fetches the post itself, and reuses the same building blocks as the `Post` list item from the feed.
+Our route tree also has a parameterized route at `post/[id]/page.tsx`. This page renders a single post with its replies underneath. `PostDetail` takes an `id`, fetches the post itself, and can use the same building blocks as the `Post` list item from the feed.
 
 In the Next.js App Router, `params` is a Promise (since Next.js 15), so we need to resolve it. We could `await` it at the page level:
 
