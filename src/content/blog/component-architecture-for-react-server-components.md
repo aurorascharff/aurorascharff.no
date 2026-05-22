@@ -571,7 +571,7 @@ export default function Page() {
 
 Each region has its own error boundary, so a failure in one part of the page doesn't take down the rest. The `ViewTransition` around the feed animates the content into place as it streams in, so the swap from skeleton to real posts feels smooth instead of abrupt.
 
-In a real Next.js App Router project, `<Layout>` and `<Sidebar>` would likely live in the root `layout.tsx` so they wrap every page, and the page file itself would only contain the content inside.
+In a real Next.js App Router project, the layout markup and `<Sidebar>` would likely live directly in the root `layout.tsx` so they wrap every page, and the page file itself would only contain the content inside.
 
 ## A Note on Cache Components
 
