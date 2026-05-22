@@ -581,6 +581,8 @@ With `cacheComponents` enabled in Next.js 16, any component that fetches dynamic
 
 The `.then()` pattern we used on the [parameterized page](#building-a-parameterized-page) matters even more here. With `cacheComponents`, awaiting `params` at the page level pulls the page out of the static shell, so the whole page has to render dynamically. Passing the Promise down with `.then()` keeps the page synchronous and the dynamic work behind a `Suspense` boundary, where it belongs.
 
+Building this way from the start pays off even if we are not using `cacheComponents` yet. We get the best performance and UX today, and once we do end up using it it, the architecture will already be in place.
+
 ## Conclusion
 
 The trip from `useEffect` to React Query to loaders to RSCs has really been about getting data fetching to the server while keeping components composable. RSCs are not the only way to get there, but they compose beautifully with React's component model, and `Suspense` gives us a way to design the loading experience on top of that.
