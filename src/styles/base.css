@@ -122,6 +122,11 @@
     word-wrap: break-word;
   }
 
+  blockquote p:first-of-type::before,
+  blockquote p:last-of-type::after {
+    content: none;
+  }
+
   pre > code {
     white-space: pre;
   }
