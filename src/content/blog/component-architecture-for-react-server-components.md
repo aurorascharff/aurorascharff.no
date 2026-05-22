@@ -571,6 +571,8 @@ export default function Page() {
 
 Each region has its own error boundary, so a failure in one part of the page doesn't take down the rest. The `ViewTransition` around the feed animates the content into place as it streams in, so the swap from skeleton to real posts feels smooth instead of abrupt.
 
+In a real Next.js App Router project, `<Layout>` and `<Sidebar>` would likely live in the root `layout.tsx` so they wrap every page, and the page file itself would only contain the content inside.
+
 ## A Note on Cache Components
 
 With `cacheComponents` enabled in Next.js 16, any component that fetches dynamic data has to live behind a `Suspense` boundary, and everything outside those boundaries becomes part of the static shell that can be prerendered and served instantly. The architecture we have been building throughout this post fits naturally into that model: components fetch their own data, pages place deliberate `Suspense` boundaries, and we get the optimal performance from the larger static shell and the smaller, more intentional dynamic regions. With [`'use cache'`](https://nextjs.org/docs/app/api-reference/directives/use-cache), we can also cache individual components or data fetches, which means some regions that previously needed a `Suspense` fallback can resolve instantly and the loading states disappear entirely.
