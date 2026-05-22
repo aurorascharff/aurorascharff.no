@@ -475,7 +475,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
 }
 ```
 
-The `.then()` resolves `params` so that `PostDetail` and `Replies` still receive a plain `id` string as a prop, and the page stays synchronous and readable.
+The `.then()` resolves `params` so that `PostDetail` and `Replies` still receive a plain `id` string as a prop, and the page stays synchronous and readable. The loading sequence follows the same thinking as on the home feed: the header is part of the static shell, the post detail streams in behind a `Suspense` boundary, and `Replies` has its own boundary inside so it can resolve independently from the post.
 
 ### Adding Interactivity
 
