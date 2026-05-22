@@ -481,7 +481,7 @@ The `.then()` resolves `params` so that `PostDetail` and `Replies` still receive
 
 ### Adding Interactivity
 
-The feed itself has interactive parts: the like button on every post needs JavaScript on the client. Client components can compose the same way. Here is a `LikeButton` that uses a [form action](https://react.dev/reference/react-dom/components/form#props) to call a [Server Function](https://react.dev/reference/rsc/server-functions) (`likePost`), with [`useOptimistic`](https://react.dev/reference/react/useOptimistic) for instant feedback:
+The feed itself might have interactive parts: the like button on every post needs JavaScript on the client. Client components can compose the same way. Here is a `LikeButton` that uses a [form action](https://react.dev/reference/react-dom/components/form#props) to call a [Server Function](https://react.dev/reference/rsc/server-functions) (`likePost`), with [`useOptimistic`](https://react.dev/reference/react/useOptimistic) for instant feedback:
 
 ```tsx
 'use client';
@@ -505,7 +505,7 @@ export function LikeButton({ postId, liked, count }: Props) {
 }
 ```
 
-The form calls `likePost` directly across the server boundary, and `useOptimistic` handles the instant feedback. Every `Post` in the feed composes it alongside the rest of the server-rendered content:
+The form calls `likePost` directly across the server boundary, and `useOptimistic` updates the UI before the server responds. Every `Post` in the feed composes it alongside the rest of the server-rendered content:
 
 ```tsx
 <article>
