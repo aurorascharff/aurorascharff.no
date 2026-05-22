@@ -445,9 +445,12 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       <PageHeader back title="Post" />
       <Suspense fallback={<PostDetailSkeleton />}>
         <PostDetail id={id} />
-      </Suspense>
-      <Suspense fallback={<RepliesSkeleton />}>
-        <Replies postId={id} />
+        <section>
+          <SectionHeader>Replies</SectionHeader>
+          <Suspense fallback={<RepliesSkeleton />}>
+            <Replies postId={id} />
+          </Suspense>
+        </section>
       </Suspense>
     </div>
   );
@@ -462,9 +465,12 @@ async function PostContent({ params }: { params: Promise<{ id: string }> }) {
   return (
     <>
       <PostDetail id={id} />
-      <Suspense fallback={<RepliesSkeleton />}>
-        <Replies postId={id} />
-      </Suspense>
+      <section>
+        <SectionHeader>Replies</SectionHeader>
+        <Suspense fallback={<RepliesSkeleton />}>
+          <Replies postId={id} />
+        </Suspense>
+      </section>
     </>
   );
 }
