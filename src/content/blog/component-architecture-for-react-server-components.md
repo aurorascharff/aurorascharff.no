@@ -4,7 +4,7 @@ pubDatetime: 2026-05-22T14:00:00Z
 title: Component Architecture for React Server Components
 slug: component-architecture-for-react-server-components
 featured: true
-draft: true
+draft: false
 tags:
   - React Server Components
   - Next.js 16
