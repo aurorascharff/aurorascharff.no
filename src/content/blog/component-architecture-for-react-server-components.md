@@ -251,17 +251,17 @@ export async function UserSuggestions() {
 
 Now we can use `<UserSuggestions />` on any page without wiring up the data from above. The same component that needed two separate loaders earlier just works.
 
-The same applies to `Feed`. In the loader version, it received `posts` and `currentUser` as props. As a server component, it fetches its own data:
+The same applies to `Feed`. In the loader version, it received `posts` and `currentUser` as props. As a server component, it fetches its own data and renders the list of posts directly:
 
 ```tsx
 export async function Feed() {
   const handle = await getCurrentUserHandle();
   const { posts } = await getFeed(handle);
-  return <ul>{posts.map(post => <Post key={post.id} id={post.id} />)}</ul>;
+  return <ul>{posts.map(post => <Post key={post.id} post={post} />)}</ul>;
 }
 ```
 
-The page just renders `<Feed />`.
+The page just renders `<Feed />`. Notice that `Feed` passes the whole `post` object down to `Post`. We already have the data from the feed query, so there is no reason for each `Post` to refetch its own row by id.
 
 With every component fetching its own data, the page itself goes back to looking like this:
 
@@ -331,7 +331,7 @@ A way I prefer to keep a skeleton in sync with its component is to export both f
 export async function Feed() {
   const handle = await getCurrentUserHandle();
   const { posts } = await getFeed(handle);
-  return <ul>{posts.map(post => <Post key={post.id} id={post.id} />)}</ul>;
+  return <ul>{posts.map(post => <Post key={post.id} post={post} />)}</ul>;
 }
 
 export function FeedSkeleton({ count = 5 }: { count?: number }) {
@@ -435,7 +435,9 @@ Notice how readable the page is at this point. We can look at the JSX and see ex
 
 ### Building a Parameterized Page
 
-Our route tree also has a parameterized route at `post/[id]/page.tsx`. In the Next.js App Router, `params` is a Promise (since Next.js 15), so we need to resolve it. We could `await` it at the page level:
+Our route tree also has a parameterized route at `post/[id]/page.tsx`. This page renders a single post with its replies underneath. `PostDetail` takes an `id`, fetches the post itself, and reuses the same building blocks as the `Post` list item from the feed.
+
+In the Next.js App Router, `params` is a Promise (since Next.js 15), so we need to resolve it. We could `await` it at the page level:
 
 ```tsx
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
@@ -538,11 +540,17 @@ The form calls `likePost` directly across the server boundary, and `useOptimisti
 Every `Post` in the feed composes it alongside the rest of the server-rendered content:
 
 ```tsx
-<article>
-  <PostHeader post={post} />
-  <PostBody post={post} />
-  <LikeButton postId={post.id} liked={post.liked} count={post.likes} />
-</article>
+// features/post/components/post.tsx
+export async function Post({ post }: { post: PostT }) {
+  const userState = await getPostUserState(post.id);
+  return (
+    <article>
+      <PostAuthor handle={post.authorHandle} />
+      <PostBody body={post.body} />
+      <LikeButton postId={post.id} liked={userState.liked} count={post.likes} />
+    </article>
+  );
+}
 ```
 
 My previous blog posts on [server and client component composition in practice](/posts/server-client-component-composition-in-practice) and [building design components with action props using async React](/posts/building-design-components-with-action-props-using-async-react) cover the client side of this in more depth.
