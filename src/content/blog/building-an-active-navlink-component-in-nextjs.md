@@ -132,14 +132,15 @@ Now the consumer can pass either a plain value or a function:
 
 ### Prefix matching
 
-Exact equality works for top-level links, but a link to `/posts` usually wants to stay active on `/posts/123` too. Default to prefix matching and add an `exact` opt-out:
+Exact equality works for top-level links, but a link to `/posts` usually wants to stay active on `/posts/123` too. Default to prefix matching and add an `exact` opt-out. We also normalize `href` to a string here, since the typed version we land on later accepts `URL` as well:
 
 ```tsx
 export function NavLink({ href, exact, ...rest }) {
   const pathname = usePathname();
+  const target = href.toString();
   const isActive = exact
-    ? pathname === href
-    : pathname === href || pathname.startsWith(`${href}/`);
+    ? pathname === target
+    : pathname === target || pathname.startsWith(`${target}/`);
 
   // ...
 }
@@ -184,7 +185,7 @@ For consumers who prefer the render-prop approach, `isActive` is still available
 
 ### Putting it together
 
-Pulling the steps so far into one component:
+Pulling the steps so far into one component. The signature is plain JavaScript for now so the shape stays readable; we'll add types in the next section:
 
 ```tsx
 "use client";
@@ -198,9 +199,10 @@ function resolve(value, props) {
 
 export function NavLink({ href, className, children, exact, ...rest }) {
   const pathname = usePathname();
+  const target = href.toString();
   const isActive = exact
-    ? pathname === href
-    : pathname === href || pathname.startsWith(`${href}/`);
+    ? pathname === target
+    : pathname === target || pathname.startsWith(`${target}/`);
   const props = { isActive };
 
   return (
@@ -325,9 +327,10 @@ export function NavLink({ href, className, children, exact, ...rest }) {
 
 function NavLinkInner({ href, className, children, exact, ...rest }) {
   const pathname = usePathname();
+  const target = href.toString();
   const isActive = exact
-    ? pathname === href
-    : pathname === href || pathname.startsWith(`${href}/`);
+    ? pathname === target
+    : pathname === target || pathname.startsWith(`${target}/`);
   const props = { isActive };
 
   return (
@@ -345,9 +348,40 @@ function NavLinkInner({ href, className, children, exact, ...rest }) {
 
 If `usePathname()` suspends, React shows the fallback, which is the same link without the active class. Once it resolves, the inner version replaces the fallback in place. The DOM doesn't disappear and reappear, it just gets an updated class name and `aria-current` attribute. The consumer doesn't need to know any of this: they pass an `href` and a render prop, and the component handles the rest in both modes.
 
+## Usage
+
+Dropping the finished `NavLink` into a real layout, the render-prop API lets you mix simple class swaps and fully custom active content in the same nav without changing the component:
+
+```tsx
+<nav className="design-nav">
+  <NavLink
+    href="/"
+    exact
+    className={({ isActive }) => (isActive ? "nav-item active" : "nav-item")}
+  >
+    Home
+  </NavLink>
+  <NavLink href="/posts" className="nav-item aria-[current=page]:font-semibold">
+    Posts
+  </NavLink>
+  <NavLink href="/settings" className="nav-item">
+    {({ isActive }) => (
+      <>
+        <SettingsIcon filled={isActive} />
+        Settings
+      </>
+    )}
+  </NavLink>
+</nav>
+```
+
+The first link uses a function for `className` to swap an active modifier on the root. The second link relies entirely on the `aria-current` attribute and Tailwind's `aria-` variant, so the `className` stays a plain string. The third link uses a function for `children` to render a different icon when active. All three live next to each other and nothing leaks: each consumer picks the shape that fits its use case.
+
 ## Should This Be Built In?
 
-React Router has shipped a `NavLink` for years, Remix kept it, and the pattern is well understood. So why doesn't Next.js have one? Part of the answer is likely that an opinionated `NavLink` makes future routing optimizations harder: once pathname access is exposed through a built-in component, every future change to how routes are resolved has to keep that contract.
+React Router has shipped a `NavLink` for years, Remix kept it, and the pattern is well understood. So why doesn't Next.js have one? Part of the answer is likely that an opinionated `NavLink` makes future routing optimizations harder. Once a built-in component exposes pathname access, every future change to how routes are resolved has to keep that contract. The current direction in the App Router is to lean on `useSelectedLayoutSegment()` and segment-based active state, which works well for nav placed in a layout but breaks down for nav placed elsewhere or for links that don't map cleanly to a single segment.
+
+The other factor is that `usePathname()` behaves differently across rendering modes. Under `cacheComponents`, it's a dynamic API that can suspend, which means a built-in component would have to handle Suspense for everyone. That choice is opinionated: where the boundary goes, what the fallback is, whether the consumer can override it. A library-level component can make those choices, but they would have to be defaults you cannot change without ejecting.
 
 In the meantime, the pattern is general enough to drop into any design system. The internal Suspense boundary means consumers don't need to know that `usePathname` can suspend, don't need to add their own boundaries, and don't see flickers when the active state resolves. The render-prop API gives them enough flexibility to handle anything from a simple class swap to a fully custom active-state rendering.
 
