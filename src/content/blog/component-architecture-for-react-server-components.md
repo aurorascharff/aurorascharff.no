@@ -111,7 +111,7 @@ React Query and similar libraries cleaned this up significantly. The data is key
 
 ```tsx
 function Feed() {
-  const { data, isLoading } = useQuery(["feed"], fetchFeed);
+  const { data, isLoading } = useQuery({ queryKey: ["feed"], queryFn: fetchFeed });
   if (isLoading) return <FeedSkeleton />;
   return <ul>{data.map(post => <Post key={post.id} post={post} />)}</ul>;
 }
