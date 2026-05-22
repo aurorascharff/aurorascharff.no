@@ -535,7 +535,7 @@ features/
       user-suggestions.tsx       // server component
 ```
 
-Server components, client components, and skeletons live together by domain. A refactor that moves a component to a new page doesn't touch anything outside its feature folder. This isn't strict feature slicing, and we don't need a methodology to follow it; pages import components, not data.
+Server components, client components, and skeletons live together by domain. A refactor that moves a component to a new page doesn't touch anything outside its feature folder.
 
 Along the same lines, we can also add error handling and animations to a region by wrapping it in a React [`ErrorBoundary`](https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary) (in Next.js, [`catchError`](https://nextjs.org/docs/app/api-reference/functions/unstable_catchError) gives us a retry button on top of that, which I covered in [Error Handling in Next.js with catchError](/posts/error-handling-in-nextjs-with-catch-error)) or in a [`ViewTransition`](https://react.dev/reference/react/ViewTransition) to animate the content as it streams in. The page composes them around its async components.
 
