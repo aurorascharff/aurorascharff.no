@@ -520,7 +520,7 @@ My previous blog posts on [server and client component composition in practice](
 
 ### Organizing the Codebase
 
-Because our components only accept minimal props like an identifier and fetch their own data, we can reuse them across any page in the codebase. The same `<UserSuggestions />` works on the home feed, the explore page, and the post detail page without changes. This means queries, components, skeletons, and client components naturally cluster by domain. A feature folder structure is a suitable pattern for this:
+When components are this self-contained, it becomes natural to group them by feature. A feature folder structure works well for this:
 
 ```
 features/
@@ -535,7 +535,7 @@ features/
       user-suggestions.tsx       // server component
 ```
 
-Server components, client components, and skeletons live together by domain. A refactor that moves a component to a new page doesn't touch anything outside its feature folder.
+Because our components only accept minimal props like an identifier and fetch their own data, they can be picked up and composed into any page. The same `<UserSuggestions />` works on the home feed, the explore page, and the post detail page without changes. Refactoring a component to a new page doesn't touch anything outside its feature folder.
 
 Along the same lines, we can also add error handling and animations to a region by wrapping it in a React [`ErrorBoundary`](https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary) (in Next.js, [`catchError`](https://nextjs.org/docs/app/api-reference/functions/unstable_catchError) gives us a retry button on top of that, which I covered in [Error Handling in Next.js with catchError](/posts/error-handling-in-nextjs-with-catch-error)) or in a [`ViewTransition`](https://react.dev/reference/react/ViewTransition) to animate the content as it streams in. The page composes them around its async components.
 
@@ -575,7 +575,7 @@ Each region has its own error boundary, so a failure in one part of the page doe
 
 With `cacheComponents` enabled in Next.js 16, any component that fetches dynamic data has to live behind a `Suspense` boundary, and everything outside those boundaries becomes part of the static shell that can be prerendered and served instantly. The architecture we have been building throughout this post fits naturally into that model: components fetch their own data, pages place deliberate `Suspense` boundaries, and we get the optimal performance from the larger static shell and the smaller, more intentional dynamic regions. With [`'use cache'`](https://nextjs.org/docs/app/api-reference/directives/use-cache), we can also cache individual components or data fetches, which means some regions that previously needed a `Suspense` fallback can resolve instantly and the loading states disappear entirely.
 
-The `.then()` pattern we used on the [parameterized page](#building-a-parameterized-page) matters even more here. With `cacheComponents`, awaiting `params` at the page level is actually an error, because it blocks the static shell from being prerendered. Passing the Promise down with `.then()` keeps the shell synchronous and lets the framework prerender as much as it can.
+The `.then()` pattern we used on the [parameterized page](#building-a-parameterized-page) matters even more here. With `cacheComponents`, awaiting `params` at the page level pulls the page out of the static shell, so the whole page has to render dynamically. Passing the Promise down with `.then()` keeps the page synchronous and the dynamic work behind a `Suspense` boundary, where it belongs.
 
 ## Conclusion
 
