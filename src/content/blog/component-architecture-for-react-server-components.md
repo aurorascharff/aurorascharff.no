@@ -452,7 +452,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 }
 ```
 
-This works, but it makes the page `async`, which means it has to wait for `params` to resolve before rendering anything. We could extract the content into a separate component to keep the page synchronous, but that would break up the readability for no real reason. Instead, we can use `.then()`:
+This works, but it makes the page `async`, which means it has to wait for `params` to resolve before rendering anything. We could extract the content into a smaller component to keep the page synchronous, but we don't need to. Instead, we can use `.then()`:
 
 ```tsx
 export default function Page({ params }: { params: Promise<{ id: string }> }) {
@@ -580,11 +580,11 @@ In a real Next.js App Router project, the layout markup and `<Sidebar>` would li
 
 ## A Note on Cache Components
 
-With `cacheComponents` enabled in Next.js 16, any component that fetches dynamic data has to live behind a `Suspense` boundary, and everything outside those boundaries becomes part of the static shell that can be prerendered and served instantly. The architecture we have been building throughout this post fits naturally into that model: components fetch their own data, pages place deliberate `Suspense` boundaries, and we get the optimal performance from the larger static shell and the smaller, more intentional dynamic regions. With [`'use cache'`](https://nextjs.org/docs/app/api-reference/directives/use-cache), we can also cache individual components or data fetches, which means some regions that previously needed a `Suspense` fallback can resolve instantly and the loading states disappear entirely.
+With `cacheComponents` enabled in Next.js 16, any component that fetches dynamic data has to live behind a `Suspense` boundary. Everything outside those boundaries becomes part of the static shell that can be prerendered and served instantly. This enables [Partial Prerendering](https://nextjs.org/docs/app/getting-started/partial-prerendering): the static parts are served immediately, and the dynamic parts stream in. With [`'use cache'`](https://nextjs.org/docs/app/api-reference/directives/use-cache), we can also cache individual components or data fetches, which means some regions that previously needed a `Suspense` fallback can resolve instantly and the loading states disappear entirely.
 
-The `.then()` pattern we used on the [parameterized page](#building-a-parameterized-page) matters even more here. With `cacheComponents`, awaiting `params` at the page level pulls the entire page out of the static shell. Passing the Promise down with `.then()` keeps the page synchronous so the shell can still be prerendered, and the dynamic work stays behind a `Suspense` boundary, where it belongs.
+The architecture we have been building throughout this post fits naturally into this model: components fetch their own data, pages place deliberate boundaries, and we choose what shows up immediately versus what streams. The `.then()` pattern we used on the [parameterized page](#building-a-parameterized-page) matters even more here, because awaiting `params` at the page level would pull the entire page out of the static shell and cause an error.
 
-Building this way from the start pays off even if we are not using `cacheComponents` yet. We get the best performance and UX today, and once we do end up using it it, the architecture will already be in place.
+Building this way from the start pays off even before we turn on `cacheComponents`. Once we do, the architecture is already in place.
 
 ## Conclusion
 
