@@ -569,7 +569,7 @@ export default function Page() {
 }
 ```
 
-Each region has its own error boundary, so a failure in one part of the page doesn't take down the rest.
+Each region has its own error boundary, so a failure in one part of the page doesn't take down the rest. The `ViewTransition` around the feed animates the content into place as it streams in, so the swap from skeleton to real posts feels smooth instead of abrupt.
 
 ## A Note on Cache Components
 
