@@ -287,6 +287,8 @@ The structure is the same as the [use case](#the-use-case). The difference is th
 
 You might be worried about duplicate fetches at this point. With each component fetching its own data, the same `getCurrentUserHandle` could be called from multiple places in the same render. React's [`cache()`](https://react.dev/reference/react/cache) function deduplicates these per request, so calling it ten times in the same render hits the source once. This is similar to what React Query's centralized cache does on the client, but built into the server render itself. I covered this in more depth in my previous post on [Avoiding Server Component Waterfall Fetching with React 19 cache()](/posts/avoiding-server-component-waterfall-fetching-with-react-19-cache).
 
+> `cache()` handles deduplication, but not batching. If many components on a page each fetch their own data by a different identifier, you can end up making a lot of separate requests that could have been one. See [@_mjmeyer's answer](https://x.com/_mjmeyer/status/2057861625382842383) for more on this.
+
 This composability is also why AI coding agents work so well with React in general, and RSCs extend that composability model to the server. A self-contained component can be moved to a new page, reused in a different layout, or refactored without touching anything outside its own file. The agent doesn't need to trace data through loaders or prop chains to understand what a component needs.
 
 ## Building the App
