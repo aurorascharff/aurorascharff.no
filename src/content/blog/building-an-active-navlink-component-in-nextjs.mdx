@@ -11,54 +11,68 @@ tags:
   - App Router
   - cache components
   - Navigation
-description: Active link styling is one of the most common things you need in a real application. Here is how to build a reusable, design-system styled NavLink component for a Next.js app, taking inspiration from React Router, that also handles cache components.
+description: Active link styling is one of the most common things you need in a real application. Here is how to build a reusable NavLink component for a Next.js app, taking inspiration from React Router, that also handles cache components.
 ---
-
-import NavLinkDemo from "../../components/examples/NavLinkDemo.tsx";
 
 Active link styling is something almost every Next.js app needs in some form. The App Router gives us [`usePathname()`](https://nextjs.org/docs/app/api-reference/functions/use-pathname) and [`useSelectedLayoutSegment()`](https://nextjs.org/docs/app/api-reference/functions/use-selected-layout-segment) to read the current route, and from there it is up to us how to style the matching link.
 
-In this blog post, we will explore one shape: a reusable, design-system styled `NavLink` component, taking inspiration from React Router. Along the way we will see why the React Router API looks the way it does, what the render-prop pattern actually buys us, and how `usePathname()` interacts with `cacheComponents`. At the end we will look at other patterns that show up in real Next.js apps and where each one fits.
+There are a few ways to do it:
+
+- **Inline `usePathname()`.** Compare against each link's `href` directly. No abstraction, just a small amount of duplication that's easy to read.
+- **`useSelectedLayoutSegment()`.** Good when the active item maps to a route segment rather than the full pathname.
+- **A reusable `NavLink` with render props.** A single component that owns the active state and exposes it to the consumer.
+
+In this post we'll go with the last one, taking inspiration from React Router. Along the way we'll see why the React Router API looks the way it does, what the render-prop pattern actually buys us, how to add `isPending` with `useTransition`, and how `usePathname()` interacts with `cacheComponents`.
 
 ## Table of contents
 
 ## The Goal
 
-[React Router's `NavLink`](https://reactrouter.com/api/components/NavLink) has solved this problem for years. Its API looks like this:
+Let's say we have a nav with three links: Home, Explore, and Notifications. The nav lives in the root layout, above a few static routes and a dynamic post route:
+
+```
+app/
+  layout.tsx
+  page.tsx
+  explore/page.tsx
+  notifications/page.tsx
+  post/[id]/page.tsx
+```
+
+Each link styles itself when it is the current page. Home and Explore just need a class swap. Notifications also shows a dot badge when it is the active page, which a class swap can't do on its own. So the active state has to be available both as a class hook and as a value we can read in JSX.
+
+[React Router's `NavLink`](https://reactrouter.com/api/components/NavLink) has an API that lets us do exactly this:
 
 ```tsx
 import { NavLink } from "react-router";
 
-<NavLink to="/messages" className={({ isActive }) => (isActive ? "active" : "")}>
-  Messages
-</NavLink>;
+<NavLink to="/home" className={({ isActive }) => (isActive ? "active" : "")}>
+  Home
+</NavLink>
+
+<NavLink to="/notifications">
+  {({ isActive, isPending }) => (
+    <>
+      {isActive && <Dot />}
+      Notifications
+      {isPending && <Spinner />}
+    </>
+  )}
+</NavLink>
 ```
 
-Notice that `className` is a function rather than a string, and it receives `{ isActive }`. `children` accepts the same shape, so we can change the rendered content based on the active state too. That looks a bit unusual at first glance. Why is a styling prop a function? Have you ever wondered how this kind of API actually works under the hood, and why React Router landed on it?
-
-We will get to that. Let's say we have a social app with a home feed at `/`, a discover feed at `/explore`, and a post detail at `/post/[id]`. Ideally we want to write something just as ergonomic as React Router's `NavLink` in our sidebar:
-
-```tsx
-<nav>
-  <NavLink href="/" exact className={({ isActive }) => (isActive ? "nav-item active" : "nav-item")}>
-    Home
-  </NavLink>
-  <NavLink href="/explore" className={({ isActive }) => (isActive ? "nav-item active" : "nav-item")}>
-    Explore
-  </NavLink>
-  <NavLink href="/post/abc123" className={({ isActive }) => (isActive ? "nav-item active" : "nav-item")}>
-    A post
-  </NavLink>
-</nav>
-```
+Notice that `className` and `children` both accept a function that receives `{ isActive, isPending }`. The component owns the state, and the consumer decides what to do with it — swap a class, swap an icon, show a loading indicator, or all three. That looks a bit unusual at first glance. Why is a styling prop a function? Have you ever wondered how this kind of API actually works under the hood, and why React Router landed on it?
 
 Let's see what the most obvious shape looks like in Next.js and where it falls short, then bring `isActive` into the API ourselves.
 
 ## Building NavLink
 
+### A First Attempt
+
 A first attempt in the App Router might look like this:
 
 ```tsx
+// app/components/nav-link.tsx
 "use client";
 
 import Link from "next/link";
@@ -82,9 +96,12 @@ The [docs also recommend](https://nextjs.org/docs/app/api-reference/functions/us
 
 ### Accepting a className and activeClassName
 
-A single `active` class only goes so far. The moment a consumer wants different styling for a sidebar link versus a header link, they need to pass both the base class and the active class as props:
+A single `active` class only goes so far. The moment a consumer wants different styling for a sidebar link versus a header link, the hardcoded class is in the way.
+
+Let's let them pass both the base class and the active class as props:
 
 ```tsx
+// app/components/nav-link.tsx
 type Props = {
   href: string;
   className?: string;
@@ -109,13 +126,14 @@ export function NavLink({ href, className, activeClassName, children }: Props) {
 
 That covers the most common case. It works fine until we want to do something the two-class shape can't express: render a leading dot when active, swap an icon for a filled variant, or use a class-name utility like `clsx` that needs access to `isActive`. For any of those, the consumer needs `isActive` itself.
 
-### Exposing isActive as a Render Prop
+### Exposing isActive with a Render Prop
 
 The way React Router exposes `isActive` is through the [render prop](https://react.dev/reference/react/Children#calling-a-render-prop-to-customize-rendering) pattern: instead of accepting a string, the prop accepts a function that receives the component's internal state and returns the value to use. The component owns the state, the consumer owns the rendering, and the function is the bridge between them. That is why `className` is a function. The component cannot know what classes the consumer wants for each state, so it hands them the state and lets them decide.
 
 We can apply the same idea to our `NavLink`, on both `className` and `children`. A small helper handles the "value or function" shape so consumers can still pass a plain value when they don't need the active state:
 
 ```tsx
+// app/components/nav-link.tsx
 "use client";
 
 import Link from "next/link";
@@ -137,7 +155,7 @@ export function NavLink({ href, className, children, ...rest }) {
 }
 ```
 
-Now the consumer can pass either a plain value or a function:
+Now the consumer can pass either a plain value or a function. For `className`, the function shape lets us swap classes based on `isActive`. For `children`, it lets us change what gets rendered inside the link, so we can show an icon, a marker, or anything else only when the link is active:
 
 ```tsx
 <NavLink href="/messages" className={({ isActive }) => (isActive ? "active" : "")}>
@@ -149,6 +167,57 @@ Now the consumer can pass either a plain value or a function:
   )}
 </NavLink>
 ```
+
+Here `className` swaps an `active` modifier on the link itself, and `children` renders a leading dot only when the link is current. The consumer can use the function form on one, both, or neither, depending on what they need. Anyone who just wants a static class or plain text still passes a string, because the helper falls through to the value when it isn't a function.
+
+### Adding isPending
+
+React Router's `NavLink` also exposes `isPending`, which is `true` while the destination route is loading. We can add the same thing with [`useTransition`](https://react.dev/reference/react/useTransition). Instead of letting `<Link>` handle the click, we intercept it and call `router.push()` inside `startTransition`. The transition stays pending until the new route's content is ready:
+
+```tsx
+// app/components/nav-link.tsx
+import { useRouter } from "next/navigation";
+import { useTransition } from "react";
+
+export function NavLink({ href, className, children, ...rest }) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const isActive = pathname === href;
+  const props = { isActive, isPending };
+
+  return (
+    <Link
+      href={href}
+      className={resolve(className, props)}
+      onClick={(e) => {
+        e.preventDefault();
+        startTransition(() => {
+          router.push(href);
+        });
+      }}
+      {...rest}
+    >
+      {resolve(children, props)}
+    </Link>
+  );
+}
+```
+
+`<Link>` still renders a regular `<a>` and handles prefetching on hover and viewport, so we don't lose any of that. The `onClick` override just routes the actual navigation through the transition so we can track it. The render props expand from `{ isActive }` to `{ isActive, isPending }`, and the consumer can use either or both:
+
+```tsx
+<NavLink
+  href="/explore"
+  className={({ isActive, isPending }) =>
+    isPending ? "nav-item pending" : isActive ? "nav-item active" : "nav-item"
+  }
+>
+  Explore
+</NavLink>
+```
+
+Next.js also has [`useLinkStatus`](https://nextjs.org/docs/app/api-reference/functions/use-link-status), which tracks the pending state natively inside `<Link>` children without intercepting clicks. It's a good fit when you only need the pending state in `children`, not in `className`.
 
 ### Matching Prefixes for Nested Routes
 
@@ -203,54 +272,6 @@ In Tailwind, use the `aria-` variant:
 
 For consumers who prefer the render-prop approach, `isActive` is still available, so they can mix both freely.
 
-### Consolidating the JavaScript Version
-
-Pulling the steps so far into one component. The signature is plain JavaScript for now so the shape stays readable; we'll add types in the next section:
-
-```tsx
-"use client";
-
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-
-function resolve(value, props) {
-  return typeof value === "function" ? value(props) : value;
-}
-
-export function NavLink({ href, className, children, exact, ...rest }) {
-  const pathname = usePathname();
-  const target = href.toString();
-  const isActive = exact
-    ? pathname === target
-    : pathname === target || pathname.startsWith(`${target}/`);
-  const props = { isActive };
-
-  return (
-    <Link
-      href={href}
-      aria-current={isActive ? "page" : undefined}
-      className={resolve(className, props)}
-      {...rest}
-    >
-      {resolve(children, props)}
-    </Link>
-  );
-}
-```
-
-That gives us the API we wanted so far: render-prop `className` and `children`, prefix matching with an `exact` opt-out, and an accessibility attribute on the link. Drop it in a layout and it works as expected:
-
-```tsx
-<nav>
-  <NavLink href="/" exact className={({ isActive }) => (isActive ? "active" : "")}>
-    Home
-  </NavLink>
-  <NavLink href="/posts" className={({ isActive }) => (isActive ? "active" : "")}>
-    Posts
-  </NavLink>
-</nav>
-```
-
 ### Adding TypeScript
 
 The component works, but in TypeScript we want the render-prop shape to type-check, consumers to keep autocomplete for every prop `next/link` accepts, and the `href` to be validated by Next.js's [statically typed links](https://nextjs.org/docs/app/api-reference/config/typescript#statically-typed-links) when `typedRoutes` is enabled. A few small types do the job:
@@ -258,7 +279,7 @@ The component works, but in TypeScript we want the render-prop shape to type-che
 ```tsx
 import type { Route } from "next";
 
-type RenderProps = { isActive: boolean };
+type RenderProps = { isActive: boolean; isPending: boolean };
 type Renderable<T> = T | ((props: RenderProps) => T);
 
 type Props<T extends string> = Omit<
@@ -296,43 +317,171 @@ export function NavLink<T extends string>({
 }
 ```
 
-## Trying It Under cacheComponents
+### The Full Component
+
+Here is everything in one file:
+
+```tsx
+// app/components/nav-link.tsx
+"use client";
+
+import type { Route } from "next";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useTransition } from "react";
+
+type RenderProps = { isActive: boolean; isPending: boolean };
+type Renderable<T> = T | ((props: RenderProps) => T);
+
+type Props<T extends string> = Omit<
+  React.ComponentProps<typeof Link>,
+  "href" | "className" | "children"
+> & {
+  href: Route<T> | URL;
+  className?: Renderable<string | undefined>;
+  children?: Renderable<React.ReactNode>;
+  exact?: boolean;
+};
+
+function resolve<T>(value: Renderable<T> | undefined, props: RenderProps) {
+  return typeof value === "function"
+    ? (value as (p: RenderProps) => T)(props)
+    : value;
+}
+
+export function NavLink<T extends string>({
+  href,
+  className,
+  children,
+  exact,
+  ...rest
+}: Props<T>) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+
+  const target = href.toString();
+  const isActive = exact
+    ? pathname === target
+    : pathname === target || pathname.startsWith(`${target}/`);
+  const props = { isActive, isPending };
+
+  return (
+    <Link
+      href={href}
+      aria-current={isActive ? "page" : undefined}
+      className={resolve(className, props)}
+      onClick={(e) => {
+        e.preventDefault();
+        startTransition(() => {
+          router.push(href);
+        });
+      }}
+      {...rest}
+    >
+      {resolve(children, props)}
+    </Link>
+  );
+}
+```
+
+### Usage
+
+Here is the component in the three-link nav from earlier:
+
+```tsx
+// app/layout.tsx
+<nav>
+  <NavLink href="/" exact className="nav-item aria-[current=page]:font-semibold">
+    Home
+  </NavLink>
+  <NavLink href="/explore" className="nav-item aria-[current=page]:font-semibold">
+    Explore
+  </NavLink>
+  <NavLink href="/notifications" className="nav-item">
+    {({ isActive }) => (
+      <>
+        {isActive && <Dot />}
+        Notifications
+      </>
+    )}
+  </NavLink>
+</nav>
+```
+
+`exact` on the Home link prevents `/` from prefix-matching every route.
+
+## NavLink Under cacheComponents
 
 So far we have not touched [cache components](https://nextjs.org/docs/app/api-reference/config/next-config-js/cacheComponents), but it is where the App Router is heading and what we want to opt into for the new features like partial prerendering and [`'use cache'`](https://nextjs.org/docs/app/api-reference/directives/use-cache). With `cacheComponents` enabled, any component that reads dynamic data has to live behind a `Suspense` boundary. Everything outside those boundaries becomes part of a static shell that can be prerendered and served instantly. That includes the layout, which means our nav is now part of the static shell.
-
-This is where things get interesting for `NavLink`. The pathname is dynamic, but the link itself is static.
 
 Let's enable `cacheComponents` in `next.config.ts`:
 
 ```ts
+// next.config.ts
 const config: NextConfig = {
   cacheComponents: true,
 };
 ```
 
-The Home page still renders fine. But navigating to our parameterized route `/post/[id]`, say `/post/abc123`, throws a missing-Suspense-boundary error pointing at `usePathname`. When `cacheComponents` is enabled, `usePathname()` is treated as a dynamic API on routes with a dynamic param, and reading a dynamic value without a Suspense boundary above it is a runtime error. The [`usePathname` docs](https://nextjs.org/docs/app/api-reference/functions/use-pathname#good-to-know) confirm this: a `Suspense` boundary is required when `cacheComponents` is enabled on a route with a dynamic param, unless we use `generateStaticParams` to prerender it.
+Static routes still render fine. But navigating to `/post/[id]` throws a missing-Suspense-boundary error pointing at `usePathname`. When `cacheComponents` is enabled, [`usePathname()` is treated as a dynamic API](https://nextjs.org/docs/app/api-reference/functions/use-pathname#good-to-know) on routes with a dynamic param, and reading a dynamic value without a Suspense boundary above it is a runtime error, unless we use `generateStaticParams` to prerender it.
 
-So we have to add a `Suspense` boundary somewhere above the nav. That clears the error, but whatever we pass as the fallback ends up replacing the nav until the pathname resolves on the client. The active-state computation is the only dynamic part here, so any fallback we pick is going to hide the link itself while we are really just waiting on a class name.
+We need a `Suspense` boundary somewhere. The quickest fix is wrapping the entire nav:
 
-## Handling Suspense Inside NavLink
+```tsx
+// app/layout.tsx
+<Suspense fallback={<NavSkeleton />}>
+  <nav>
+    <NavLink href="/" exact className={({ isActive }) => (isActive ? "nav-item active" : "nav-item")}>
+      Home
+    </NavLink>
+    <NavLink href="/explore" className="nav-item">
+      Explore
+    </NavLink>
+  </nav>
+</Suspense>
+```
 
-The fix is to own the Suspense boundary inside the component itself, with the inactive version of the link as the fallback. The link becomes its own loading state. No spinner, no skeleton, no missing nav item, just the link in its default form, which then upgrades to active styling once `usePathname()` resolves on the client.
+That clears the error, but the entire nav disappears while we wait on a class name. We can narrow it down by wrapping each link individually:
+
+```tsx
+// app/layout.tsx
+<nav>
+  <Suspense fallback={<Link href="/">Home</Link>}>
+    <NavLink href="/" exact className={({ isActive }) => (isActive ? "nav-item active" : "nav-item")}>
+      Home
+    </NavLink>
+  </Suspense>
+  <Suspense fallback={<Link href="/explore">Explore</Link>}>
+    <NavLink href="/explore" className="nav-item">
+      Explore
+    </NavLink>
+  </Suspense>
+</nav>
+```
+
+Better: each link stays clickable while suspended, and only the active styling pops in once the pathname resolves. But the consumer has to duplicate the link content in every fallback and repeat the wrapping in every layout. We can push this further by owning the boundary inside the component itself.
+
+### Moving Suspense Inside NavLink
+
+The idea is to put the `Suspense` boundary inside `NavLink`, with the inactive version of the link as the fallback. The link becomes its own loading state. No spinner, no skeleton, no missing nav item, just the link in its default form, which then upgrades to active styling once `usePathname()` resolves on the client.
 
 Let's split the component into an outer `NavLink` that renders the Suspense boundary, and an inner `NavLinkInner` that reads `usePathname()`. Keeping things untyped here to focus on the structure (the `Props` and `Renderable` types from earlier apply unchanged):
 
 ```tsx
+// app/components/nav-link.tsx
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Suspense } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { Suspense, useTransition } from "react";
 
 function resolve(value, props) {
   return typeof value === "function" ? value(props) : value;
 }
 
 export function NavLink({ href, className, children, exact, ...rest }) {
-  const inactive = { isActive: false };
+  const inactive = { isActive: false, isPending: false };
 
   return (
     <Suspense
@@ -351,17 +500,26 @@ export function NavLink({ href, className, children, exact, ...rest }) {
 
 function NavLinkInner({ href, className, children, exact, ...rest }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+
   const target = href.toString();
   const isActive = exact
     ? pathname === target
     : pathname === target || pathname.startsWith(`${target}/`);
-  const props = { isActive };
+  const props = { isActive, isPending };
 
   return (
     <Link
       href={href}
       aria-current={isActive ? "page" : undefined}
       className={resolve(className, props)}
+      onClick={(e) => {
+        e.preventDefault();
+        startTransition(() => {
+          router.push(href);
+        });
+      }}
       {...rest}
     >
       {resolve(children, props)}
@@ -372,53 +530,10 @@ function NavLinkInner({ href, className, children, exact, ...rest }) {
 
 If `usePathname()` suspends, React shows the fallback, which is the same link without the active class. Once it resolves, the inner version replaces the fallback in place. The DOM doesn't disappear and reappear, it just gets an updated class name and `aria-current` attribute. The consumer doesn't need to know any of this: they pass an `href` and a render prop, and the component handles the rest in both modes.
 
-## Usage
-
-Let's drop the finished `NavLink` into a real layout. The render-prop API lets us mix simple class swaps and fully custom active content in the same nav without changing the component:
-
-```tsx
-<nav className="design-nav">
-  <NavLink
-    href="/"
-    exact
-    className={({ isActive }) => (isActive ? "nav-item active" : "nav-item")}
-  >
-    Home
-  </NavLink>
-  <NavLink href="/posts" className="nav-item aria-[current=page]:font-semibold">
-    Posts
-  </NavLink>
-  <NavLink href="/settings" className="nav-item">
-    {({ isActive }) => (
-      <>
-        <SettingsIcon filled={isActive} />
-        Settings
-      </>
-    )}
-  </NavLink>
-</nav>
-```
-
-The first link uses a function for `className` to swap an active modifier on the root. The second link relies entirely on the `aria-current` attribute and Tailwind's `aria-` variant, so the `className` stays a plain string. The third link uses a function for `children` to render a different icon when active. All three live next to each other and nothing leaks. Each consumer picks the shape that fits its use case.
-
-Try clicking the links below to see all three shapes react to the same `isActive` state:
-
-<NavLinkDemo client:load />
-
-## Approaches in Practice
-
-A reusable `NavLink` is one approach, but it's not always the right one. Large Next.js apps often mix two simpler patterns alongside something like this component, depending on the nav.
-
-**Inline `usePathname()` in a top navbar.** Call `usePathname()` once at the top of the component and compare against each link's `href` inline. No abstraction, no render prop, just a small amount of duplication that's easy to read. This works well when the nav lives in a single file and there are only a handful of links.
-
-**`useSelectedLayoutSegment()` in a deep sidebar.** For a tree-shaped nav like a documentation sidebar, the active item is usually driven by the current route segment rather than the full pathname. `useSelectedLayoutSegment()` plus `useParams()` lets you walk the tree and compute which item is active. It can avoid suspending under `cacheComponents` too, as long as the route's params are prerendered with `generateStaticParams`. If they aren't, `useParams()` is dynamic and you're back to the same Suspense question as `usePathname()`.
-
-**A reusable `NavLink` with render props.** The pattern this post built. Useful when you have several navs across the app, want render-prop ergonomics, or want a single component that owns `aria-current`, prefix matching, and the Suspense handling we just walked through.
-
-Which approach to reach for depends on the shape of the nav, not on any of them being better than the others.
+One thing worth noting: `isPending` becomes less useful under `cacheComponents`. Most of the page is part of the static shell and only the dynamic holes suspend, so transitions tend to resolve quickly. The main case where you'll see it fire is on routes that read `searchParams` without a `Suspense` boundary.
 
 ## Conclusion
 
-Active link styling is a small surface, but it touches a lot: `usePathname()`, `useSelectedLayoutSegment()`, statically typed links, and `cacheComponents` from the App Router, plus `aria-current` from ARIA. The render-prop pattern from React Router holds up well across all of it. It gives a single component the ability to expose `isActive` to whoever consumes it, without forcing one rendering decision on every caller.
+We started with a hardcoded `active` class and ended up with a typed, render-prop `NavLink` that exposes `isActive` and `isPending`, handles prefix matching and `aria-current`, and owns its own Suspense boundary for `cacheComponents`. The render-prop pattern from React Router holds up well in the App Router. It gives a single component the flexibility to handle class swaps, content swaps, and pending indicators without forcing one shape on every caller.
 
 I hope this post has been helpful. Please let me know if you have any questions or comments, and follow me on [Bluesky](https://bsky.app/profile/aurorascharff.no) or [X](https://x.com/aurorascharff) for more updates. Happy coding! 🚀
