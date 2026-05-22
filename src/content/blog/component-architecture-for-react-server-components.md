@@ -257,7 +257,15 @@ The same applies to `Feed`. In the loader version, it received `posts` and `curr
 export async function Feed() {
   const handle = await getCurrentUserHandle();
   const { posts } = await getFeed(handle);
-  return <ul>{posts.map(post => <Post key={post.id} post={post} />)}</ul>;
+  return (
+    <ul>
+      {posts.map(post => (
+        <li key={post.id}>
+          <Post post={post} />
+        </li>
+      ))}
+    </ul>
+  );
 }
 ```
 
@@ -291,7 +299,7 @@ You might be worried about duplicate fetches at this point. With each component 
 
 This composability is also why AI coding agents work so well with React in general, and RSCs extend that composability model to the server. A self-contained component can be moved to a new page, reused in a different layout, or refactored without touching anything outside its own file. The agent doesn't need to trace data through loaders or prop chains to understand what a component needs.
 
-## Building the App
+## Building the App in Next.js
 
 Now that we have components that fetch their own data and can be reused across pages without loaders, the next question is: how do we build real apps with this? Let's say our social feed app has more than one page:
 
@@ -307,6 +315,8 @@ app/
 ```
 
 A component like `<WhoToFollow />` works on any of these pages without the page having to fetch anything for it. The page is free to focus on what the user actually sees while things load.
+
+From this point on, the layout markup and the sidebar live in `app/layout.tsx` so they wrap every page automatically.
 
 ### Avoiding Blocking Renders
 
@@ -333,7 +343,11 @@ export async function Feed() {
   const { posts } = await getFeed(handle);
   return (
     <ul className="flex flex-col gap-4">
-      {posts.map(post => <Post key={post.id} post={post} />)}
+      {posts.map(post => (
+        <li key={post.id}>
+          <Post post={post} />
+        </li>
+      ))}
     </ul>
   );
 }
@@ -342,7 +356,9 @@ export function FeedSkeleton({ count = 5 }: { count?: number }) {
   return (
     <ul className="flex flex-col gap-4">
       {Array.from({ length: count }).map((_, i) => (
-        <PostSkeleton key={i} />
+        <li key={i}>
+          <PostSkeleton />
+        </li>
       ))}
     </ul>
   );
@@ -355,17 +371,17 @@ export function FeedSkeleton({ count = 5 }: { count?: number }) {
 // features/post/components/post.tsx
 export function Post({ post }: { post: PostT }) {
   return (
-    <li className="h-24 rounded-lg border p-4">
+    <article className="h-24 rounded-lg border p-4">
       <p>{post.body}</p>
-    </li>
+    </article>
   );
 }
 
 export function PostSkeleton() {
   return (
-    <li className="h-24 rounded-lg border p-4">
+    <article className="h-24 rounded-lg border p-4">
       <div className="h-4 w-32 animate-pulse rounded bg-muted" />
-    </li>
+    </article>
   );
 }
 ```
@@ -380,19 +396,16 @@ With `Suspense` and skeletons in place, the question becomes: how do we want the
 // app/page.tsx
 export default function HomePage() {
   return (
-    <Layout>
-      <Sidebar />
-      <Suspense fallback={<PageSkeleton />}>
-        <main>
-          <PageHeader title="Home" />
-          <Feed />
-        </main>
-        <aside>
-          <TrendingTags />
-          <WhoToFollow />
-        </aside>
-      </Suspense>
-    </Layout>
+    <Suspense fallback={<PageSkeleton />}>
+      <main>
+        <PageHeader title="Home" />
+        <Feed />
+      </main>
+      <aside>
+        <TrendingTags />
+        <WhoToFollow />
+      </aside>
+    </Suspense>
   );
 }
 ```
@@ -405,8 +418,7 @@ Or we can split the boundaries so that each section streams independently:
 // app/page.tsx
 export default function HomePage() {
   return (
-    <Layout>
-      <Sidebar />
+    <>
       <main>
         <PageHeader title="Home" />
         <Suspense fallback={<FeedSkeleton />}>
@@ -421,12 +433,12 @@ export default function HomePage() {
           <WhoToFollow />
         </Suspense>
       </aside>
-    </Layout>
+    </>
   );
 }
 ```
 
-Now the sidebar and header are part of the static shell, and the feed, follow suggestions, and trending tags each resolve on their own. If the suggestions are fast and the feed is slow, the user sees suggestions first. This can also feel fragmented: three separate regions popping in at different times is not always a better experience.
+Now the layout shell stays static, the page header sits outside any boundary, and the feed, follow suggestions, and trending tags each resolve on their own. If the suggestions are fast and the feed is slow, the user sees suggestions first. This can also feel fragmented: three separate regions popping in at different times is not always a better experience.
 
 We could also group the aside behind a single boundary:
 
@@ -434,8 +446,7 @@ We could also group the aside behind a single boundary:
 // app/page.tsx
 export default function HomePage() {
   return (
-    <Layout>
-      <Sidebar />
+    <>
       <main>
         <PageHeader title="Home" />
         <Suspense fallback={<FeedSkeleton />}>
@@ -448,7 +459,7 @@ export default function HomePage() {
           <WhoToFollow />
         </aside>
       </Suspense>
-    </Layout>
+    </>
   );
 }
 ```
@@ -616,8 +627,7 @@ Pulling everything from this post into one place, the home feed page might end u
 // app/page.tsx
 export default function HomePage() {
   return (
-    <Layout>
-      <Sidebar />
+    <>
       <main>
         <PageHeader title="Home" />
         <ErrorBoundary title="Failed to load feed">
@@ -636,7 +646,7 @@ export default function HomePage() {
           </aside>
         </Suspense>
       </ErrorBoundary>
-    </Layout>
+    </>
   );
 }
 ```
@@ -672,8 +682,6 @@ export default function PostPage({ params }: { params: Promise<{ id: string }> }
   );
 }
 ```
-
-In a real Next.js App Router project, `<Layout>` and `<Sidebar>` would likely live directly in the root `layout.tsx` so they wrap every page, and the page file itself would only contain the content inside.
 
 ## A Note on Cache Components
 
