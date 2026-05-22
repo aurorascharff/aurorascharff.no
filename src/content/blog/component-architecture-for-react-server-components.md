@@ -544,7 +544,7 @@ export default function PostPage({ params }: { params: Promise<{ id: string }> }
 }
 ```
 
-The `.then()` resolves `params` so that `PostDetail` and `Replies` still receive a plain `id` string as a prop, and the page stays synchronous and readable. This pattern also sets us up nicely for [cache components](#a-note-on-cache-components) later, where keeping pages synchronous matters even more.
+The `.then()` resolves `params` so that `PostDetail` and `Replies` still receive a plain `id` string as a prop, and the page stays synchronous and readable. The same trick works for [`searchParams`](https://nextjs.org/docs/app/api-reference/file-conventions/page#searchparams-optional), which is also a Promise in Next.js 15+. This pattern also sets us up nicely for [cache components](#a-note-on-cache-components) later, where keeping pages synchronous matters even more.
 
 The loading sequence follows the same thinking as on the home feed: the header is part of the static shell, the post detail streams in behind a `Suspense` boundary, and `Replies` has its own boundary inside so it can resolve independently from the post.
 
