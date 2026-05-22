@@ -488,16 +488,13 @@ The feed itself has interactive parts: the like button on every post needs JavaS
 
 export function LikeButton({ postId, liked, count }: Props) {
   const [optimistic, setOptimistic] = useOptimistic({ liked, count });
-  const [, startTransition] = useTransition();
 
-  const likeAction = () => {
-    startTransition(async () => {
-      setOptimistic({
-        liked: !optimistic.liked,
-        count: optimistic.count + (optimistic.liked ? -1 : 1),
-      });
-      await likePost(postId);
+  const likeAction = async () => {
+    setOptimistic({
+      liked: !optimistic.liked,
+      count: optimistic.count + (optimistic.liked ? -1 : 1),
     });
+    await likePost(postId);
   };
 
   return (
