@@ -31,7 +31,7 @@ The question is what we lose in the process, and whether RSCs let us keep the se
 
 ## The Use Case
 
-For the rest of this post, let's imagine we are building a social feed page. The UI has a sidebar, a feed of posts, a section of user suggestions, and a list of trending tags. In plain JSX, the page looks something like this:
+For the rest of this post, let's imagine we are building a social feed page. The UI has a sidebar, a feed of posts, a list of suggested users to follow, and a list of trending tags. In plain JSX, the page looks something like this:
 
 ```tsx
 function HomePage() {
@@ -44,7 +44,7 @@ function HomePage() {
       </main>
       <aside>
         <TrendingTags />
-        <UserSuggestions />
+        <WhoToFollow />
       </aside>
     </Layout>
   );
@@ -138,16 +138,16 @@ To fix the client-fetching problem, we can move the data fetching to the server 
 // React Router / Remix style
 export async function loader() {
   const user = await getCurrentUser();
-  const [feed, suggestedUsers, trendingTags] = await Promise.all([
+  const [feed, whoToFollow, trendingTags] = await Promise.all([
     getFeed(user.handle),
-    getSuggestedUsers(user.handle),
+    getWhoToFollow(user.handle),
     getTrendingTags(),
   ]);
-  return { user, feed, suggestedUsers, trendingTags };
+  return { user, feed, whoToFollow, trendingTags };
 }
 
 export default function HomePage() {
-  const { user, feed, suggestedUsers, trendingTags } = useLoaderData<typeof loader>();
+  const { user, feed, whoToFollow, trendingTags } = useLoaderData<typeof loader>();
 
   return (
     <Layout>
@@ -155,7 +155,7 @@ export default function HomePage() {
       <Feed posts={feed.posts} currentUser={user} />
       <aside>
         <TrendingTags tags={trendingTags} />
-        <UserSuggestions users={suggestedUsers} currentUser={user} />
+        <WhoToFollow users={whoToFollow} currentUser={user} />
       </aside>
     </Layout>
   );
@@ -170,9 +170,9 @@ The same mindset is easy to recreate at the page component level in the Next.js 
 // Next.js App Router, loader mindset
 export default async function HomePage() {
   const user = await getCurrentUser();
-  const [feed, suggestedUsers, trendingTags] = await Promise.all([
+  const [feed, whoToFollow, trendingTags] = await Promise.all([
     getFeed(user.handle),
-    getSuggestedUsers(user.handle),
+    getWhoToFollow(user.handle),
     getTrendingTags(),
   ]);
 
@@ -182,7 +182,7 @@ export default async function HomePage() {
       <Feed posts={feed.posts} currentUser={user} />
       <aside>
         <TrendingTags tags={trendingTags} />
-        <UserSuggestions users={suggestedUsers} currentUser={user} />
+        <WhoToFollow users={whoToFollow} currentUser={user} />
       </aside>
     </Layout>
   );
@@ -191,10 +191,10 @@ export default async function HomePage() {
 
 The framework is different, but the shape is identical. The page is still the data owner, and the components are still views that receive whatever the page chose to fetch.
 
-This feels organized, but the components are now coupled to whatever the page chose to fetch for them. Our `UserSuggestions` component just renders whatever it receives:
+This feels organized, but the components are now coupled to whatever the page chose to fetch for them. Our `WhoToFollow` component just renders whatever it receives:
 
 ```tsx
-function UserSuggestions({ users, currentUser }: Props) {
+function WhoToFollow({ users, currentUser }: Props) {
   return (
     <ul>
       {users.map(user => (
@@ -205,24 +205,24 @@ function UserSuggestions({ users, currentUser }: Props) {
 }
 ```
 
-On the home page, it works fine because the page already fetches `suggestedUsers`. But now we want to reuse it on a profile page too:
+On the home page, it works fine because the page already fetches `whoToFollow`. But now we want to reuse it on a profile page too:
 
 ```tsx
 // home page
-const [user, feed, suggestedUsers] = await Promise.all([
+const [user, feed, whoToFollow] = await Promise.all([
   getCurrentUser(),
   getFeed(/* ... */),
-  getSuggestedUsers(/* ... */),
+  getWhoToFollow(/* ... */),
 ]);
 
 // profile page (now needs the same thing)
-const [user, profile, suggestedUsers] = await Promise.all([
+const [user, profile, whoToFollow] = await Promise.all([
   getCurrentUser(),
   getProfile(handle),
-  getSuggestedUsers(/* ... */), // duplicated
+  getWhoToFollow(/* ... */), // duplicated
 ]);
 
-<UserSuggestions users={suggestedUsers} currentUser={user} />;
+<WhoToFollow users={whoToFollow} currentUser={user} />;
 ```
 
 The component itself didn't change, but every new route that wants to use it has to fetch the same data, in the same shape, and thread the same props through every wrapper above it. The component is essentially welded to whichever loader happens to be fetching its data. This is inherent to the loader pattern in any framework: the data lives at the route boundary, and everything below it is a view that receives props.
@@ -233,12 +233,12 @@ What if each component could fetch its own data on the server, without needing a
 
 The Next.js App Router is where most developers encounter RSCs today, and it makes this the default: every component is a server component unless we explicitly mark it with `"use client"`.
 
-Instead of the page fetching everything and passing it down, each component fetches what it needs based on minimal props, usually just an identifier. The component is self-contained: the consumer passes the minimum it needs to know (often just an ID or a handle), and the component resolves whatever else it requires internally. Let's take `UserSuggestions` from the [loader example](#2-route-level-loaders). As a server component, it doesn't need the `users` and `currentUser` props the page was handing it. It can resolve the current user and fetch the suggestions itself:
+Instead of the page fetching everything and passing it down, each component fetches what it needs based on minimal props, usually just an identifier. The component is self-contained: the consumer passes the minimum it needs to know (often just an ID or a handle), and the component resolves whatever else it requires internally. Let's take `WhoToFollow` from the [loader example](#2-route-level-loaders). As a server component, it doesn't need the `users` and `currentUser` props the page was handing it. It can resolve the current user and fetch the list itself:
 
 ```tsx
-export async function UserSuggestions() {
+export async function WhoToFollow() {
   const handle = await getCurrentUserHandle();
-  const users = await getSuggestedUsers(handle);
+  const users = await getWhoToFollow(handle);
   return (
     <ul>
       {users.map(user => (
@@ -249,7 +249,7 @@ export async function UserSuggestions() {
 }
 ```
 
-Now we can use `<UserSuggestions />` on any page without wiring up the data from above. The same component that needed two separate loaders earlier just works.
+Now we can use `<WhoToFollow />` on any page without wiring up the data from above. The same component that needed two separate loaders earlier just works.
 
 The same applies to `Feed`. In the loader version, it received `posts` and `currentUser` as props. As a server component, it fetches its own data and renders the list of posts directly:
 
@@ -276,7 +276,7 @@ export default function HomePage() {
       </main>
       <aside>
         <TrendingTags />
-        <UserSuggestions />
+        <WhoToFollow />
       </aside>
     </Layout>
   );
@@ -306,7 +306,7 @@ app/
       page.tsx          // single post with replies
 ```
 
-A component like `<UserSuggestions />` works on any of these pages without the page having to fetch anything for it. The page is free to focus on what the user actually sees while things load.
+A component like `<WhoToFollow />` works on any of these pages without the page having to fetch anything for it. The page is free to focus on what the user actually sees while things load.
 
 ### Avoiding Blocking Renders
 
@@ -389,7 +389,7 @@ export default function HomePage() {
         </main>
         <aside>
           <TrendingTags />
-          <UserSuggestions />
+          <WhoToFollow />
         </aside>
       </Suspense>
     </Layout>
@@ -417,8 +417,8 @@ export default function HomePage() {
         <Suspense fallback={<TrendingTagsSkeleton />}>
           <TrendingTags />
         </Suspense>
-        <Suspense fallback={<UserSuggestionsSkeleton />}>
-          <UserSuggestions />
+        <Suspense fallback={<WhoToFollowSkeleton />}>
+          <WhoToFollow />
         </Suspense>
       </aside>
     </Layout>
@@ -426,7 +426,7 @@ export default function HomePage() {
 }
 ```
 
-Now the sidebar and header are part of the static shell, and the feed, user suggestions, and trending tags each resolve on their own. If user suggestions are fast and the feed is slow, the user sees suggestions first. This can also feel fragmented: three separate regions popping in at different times is not always a better experience.
+Now the sidebar and header are part of the static shell, and the feed, follow suggestions, and trending tags each resolve on their own. If the suggestions are fast and the feed is slow, the user sees suggestions first. This can also feel fragmented: three separate regions popping in at different times is not always a better experience.
 
 We could also group the aside behind a single boundary:
 
@@ -445,7 +445,7 @@ export default function HomePage() {
       <Suspense fallback={<TrendingTagsSkeleton />}>
         <aside>
           <TrendingTags />
-          <UserSuggestions />
+          <WhoToFollow />
         </aside>
       </Suspense>
     </Layout>
@@ -453,7 +453,7 @@ export default function HomePage() {
 }
 ```
 
-The page now loads in two groups instead of three. Notice that the fallback is only `<TrendingTagsSkeleton />`. TrendingTags can return a variable number of items, so we don't know how tall it will be. If we also showed a `<UserSuggestionsSkeleton />` below it, the skeleton would likely be at the wrong vertical position once the real trending tags resolve. By only showing the trending tags skeleton, we avoid that mismatch. The entire aside appears at once when both components are ready.
+The page now loads in two groups instead of three. Notice that the fallback is only `<TrendingTagsSkeleton />`. TrendingTags can return a variable number of items, so we don't know how tall it will be. If we also showed a `<WhoToFollowSkeleton />` below it, the skeleton would likely be at the wrong vertical position once the real trending tags resolve. By only showing the trending tags skeleton, we avoid that mismatch. The entire aside appears at once when both components are ready.
 
 When every component manages its own loading state on the client, the page has no say in what appears when. With `Suspense`, the page decides where the user waits. There is no formula for the perfect boundary placement; it comes down to trying different groupings, seeing how they feel, and iterating.
 
@@ -596,15 +596,15 @@ features/
       post.tsx                   // server component + skeleton
       post-detail.tsx            // server component + skeleton
       feed.tsx                   // server component + skeleton
-      feed-tabs.tsx              // "use client"
+      like-button.tsx            // client component
       replies.tsx                // server component + skeleton
   user/
     components/
       user-avatar.tsx            // server component + skeleton
-      user-suggestions.tsx       // server component
+      who-to-follow.tsx          // server component + skeleton
 ```
 
-Because our components only accept minimal props like an identifier and fetch their own data, they can be picked up and composed into any page. The same `<UserSuggestions />` works on the home feed, the explore page, and the post detail page without changes. Refactoring a component to a new page doesn't touch anything outside its feature folder.
+Because our components only accept minimal props like an identifier and fetch their own data, they can be picked up and composed into any page. `<UserAvatar handle={handle} />` is a good example: the same component renders in the feed, on a post's author row, next to each reply, in the follow suggestions, and in the sidebar, with nothing more than a handle. Refactoring a component to a new page doesn't touch anything outside its feature folder.
 
 > Feature slicing is just one way to organize this. Any structure works as long as the components stay self-contained, but the reusable model maps especially well to feature folders.
 
@@ -632,7 +632,7 @@ export default function HomePage() {
         <Suspense fallback={<TrendingTagsSkeleton />}>
           <aside>
             <TrendingTags />
-            <UserSuggestions />
+            <WhoToFollow />
           </aside>
         </Suspense>
       </ErrorBoundary>
