@@ -23,7 +23,7 @@ In this post we'll build a reusable `NavLink` component on top of `usePathname()
 
 ## Table of contents
 
-## The Goal
+## The Use Case
 
 Let's say we have a sidebar nav like Twitter's: Home, Explore, Notifications, and a Profile link to the current user. The nav lives in the root layout, above a few static routes and a dynamic post route:
 
@@ -58,6 +58,8 @@ The `ProfileLink` is an async Server Component because its `href` depends on the
 
 Each link should style itself when it is the current page: bold the text and fill in the icon. A class swap can handle the bold, but the icon needs to switch between an outline and a filled variant in JSX. So the active state has to be available both as a class hook and as a value we can read in the render tree.
 
+### How React Router Does It
+
 [React Router's `NavLink`](https://reactrouter.com/api/components/NavLink) has an API that allows this sort of flexibility. Both `className` and `children` accept a function that receives `{ isActive, isPending }`, so the consumer decides what to do with the state. Here is the Home link styled three different ways:
 
 ```tsx
@@ -91,42 +93,7 @@ import { NavLink } from "react-router";
 </NavLink>
 ```
 
-That looks a bit unusual at first glance. Why is a styling prop a function? Have you ever wondered how this kind of API actually works under the hood, and why React Router landed on it?
-
-Dropped into our Twitter-style sidebar, it reads like this:
-
-```tsx
-// app/layout.tsx
-<nav>
-  <NavLink href="/" exact className={({ isActive }) => (isActive ? "nav-item font-bold" : "nav-item")}>
-    {({ isActive }) => (
-      <>
-        <HomeIcon filled={isActive} />
-        Home
-      </>
-    )}
-  </NavLink>
-  <NavLink href="/explore" className={({ isActive }) => (isActive ? "nav-item font-bold" : "nav-item")}>
-    {({ isActive }) => (
-      <>
-        <SearchIcon filled={isActive} />
-        Explore
-      </>
-    )}
-  </NavLink>
-  <ProfileLink />
-  <NavLink href="/notifications" className={({ isActive }) => (isActive ? "nav-item font-bold" : "nav-item")}>
-    {({ isActive }) => (
-      <>
-        <BellIcon filled={isActive} />
-        Notifications
-      </>
-    )}
-  </NavLink>
-</nav>
-```
-
-Let's build a `NavLink` like that for the App Router. We'll start with the simplest version and work through each piece: the render-prop pattern, `isPending`, prefix matching, `aria-current`, and TypeScript.
+That looks a bit unusual at first glance. Why is a styling prop a function? Let's build a `NavLink` like that for the App Router, and it'll make more sense as we go.
 
 ## Building NavLink
 
