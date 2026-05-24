@@ -632,10 +632,10 @@ With `usePathname({ ssr: false })`, the link renders inactive on the server and 
 
 We can fix this with the same [inline script pattern](https://nextjs.org/docs/app/guides/preventing-flash-before-hydration) Next.js recommends for themes and persisted UI state. The idea is to run a small script during HTML parsing, before the browser paints, that reads `location.pathname` and applies the active class immediately. By the time the user sees anything, the correct link is already highlighted.
 
-We store the active and inactive class names as data attributes on each link, then the script swaps them:
+The script can't call our `resolveClassName` function since it runs outside React, so we can pre-compute both the active and inactive class strings on the server and store them as `data-` attributes on each link. The script then reads the attributes and picks the right one based on the current pathname. We also add `suppressHydrationWarning` because the script will have already changed the `className` by the time React hydrates:
 
 ```tsx
-// NavLinkInner — add data attributes for the script to read
+// NavLink — add data attributes for the script to read
 <Link
   href={href}
   aria-current={isActive ? "page" : undefined}
