@@ -583,6 +583,49 @@ The two static links no longer need per-link wrappers. But what about `ProfileLi
 
 The consumer no longer has to think about `Suspense` for the static links, and the one async link gets a clean, layout-stable fallback.
 
+## Simplifying with usePathname in Next.js 16.3
+
+The Suspense split works, but it's a lot of ceremony for something that should be simple. The core issue is that `usePathname()` always runs during prerendering, which triggers dynamic rendering on routes with dynamic params. For a nav link, we don't need the pathname on the server at all. We just need it on the client to toggle the active class.
+
+In Next.js 16.3, `usePathname` accepts an `{ ssr: false }` option. It returns `null` during prerendering and the real pathname on the client. The component renders in its inactive state on the server and upgrades after hydration, with no Suspense boundary required:
+
+```tsx
+import { usePathname } from "next/navigation";
+
+const pathname = usePathname({ ssr: false }); // string | null
+```
+
+This also avoids the [hydration mismatch with rewrites](https://nextjs.org/docs/app/api-reference/functions/use-pathname#avoid-hydration-mismatch-with-rewrites) we mentioned earlier, since the pathname is never read during prerendering.
+
+With this, `NavLink` simplifies back down:
+
+```tsx
+// app/components/nav-link.tsx
+"use client";
+
+// ...imports, types, checkActive, resolve, resolveClassName (same as before)
+
+export function NavLink({ href, className, children, exact, ...rest }) {
+  const pathname = usePathname({ ssr: false });
+  const isActive = checkActive(pathname, href.toString(), exact);
+
+  return (
+    <Link
+      href={href}
+      aria-current={isActive ? "page" : undefined}
+      className={resolveClassName(className, { isActive })}
+      {...rest}
+    >
+      <NavLinkContent isActive={isActive}>{children}</NavLinkContent>
+    </Link>
+  );
+}
+
+// NavLinkContent, NavLinkSkeleton (same as before)
+```
+
+The Suspense split is gone. Just `usePathname` with a flag.
+
 ## Conclusion
 
 We started with a hardcoded `active` class and ended up with a typed, render-prop `NavLink` that exposes `isActive` and `isPending`, handles prefix matching and `aria-current`, and owns its own Suspense boundary for `cacheComponents`. Instead of overriding `<Link>`'s click handler, we use `useLinkStatus` to get the pending state natively inside the link's children. The render-prop pattern from React Router holds up well in the App Router. It gives a single component the flexibility to handle class swaps, content swaps, and pending indicators without forcing one shape on every caller.
