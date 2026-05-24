@@ -11,7 +11,7 @@ tags:
   - App Router
   - Cache Components
   - Navigation
-description: "Active link styling is one of the most common things you need in a real application. Here is how to build a reusable NavLink component for a Next.js app, taking inspiration from React Router, that handles Cache Components, usePathname({ ssr: false }), and flicker-free hydration."
+description: "Active link styling is one of the most common things you need in a real application. Here is how to build a reusable NavLink component for a Next.js app, taking inspiration from React Router, that handles Cache Components, with a simpler usePathname({ ssr: false }) alternative that skips Suspense."
 ---
 
 Active link styling is something almost every Next.js app needs in some form. The App Router gives us [`usePathname()`](https://nextjs.org/docs/app/api-reference/functions/use-pathname) and [`useSelectedLayoutSegment()`](https://nextjs.org/docs/app/api-reference/functions/use-selected-layout-segment) to read the current route, and from there it is up to us how to style the matching link.
@@ -19,7 +19,7 @@ Active link styling is something almost every Next.js app needs in some form. Th
 - **`usePathname()`** compares against each link's `href` directly. Works anywhere.
 - **`useSelectedLayoutSegment()`** matches route segments instead of the full pathname. Good for layouts where each link maps to a top-level segment.
 
-In this post we'll build a reusable `NavLink` component on top of `usePathname()`, taking inspiration from React Router. First we'll build it up piece by piece: the render-prop pattern, pending states with `useLinkStatus`, prefix matching, accessibility, and TypeScript. Then we'll try it under `cacheComponents` and see what breaks. Finally, we'll optimize it with `usePathname({ ssr: false })` in Next.js 16.3 and an inline script to prevent flickering during hydration.
+In this post we'll build a reusable `NavLink` component on top of `usePathname()`, taking inspiration from React Router. First we'll build it up piece by piece: the render-prop pattern, pending states with `useLinkStatus`, prefix matching, accessibility, and TypeScript. Then we'll try it under `cacheComponents` and see what breaks. Finally, we'll look at a simpler alternative using `usePathname({ ssr: false })` in Next.js 16.3 that skips Suspense entirely, with an optional inline script to prevent the flicker that comes with it.
 
 It's a bit of a journey, so let's get started.
 
@@ -460,7 +460,7 @@ The `exact` prop on the Home link prevents `/` from prefix-matching every route.
 
 One thing to be aware of: a function `className` (or function `children`) is not serializable, so it cannot be passed across the server-client boundary. If your layout is a Server Component, you cannot use the render-prop form inline. The fix is either to mark the layout as `'use client'`, or to extract a small client component that holds the function internally and accepts only serializable props (`href`, `icon`, `label`) from the server. If you only need a plain string `className` and static children, none of this applies, you can use `NavLink` directly from a Server Component.
 
-One more edge case: if your app uses [rewrites in `next.config` or a `Proxy` file](https://nextjs.org/docs/app/api-reference/functions/use-pathname#avoid-hydration-mismatch-with-rewrites), `usePathname()` can cause a hydration mismatch. The prerendered HTML is built for the source pathname, but the browser URL may differ after the rewrite. The docs recommend deferring the pathname read until after mount with a `useEffect`/`useState` guard, returning `null` on the first render so the server and client output match. We'll fix this properly later with `usePathname({ ssr: false })`, so keep reading if this affects you.
+One more edge case: if your app uses [rewrites in `next.config` or a `Proxy` file](https://nextjs.org/docs/app/api-reference/functions/use-pathname#avoid-hydration-mismatch-with-rewrites), `usePathname()` can cause a hydration mismatch. The prerendered HTML is built for the source pathname, but the browser URL may differ after the rewrite. We'll come back to this later with `usePathname({ ssr: false })`.
 
 ## NavLink Under cacheComponents
 
@@ -585,11 +585,13 @@ The two static links no longer need per-link wrappers. But what about `ProfileLi
 
 The consumer no longer has to think about `Suspense` for the static links, and the one async link gets a clean, layout-stable fallback.
 
-## Simplifying with usePathname in Next.js 16.3
+This is a good place to stop for most apps. The component is self-contained: drop a `NavLink` anywhere and it just works under `cacheComponents`, with the active state rendered on the server so the correct link is highlighted on first paint. The cost is a bit of internal machinery (the inner Suspense, the fallback `<Link>`), and the fact that `usePathname()` does run on the server during prerendering, which is what we'll address next.
 
-The Suspense split works, but it's a lot of ceremony for something that should be simple. The core issue is that `usePathname()` always runs during prerendering, which triggers dynamic rendering on routes with dynamic params. For a nav link, we don't need the pathname on the server at all. We just need it on the client to toggle the active class.
+## An Alternative: usePathname in Next.js 16.3
 
-In Next.js 16.3, `usePathname` accepts an `{ ssr: false }` option. It returns `null` during prerendering and the real pathname on the client. The component renders in its inactive state on the server and upgrades after hydration, with no Suspense boundary required:
+The Suspense version is more complex than it needs to be if you're okay with a brief flicker on first paint, or if you'd rather not think about Suspense boundaries inside `NavLink` at all. And if your app uses [rewrites](https://nextjs.org/docs/app/api-reference/functions/use-pathname#avoid-hydration-mismatch-with-rewrites), the Suspense version has another problem on top of that: `usePathname()` runs during prerendering against the source path, but the browser URL after the rewrite may differ, causing a hydration mismatch.
+
+For either of those cases, there's a simpler approach. In Next.js 16.3, `usePathname` accepts an `{ ssr: false }` option. It returns `null` during prerendering and the real pathname on the client. The component renders in its inactive state on the server and upgrades after hydration, with no Suspense boundary required:
 
 ```tsx
 import { usePathname } from "next/navigation";
@@ -597,9 +599,9 @@ import { usePathname } from "next/navigation";
 const pathname = usePathname({ ssr: false }); // string | null
 ```
 
-This also avoids the [hydration mismatch with rewrites](https://nextjs.org/docs/app/api-reference/functions/use-pathname#avoid-hydration-mismatch-with-rewrites) we mentioned earlier, since the pathname is never read during prerendering.
+This sidesteps the rewrite hydration mismatch entirely, since the pathname is never read on the server.
 
-With this, `NavLink` simplifies back down:
+Now we can drop the Suspense boundary and `NavLink` simplifies back down:
 
 ```tsx
 // app/components/nav-link.tsx
@@ -626,7 +628,7 @@ export function NavLink({ href, className, children, exact, ...rest }) {
 // NavLinkContent, NavLinkSkeleton (same as before)
 ```
 
-The Suspense split is gone. Just `usePathname` with a flag.
+The Suspense split is gone. Just `usePathname` with a flag. But there's a catch: the link now renders inactive on the server and only flips to active after hydration. That means every active link briefly flashes from inactive to active when the page loads. If you don't mind the flicker, you can stop here. If you do, the next section adds an inline script to fix it.
 
 ## Preventing Flickering During Hydration
 
@@ -637,7 +639,7 @@ We can fix this with an inline script that runs during HTML parsing, before the 
 The script can't call our `resolveClassName` function since it runs outside React, so we can pre-compute both the active and inactive class strings on the server and store them as `data-` attributes on each link. The script then reads the attributes and picks the right one based on the current pathname. We also add `suppressHydrationWarning` because the script will have already changed the `className` by the time React hydrates:
 
 ```tsx
-// NavLink — add data attributes for the script to read
+// NavLink: add data attributes for the script to read
 <Link
   href={href}
   aria-current={isActive ? "page" : undefined}
@@ -684,9 +686,9 @@ export function NavLinkScript() {
 
 The script type flips to `text/plain` on the client so it only runs once, during the initial HTML parse. On soft navigations React handles the active state as usual. Drop `<NavLinkScript />` anywhere that renders alongside your nav links and the active link is correct from the first paint.
 
-## The Optimized NavLink
+## The Full Suspense-Free NavLink
 
-Here is the complete `NavLink` with all the improvements: `usePathname({ ssr: false })` for `cacheComponents` support, `useLinkStatus` for pending states, the data attributes for flicker-free hydration, and TypeScript:
+Here is the complete `NavLink` for the alternative path. It's useful for apps that use rewrites, or anyone who'd rather skip the Suspense machinery: `usePathname({ ssr: false })` for `cacheComponents` support, `useLinkStatus` for pending states, the data attributes for flicker-free hydration, and TypeScript:
 
 ```tsx
 // app/components/nav-link.tsx
@@ -781,7 +783,7 @@ export function NavLinkSkeleton({
 }
 ```
 
-Copy this file into your project along with the `NavLinkScript` component below, and render it alongside your nav links. The optimized version works with or without `cacheComponents`, so you can use it either way:
+Copy this file into your project along with the `NavLinkScript` component below, and render `<NavLinkScript />` alongside your nav links:
 
 ```tsx
 // app/components/nav-link-script.tsx
@@ -812,8 +814,6 @@ export function NavLinkScript() {
 
 ## Conclusion
 
-We started with a hardcoded `active` class and worked through quite a few iterations: the render-prop pattern, `useLinkStatus` for pending states, prefix matching, `aria-current`, TypeScript, Suspense boundaries for `cacheComponents`, `usePathname({ ssr: false })` to drop those boundaries, and finally an inline script to prevent the active-state flicker during hydration. That's a lot of ground for one component, but each piece solves a real problem that comes up in production apps.
-
-You might not need all of this. A plain `usePathname()` call in a navbar component works fine for most apps. But if you want a single, reusable `NavLink` that handles every edge case, now you know how to build one.
+Which version should you reach for? The Suspense version is the better default: the active state renders on the server, so the correct link is highlighted on first paint with no flicker and no extra script. The `{ ssr: false }` version is the easy way out: reach for it if your app uses rewrites and the Suspense version would cause a hydration mismatch, or if you just want to skip the Suspense machinery. Add `NavLinkScript` on top if you want to avoid the flicker on first paint.
 
 I hope this post has been helpful. Please let me know if you have any questions or comments, and follow me on [Bluesky](https://bsky.app/profile/aurorascharff.no) or [X](https://x.com/aurorascharff) for more updates. Happy coding! 🚀
