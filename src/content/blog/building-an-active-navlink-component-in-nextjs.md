@@ -25,27 +25,25 @@ In this post we'll build a reusable `NavLink` component on top of `usePathname()
 
 ## The Use Case
 
-Let's say we have a sidebar nav like Twitter's: Home, Explore, Notifications, and a Profile link to the current user. The nav lives in the root layout, above a few static routes and a dynamic post route:
+Let's say we have a sidebar nav similar to a Social Media like X: Home, Search, and a Profile link to the current user. The nav lives in the root layout, above a few static routes and a dynamic post route:
 
 ```
 app/
   layout.tsx
   page.tsx
-  explore/page.tsx
-  notifications/page.tsx
+  search/page.tsx
   u/[handle]/page.tsx
-  post/[id]/page.tsx
+  drop/[id]/page.tsx
 ```
 
-Without any active-state logic, the nav is just four links. Three are static, and the Profile link's `href` depends on the current user's handle:
+Without any active-state logic, the nav is just three links. Two are static, and the Profile link's `href` depends on the current user's handle:
 
 ```tsx
 // app/layout.tsx
 <nav>
   <Link href="/"><HomeIcon /> Home</Link>
-  <Link href="/explore"><SearchIcon /> Explore</Link>
+  <Link href="/search"><SearchIcon /> Search</Link>
   <ProfileLink />
-  <Link href="/notifications"><BellIcon /> Notifications</Link>
 </nav>
 
 async function ProfileLink() {
@@ -257,7 +255,7 @@ How useful `isPending` ends up being depends on how the destination route is set
 
 ### Matching Prefixes for Nested Routes
 
-Exact equality works for top-level links, but a link to `/explore` usually wants to stay active on `/explore/trending` too. We can default to prefix matching and add an `exact` opt-out. We also normalize `href` to a string here, since the typed version we land on later accepts `URL` as well:
+Exact equality works for top-level links, but a link to `/search` usually wants to stay active on `/search?q=react` too. We can default to prefix matching and add an `exact` opt-out. We also normalize `href` to a string here, since the typed version we land on later accepts `URL` as well:
 
 ```tsx
 export function NavLink({ href, exact, ...rest }) {
@@ -271,7 +269,7 @@ export function NavLink({ href, exact, ...rest }) {
 }
 ```
 
-Now `/explore` stays active on `/explore/trending`, but `/` only matches the exact home route when `exact` is set.
+Now `/search` stays active on `/search?q=react`, but `/` only matches the exact home route when `exact` is set.
 
 ### Marking the Active Link with aria-current
 
@@ -444,23 +442,15 @@ Back in our sidebar, this is how we'd use it. Since the component sets `aria-cur
       </>
     )}
   </NavLink>
-  <NavLink href="/explore" className="nav-item aria-[current=page]:font-bold">
+  <NavLink href="/search" className="nav-item aria-[current=page]:font-bold">
     {({ isActive }) => (
       <>
         <SearchIcon filled={isActive} />
-        Explore
+        Search
       </>
     )}
   </NavLink>
   <ProfileLink />
-  <NavLink href="/notifications" className="nav-item aria-[current=page]:font-bold">
-    {({ isActive }) => (
-      <>
-        <BellIcon filled={isActive} />
-        Notifications
-      </>
-    )}
-  </NavLink>
 </nav>
 ```
 
@@ -494,7 +484,7 @@ The most obvious fix is wrapping the entire nav:
 <Suspense fallback={<NavSkeleton />}>
   <nav>
     <NavLink href="/" exact /* ... */>{/* HomeIcon + Home */}</NavLink>
-    {/* same for /explore and /notifications */}
+    {/* same for /search */}
   </nav>
 </Suspense>
 ```
@@ -507,7 +497,7 @@ That works, but the entire nav is replaced by a skeleton until `usePathname()` r
   <Suspense fallback={<span className="nav-item opacity-50"><HomeIcon /> Home</span>}>
     <NavLink href="/" exact /* ... */>{/* HomeIcon + Home */}</NavLink>
   </Suspense>
-  {/* same for /explore and /notifications */}
+  {/* same for /search */}
 </nav>
 ```
 
@@ -569,7 +559,7 @@ export function NavLinkSkeleton({ children, className }) {
 
 The default Suspense fallback is the same `<Link>` rendered in its inactive state. This guarantees the layout matches the real link exactly, no element swap, no class drift, no CLS. We also export a small `NavLinkSkeleton` next to `NavLink`: a grayed-out `<span>` with `opacity-50` and `aria-hidden`, useful anywhere a consumer needs a placeholder that matches a `NavLink`'s layout.
 
-The three static links no longer need per-link wrappers. But what about `ProfileLink`? It's an async Server Component, so it still needs an outer `Suspense` boundary. Without a fallback, nothing renders in its place while the handle loads, and the nav jumps when the link pops in. We can use the exported `NavLinkSkeleton` as the fallback, sharing the same base layout class with the real link so the dimensions match:
+The two static links no longer need per-link wrappers. But what about `ProfileLink`? It's an async Server Component, so it still needs an outer `Suspense` boundary. Without a fallback, nothing renders in its place while the handle loads, and the nav jumps when the link pops in. We can use the exported `NavLinkSkeleton` as the fallback, sharing the same base layout class with the real link so the dimensions match:
 
 ```tsx
 // before
@@ -577,19 +567,17 @@ The three static links no longer need per-link wrappers. But what about `Profile
   <Suspense fallback={<span className="nav-item opacity-50"><HomeIcon /> Home</span>}>
     <NavLink href="/" exact /* ... */>{/* HomeIcon + Home */}</NavLink>
   </Suspense>
-  {/* same for /explore */}
+  {/* same for /search */}
   <ProfileLink />
-  {/* same for /notifications */}
 </nav>
 
 // after
 <nav>
   <NavLink href="/" exact /* ... */>{/* HomeIcon + Home */}</NavLink>
-  <NavLink href="/explore" /* ... */>{/* SearchIcon + Explore */}</NavLink>
+  <NavLink href="/search" /* ... */>{/* SearchIcon + Search */}</NavLink>
   <Suspense fallback={<NavLinkSkeleton className="nav-item"><UserIcon /> Profile</NavLinkSkeleton>}>
     <ProfileLink />
   </Suspense>
-  <NavLink href="/notifications" /* ... */>{/* BellIcon + Notifications */}</NavLink>
 </nav>
 ```
 
