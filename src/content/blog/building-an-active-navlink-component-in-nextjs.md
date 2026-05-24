@@ -19,7 +19,7 @@ Active link styling is something almost every Next.js app needs in some form. Th
 - **`usePathname()`** compares against each link's `href` directly. Works anywhere.
 - **`useSelectedLayoutSegment()`** matches route segments instead of the full pathname. Good for layouts where each link maps to a top-level segment.
 
-In this post we'll build a reusable `NavLink` component on top of `usePathname()`, taking inspiration from React Router. We'll start simple and layer in features as we go: the render-prop pattern, pending states with `useLinkStatus`, prefix matching, accessibility, and TypeScript. Then we'll make it work under `cacheComponents` with Suspense, simplify it with `usePathname({ ssr: false })` in Next.js 16.3, and finally prevent the active-state flicker during hydration with an inline script. 
+In this post we'll build a reusable `NavLink` component on top of `usePathname()`, taking inspiration from React Router. First we'll build it up piece by piece: the render-prop pattern, pending states with `useLinkStatus`, prefix matching, accessibility, and TypeScript. Then we'll try it under `cacheComponents` and see what breaks. Finally, we'll optimize it with `usePathname({ ssr: false })` in Next.js 16.3 and an inline script to prevent flickering during hydration.
 
 It's a bit of a journey, so let's get started.
 
@@ -360,7 +360,7 @@ export function NavLink<T extends string>({
 
 That's the type layer done. The runtime code stays exactly the same, we've just given it a shape that TypeScript can check.
 
-### The Full Component
+### The Full NavLink
 
 Putting it all together, here is the complete component in one file:
 
@@ -460,11 +460,11 @@ The `exact` prop on the Home link prevents `/` from prefix-matching every route.
 
 One thing to be aware of: a function `className` (or function `children`) is not serializable, so it cannot be passed across the server-client boundary. If your layout is a Server Component, you cannot use the render-prop form inline. The fix is either to mark the layout as `'use client'`, or to extract a small client component that holds the function internally and accepts only serializable props (`href`, `icon`, `label`) from the server. If you only need a plain string `className` and static children, none of this applies, you can use `NavLink` directly from a Server Component.
 
-One more edge case: if your app uses [rewrites in `next.config` or a `Proxy` file](https://nextjs.org/docs/app/api-reference/functions/use-pathname#avoid-hydration-mismatch-with-rewrites), `usePathname()` can cause a hydration mismatch. The prerendered HTML is built for the source pathname, but the browser URL may differ after the rewrite. The docs recommend deferring the pathname read until after mount with a `useEffect`/`useState` guard, returning `null` on the first render so the server and client output match.
+One more edge case: if your app uses [rewrites in `next.config` or a `Proxy` file](https://nextjs.org/docs/app/api-reference/functions/use-pathname#avoid-hydration-mismatch-with-rewrites), `usePathname()` can cause a hydration mismatch. The prerendered HTML is built for the source pathname, but the browser URL may differ after the rewrite. The docs recommend deferring the pathname read until after mount with a `useEffect`/`useState` guard, returning `null` on the first render so the server and client output match. We'll fix this properly later with `usePathname({ ssr: false })`, so keep reading if this affects you.
 
 ## NavLink Under cacheComponents
 
-So far we have not touched [Cache Components](https://nextjs.org/docs/app/api-reference/config/next-config-js/cacheComponents), but it is where the App Router is heading and what we want to opt into for the new features like partial prerendering and [`'use cache'`](https://nextjs.org/docs/app/api-reference/directives/use-cache). With `cacheComponents` enabled, any component that reads dynamic data has to live behind a `Suspense` boundary. Everything outside those boundaries can become part of a static shell that is prerendered and served instantly.
+[Cache Components](https://nextjs.org/docs/app/api-reference/config/next-config-js/cacheComponents) is where the App Router is heading and what we want to opt into for the new features like partial prerendering and [`'use cache'`](https://nextjs.org/docs/app/api-reference/directives/use-cache). With `cacheComponents` enabled, any component that reads dynamic data has to live behind a `Suspense` boundary. Everything outside those boundaries can become part of a static shell that is prerendered and served instantly.
 
 Let's enable `cacheComponents` in `next.config.ts`:
 
@@ -628,7 +628,7 @@ export function NavLink({ href, className, children, exact, ...rest }) {
 
 The Suspense split is gone. Just `usePathname` with a flag.
 
-## Preventing a Flicker During Hydration
+## Preventing Flickering During Hydration
 
 With `usePathname({ ssr: false })`, the link renders inactive on the server and upgrades on the client. That means every link briefly flashes from its inactive to its active state as React hydrates.
 
@@ -653,11 +653,11 @@ The script can't call our `resolveClassName` function since it runs outside Reac
 </Link>
 ```
 
-Then we add a script component to the root layout that runs before paint:
+Then we add a script component that runs before paint:
 
 ```tsx
-// app/components/seed-nav-links.tsx
-export function SeedNavLinksFromPathname() {
+// app/components/nav-link-script.tsx
+export function NavLinkScript() {
   const html = `(function(){
   var p = location.pathname;
   document.querySelectorAll('[data-navlink-href]').forEach(function(el) {
@@ -682,7 +682,133 @@ export function SeedNavLinksFromPathname() {
 }
 ```
 
-The script type flips to `text/plain` on the client so it only runs once, during the initial HTML parse. On soft navigations React handles the active state as usual. Drop `<SeedNavLinksFromPathname />` into your root layout and the active link is correct from the first paint.
+The script type flips to `text/plain` on the client so it only runs once, during the initial HTML parse. On soft navigations React handles the active state as usual. Drop `<NavLinkScript />` anywhere that renders alongside your nav links and the active link is correct from the first paint.
+
+## The Optimized NavLink
+
+Here is the complete `NavLink` with all the improvements: `usePathname({ ssr: false })` for `cacheComponents` support, `useLinkStatus` for pending states, the data attributes for flicker-free hydration, and TypeScript:
+
+```tsx
+// app/components/nav-link.tsx
+"use client";
+
+import type { Route } from "next";
+import Link, { useLinkStatus } from "next/link";
+import { usePathname } from "next/navigation";
+
+type ActiveProps = { isActive: boolean };
+type RenderProps = ActiveProps & { isPending: boolean };
+type Renderable<T> = T | ((props: RenderProps) => T);
+
+type Props<T extends string> = Omit<
+  React.ComponentProps<typeof Link>,
+  "href" | "className" | "children"
+> & {
+  href: Route<T> | URL;
+  className?: string | ((props: ActiveProps) => string | undefined);
+  children?: Renderable<React.ReactNode>;
+  exact?: boolean;
+};
+
+function checkActive(pathname: string | null, href: string, exact?: boolean) {
+  if (pathname === null) return false;
+  return exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function resolve<T>(value: Renderable<T> | undefined, props: RenderProps) {
+  return typeof value === "function"
+    ? (value as (p: RenderProps) => T)(props)
+    : value;
+}
+
+function resolveClassName(
+  value: string | ((props: ActiveProps) => string | undefined) | undefined,
+  props: ActiveProps,
+) {
+  return typeof value === "function" ? value(props) : value;
+}
+
+export function NavLink<T extends string>({
+  href,
+  className,
+  children,
+  exact,
+  ...rest
+}: Props<T>) {
+  const pathname = usePathname({ ssr: false });
+  const isActive = checkActive(pathname, href.toString(), exact);
+
+  return (
+    <Link
+      href={href}
+      aria-current={isActive ? "page" : undefined}
+      className={resolveClassName(className, { isActive })}
+      data-navlink-href={href.toString()}
+      data-navlink-exact={exact || undefined}
+      data-navlink-active={resolveClassName(className, { isActive: true })}
+      data-navlink-inactive={resolveClassName(className, { isActive: false })}
+      suppressHydrationWarning
+      {...rest}
+    >
+      <NavLinkContent isActive={isActive}>{children}</NavLinkContent>
+    </Link>
+  );
+}
+
+function NavLinkContent({
+  isActive,
+  children,
+}: {
+  isActive: boolean;
+  children?: Renderable<React.ReactNode>;
+}) {
+  const { pending } = useLinkStatus();
+  return <>{resolve(children, { isActive, isPending: pending })}</>;
+}
+
+export function NavLinkSkeleton({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <span aria-hidden className={`text-gray opacity-50 ${className ?? ""}`}>
+      {children}
+    </span>
+  );
+}
+```
+
+Copy this file into your project along with the `NavLinkScript` component below, and render it alongside your nav links. The optimized version works with or without `cacheComponents`, so you can use it either way:
+
+```tsx
+// app/components/nav-link-script.tsx
+export function NavLinkScript() {
+  const html = `(function(){
+  var p = location.pathname;
+  document.querySelectorAll('[data-navlink-href]').forEach(function(el) {
+    var href = el.getAttribute('data-navlink-href');
+    var exact = el.hasAttribute('data-navlink-exact');
+    var active = (exact || href === '/')
+      ? p === href
+      : (p === href || p.startsWith(href + '/'));
+    el.className = el.getAttribute(active ? 'data-navlink-active' : 'data-navlink-inactive');
+    if (active) el.setAttribute('aria-current', 'page');
+    else el.removeAttribute('aria-current');
+  });
+})()`;
+
+  return (
+    <script
+      type={typeof window === 'undefined' ? 'text/javascript' : 'text/plain'}
+      suppressHydrationWarning
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
+}
+```
 
 ## Conclusion
 
