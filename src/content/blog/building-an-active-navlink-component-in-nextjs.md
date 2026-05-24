@@ -11,7 +11,7 @@ tags:
   - App Router
   - Cache Components
   - Navigation
-description: Active link styling is one of the most common things you need in a real application. Here is how to build a reusable NavLink component for a Next.js app, taking inspiration from React Router, that also handles Cache Components.
+description: Active link styling is one of the most common things you need in a real application. Here is how to build a reusable NavLink component for a Next.js app, taking inspiration from React Router, that handles Cache Components, usePathname({ ssr: false }), and flicker-free hydration.
 ---
 
 Active link styling is something almost every Next.js app needs in some form. The App Router gives us [`usePathname()`](https://nextjs.org/docs/app/api-reference/functions/use-pathname) and [`useSelectedLayoutSegment()`](https://nextjs.org/docs/app/api-reference/functions/use-selected-layout-segment) to read the current route, and from there it is up to us how to style the matching link.
@@ -19,7 +19,9 @@ Active link styling is something almost every Next.js app needs in some form. Th
 - **`usePathname()`** compares against each link's `href` directly. Works anywhere.
 - **`useSelectedLayoutSegment()`** matches route segments instead of the full pathname. Good for layouts where each link maps to a top-level segment.
 
-In this post we'll build a reusable `NavLink` component on top of `usePathname()`, taking inspiration from React Router. Along the way we'll cover the render-prop pattern, pending states, prefix matching, accessibility, TypeScript, and how to make it all work under `cacheComponents`.
+In this post we'll build a reusable `NavLink` component on top of `usePathname()`, taking inspiration from React Router. We'll start simple and layer in features as we go: the render-prop pattern, pending states with `useLinkStatus`, prefix matching, accessibility, and TypeScript. Then we'll make it work under `cacheComponents` with Suspense, simplify it with `usePathname({ ssr: false })` in Next.js 16.3, and finally prevent the active-state flicker during hydration with an inline script. 
+
+It's a bit of a journey, so let's get started.
 
 ## Table of contents
 
@@ -473,7 +475,7 @@ const config: NextConfig = {
 };
 ```
 
-Static routes still render fine. But navigating to `/post/[id]` throws a missing-Suspense-boundary error pointing at `usePathname`. When `cacheComponents` is enabled, [`usePathname()` is treated as a dynamic API](https://nextjs.org/docs/app/api-reference/functions/use-pathname#good-to-know) on routes with a dynamic param, and reading a dynamic value without a Suspense boundary above it is a runtime error, unless we use `generateStaticParams` to prerender it.
+Static routes still render fine. But navigating to `/drop/[id]` throws a missing-Suspense-boundary error pointing at `usePathname`. The nav lives in the root layout, which is shared across all routes, so `usePathname()` runs on the dynamic route too. When `cacheComponents` is enabled, [`usePathname()` is treated as a dynamic API](https://nextjs.org/docs/app/api-reference/functions/use-pathname#good-to-know) on routes with a dynamic param, and reading a dynamic value without a Suspense boundary above it is a runtime error, unless we use `generateStaticParams` to prerender it.
 
 We need a `Suspense` boundary somewhere. This also surfaces another problem we've been ignoring: the `ProfileLink` is an async Server Component, and without a boundary around it the entire layout blocks until the handle resolves. We need to wrap that too.
 
@@ -630,7 +632,7 @@ The Suspense split is gone. Just `usePathname` with a flag.
 
 With `usePathname({ ssr: false })`, the link renders inactive on the server and upgrades on the client. That means every link briefly flashes from its inactive to its active state as React hydrates.
 
-We can fix this with the same [inline script pattern](https://nextjs.org/docs/app/guides/preventing-flash-before-hydration) Next.js recommends for themes and persisted UI state. The idea is to run a small script during HTML parsing, before the browser paints, that reads `location.pathname` and applies the active class immediately. By the time the user sees anything, the correct link is already highlighted.
+We can fix this with an inline script that runs during HTML parsing, before the browser paints. This is the same pattern Next.js recommends for [preventing flash before hydration](https://nextjs.org/docs/app/guides/preventing-flash-before-hydration) with themes, dates, and persisted UI state, and the same class of problem Ethan Niser describes in ["A Clock That Doesn't Snap"](https://ethanniser.dev/blog/a-clock-that-doesnt-snap/): client-only state that the server can't know, corrected before the user sees anything. In our case, the "client-only state" is `location.pathname`, and the script reads it and applies the active class immediately.
 
 The script can't call our `resolveClassName` function since it runs outside React, so we can pre-compute both the active and inactive class strings on the server and store them as `data-` attributes on each link. The script then reads the attributes and picks the right one based on the current pathname. We also add `suppressHydrationWarning` because the script will have already changed the `className` by the time React hydrates:
 
@@ -684,8 +686,8 @@ The script type flips to `text/plain` on the client so it only runs once, during
 
 ## Conclusion
 
-We started with a hardcoded `active` class and ended up with a typed, render-prop `NavLink` that exposes `isActive` and `isPending`, handles prefix matching and `aria-current`, and owns its own Suspense boundary for `cacheComponents`. Instead of overriding `<Link>`'s click handler, we use `useLinkStatus` to get the pending state natively inside the link's children. The render-prop pattern from React Router holds up well in the App Router. It gives a single component the flexibility to handle class swaps, content swaps, and pending indicators without forcing one shape on every caller.
+We started with a hardcoded `active` class and worked through quite a few iterations: the render-prop pattern, `useLinkStatus` for pending states, prefix matching, `aria-current`, TypeScript, Suspense boundaries for `cacheComponents`, `usePathname({ ssr: false })` to drop those boundaries, and finally an inline script to prevent the active-state flicker during hydration. That's a lot of ground for one component, but each piece solves a real problem that comes up in production apps.
 
-You might not need any of this. A plain `usePathname()` call in a navbar component works fine for most apps, and the App Router gives you everything you need out of the box. But it's an option, and building it yourself is a good way to get familiar with render props, transitions, and how Suspense interacts with the App Router.
+You might not need all of this. A plain `usePathname()` call in a navbar component works fine for most apps. But if you want a single, reusable `NavLink` that handles every edge case, now you know how to build one.
 
 I hope this post has been helpful. Please let me know if you have any questions or comments, and follow me on [Bluesky](https://bsky.app/profile/aurorascharff.no) or [X](https://x.com/aurorascharff) for more updates. Happy coding! 🚀
