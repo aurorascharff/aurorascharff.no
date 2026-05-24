@@ -626,6 +626,62 @@ export function NavLink({ href, className, children, exact, ...rest }) {
 
 The Suspense split is gone. Just `usePathname` with a flag.
 
+## Preventing a Flicker During Hydration
+
+With `usePathname({ ssr: false })`, the link renders inactive on the server and upgrades on the client. That means every link briefly flashes from its inactive to its active state as React hydrates.
+
+We can fix this with the same [inline script pattern](https://nextjs.org/docs/app/guides/preventing-flash-before-hydration) Next.js recommends for themes and persisted UI state. The idea is to run a small script during HTML parsing, before the browser paints, that reads `location.pathname` and applies the active class immediately. By the time the user sees anything, the correct link is already highlighted.
+
+We store the active and inactive class names as data attributes on each link, then the script swaps them:
+
+```tsx
+// NavLinkInner — add data attributes for the script to read
+<Link
+  href={href}
+  aria-current={isActive ? "page" : undefined}
+  className={resolveClassName(className, { isActive })}
+  data-navlink-href={href.toString()}
+  data-navlink-exact={exact || undefined}
+  data-navlink-active={resolveClassName(className, { isActive: true })}
+  data-navlink-inactive={resolveClassName(className, { isActive: false })}
+  suppressHydrationWarning
+  {...rest}
+>
+  {/* ... */}
+</Link>
+```
+
+Then we add a script component to the root layout that runs before paint:
+
+```tsx
+// app/components/seed-nav-links.tsx
+export function SeedNavLinksFromPathname() {
+  const html = `(function(){
+  var p = location.pathname;
+  document.querySelectorAll('[data-navlink-href]').forEach(function(el) {
+    var href = el.getAttribute('data-navlink-href');
+    var exact = el.hasAttribute('data-navlink-exact');
+    var active = (exact || href === '/')
+      ? p === href
+      : (p === href || p.startsWith(href + '/'));
+    el.className = el.getAttribute(active ? 'data-navlink-active' : 'data-navlink-inactive');
+    if (active) el.setAttribute('aria-current', 'page');
+    else el.removeAttribute('aria-current');
+  });
+})()`;
+
+  return (
+    <script
+      type={typeof window === 'undefined' ? 'text/javascript' : 'text/plain'}
+      suppressHydrationWarning
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
+}
+```
+
+The script type flips to `text/plain` on the client so it only runs once, during the initial HTML parse. On soft navigations React handles the active state as usual. Drop `<SeedNavLinksFromPathname />` into your root layout and the active link is correct from the first paint.
+
 ## Conclusion
 
 We started with a hardcoded `active` class and ended up with a typed, render-prop `NavLink` that exposes `isActive` and `isPending`, handles prefix matching and `aria-current`, and owns its own Suspense boundary for `cacheComponents`. Instead of overriding `<Link>`'s click handler, we use `useLinkStatus` to get the pending state natively inside the link's children. The render-prop pattern from React Router holds up well in the App Router. It gives a single component the flexibility to handle class swaps, content swaps, and pending indicators without forcing one shape on every caller.
