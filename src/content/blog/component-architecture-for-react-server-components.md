@@ -619,7 +619,7 @@ Because our components only accept minimal props like an identifier and fetch th
 
 > Feature slicing is just one way to organize this. Any structure works as long as the components stay self-contained, but the reusable model maps especially well to feature folders.
 
-Along the same lines, we can also add error handling and animations to a region by wrapping it in a React [`ErrorBoundary`](https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary) (in Next.js, [`catchError`](https://nextjs.org/docs/app/api-reference/functions/unstable_catchError) gives us a retry button on top of that, which I covered in [Error Handling in Next.js with catchError](/posts/error-handling-in-nextjs-with-catch-error)) or in a [`ViewTransition`](https://react.dev/reference/react/ViewTransition) to animate the content as it streams in. The page composes them around its async components.
+Along the same lines, we can also add error handling and animations to a region by wrapping it in a React [`ErrorBoundary`](https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary) (in Next.js, [`catchError`](https://nextjs.org/docs/app/api-reference/functions/catchError) gives us a retry button on top of that, which I covered in [Error Handling in Next.js with catchError](/posts/error-handling-in-nextjs-with-catch-error)) or in a [`ViewTransition`](https://react.dev/reference/react/ViewTransition) to animate the content as it streams in. The page composes them around its async components.
 
 Pulling everything from this post into one place, the home feed page might end up looking something like this:
 
