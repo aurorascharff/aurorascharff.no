@@ -697,6 +697,14 @@ The trip from `useEffect` to React Query to loaders to RSCs has really been abou
 
 If you are still reflexively writing `async function Page` and `await`ing five queries at the top, try the inversion. Many of us learned that habit from loaders and `getServerSideProps`, and AI coding agents have been trained on the same patterns. Push the data fetches into the components that use them, and let `Suspense` handle the orchestration. The result is a codebase that is easier to read, easier to move around in, and easier for both humans and agents to work with.
 
-If you want to see these patterns in a real app, check out [next16-social-media](https://github.com/aurorascharff/next16-social-media) and [next16-music-player](https://github.com/aurorascharff/next16-music-player). Both use the architecture from this post: self-contained async server components, minimal props, `Suspense` boundaries, error boundaries, and `cacheComponents`.
+To summarize the principles:
+
+- **Pages are synchronous compositors.** They don't fetch, they compose.
+- **Async components fetch their own data.** Co-locate the read with the JSX.
+- **Skeletons live next to their component.** Same file, exported alongside it.
+- **Suspense boundaries go at the page level.** The page designs the loading sequence.
+- **Client boundaries are leaf nodes.** Push `'use client'` as deep as it can go.
+
+If you want to see these patterns in a real app, check out [next16-social-media](https://github.com/aurorascharff/next16-social-media) and [next16-music-player](https://github.com/aurorascharff/next16-music-player). Both use the architecture from this post.
 
 I hope this post has been helpful. Thanks to [Nadia Makarevich](https://x.com/adevnadia) for benchmarking RSC performance in her article, so you don't have to take my word for it. Please let me know if you have any questions or comments, and follow me on [Bluesky](https://bsky.app/profile/aurorascharff.no) or [X](https://x.com/aurorascharff) for more updates. Happy coding! 🚀
