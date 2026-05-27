@@ -705,6 +705,6 @@ To summarize the principles:
 - **Suspense boundaries go at the page level.** The page designs the loading sequence.
 - **Client boundaries are leaf nodes.** Push `'use client'` as deep as it can go.
 
-If you want to see these patterns in a real app, check out [next16-social-media](https://github.com/aurorascharff/next16-social-media).
+The demo app from this post is open source at [next16-social-media](https://github.com/aurorascharff/next16-social-media) if you want to explore the full codebase.
 
 I hope this post has been helpful. Thanks to [Nadia Makarevich](https://x.com/adevnadia) for benchmarking RSC performance in her article, so you don't have to take my word for it. Please let me know if you have any questions or comments, and follow me on [Bluesky](https://bsky.app/profile/aurorascharff.no) or [X](https://x.com/aurorascharff) for more updates. Happy coding! 🚀
