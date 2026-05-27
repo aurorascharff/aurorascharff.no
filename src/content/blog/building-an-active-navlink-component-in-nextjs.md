@@ -720,7 +720,7 @@ The script type flips to `text/plain` on the client so it only runs once, during
 
 ## The Full Suspense-Free NavLink
 
-Here is the complete `NavLink` for the alternative path, with `useClientPathname` for `cacheComponents` support without Suspense, `useLinkStatus` for pending states, the data attributes for flicker-free hydration, and TypeScript. You can find this pattern in use in [next16-social-media](https://github.com/aurorascharff/next16-social-media) and [next16-music-player](https://github.com/aurorascharff/next16-music-player).
+Here is the complete `NavLink` for the alternative path, with `useClientPathname` for `cacheComponents` support without Suspense, `useLinkStatus` for pending states, the data attributes for flicker-free hydration, and TypeScript. You can find this pattern in use in [next16-social-media](https://github.com/aurorascharff/next16-social-media).
 
 ```tsx
 // app/components/nav-link.tsx
