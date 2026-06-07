@@ -254,13 +254,13 @@ How useful `isPending` ends up being depends on how the destination route is set
 
 ### Matching Prefixes for Nested Routes
 
-Exact equality works for top-level links, but a link to `/search` usually wants to stay active on `/search?q=react` too. We can default to prefix matching and add an `exact` opt-out. We also normalize `href` to a string here, since the typed version we land on later accepts `URL` as well:
+Exact equality works for top-level links, but a link to `/search` usually wants to stay active on `/search?q=react` too. We can default to prefix matching and add an `exact` opt-out. We also special-case `/` to always be exact, since every pathname starts with `/` and prefix matching would make Home active on every route:
 
 ```tsx
 export function NavLink({ href, exact, ...rest }) {
   const pathname = usePathname();
   const target = href.toString();
-  const isActive = exact
+  const isActive = (exact || target === "/")
     ? pathname === target
     : pathname === target || pathname.startsWith(`${target}/`);
 
@@ -268,7 +268,7 @@ export function NavLink({ href, exact, ...rest }) {
 }
 ```
 
-Now `/search` stays active on `/search?q=react`, but `/` only matches the exact home route when `exact` is set.
+Now `/search` stays active on `/search?q=react`, and `/` only matches the exact home route.
 
 ### Marking the Active Link with aria-current
 
@@ -380,7 +380,8 @@ type Props<T extends string> = Omit<
 };
 
 function checkActive(pathname: string, href: string, exact?: boolean) {
-  return exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
+  if (exact || href === '/') return pathname === href;
+  return pathname === href || pathname.startsWith(`${href}/`);
 }
 
 function resolve<T>(value: Renderable<T> | undefined, props: RenderProps) {
@@ -452,15 +453,16 @@ The active class depends on `usePathname()`, which resolves on the client. Durin
 
 We can fix this with an inline script that runs during HTML parsing, before the browser paints. This is the same pattern Next.js recommends for [preventing flash before hydration](https://nextjs.org/docs/app/guides/preventing-flash-before-hydration) with themes and dates, and the same class of problem Ethan Niser describes in ["A Clock That Doesn't Snap"](https://ethanniser.dev/blog/a-clock-that-doesnt-snap/). The script reads `location.pathname` and sets `aria-current="page"` on the matching nav link before the user sees anything. Since we're styling with `aria-[current=page]:` in Tailwind, that's all it takes.
 
-For the script to find the nav links, we add a `data-nav-link` attribute to each `<Link>`. The script walks every element with that attribute, compares its `href` to `location.pathname`, and sets `aria-current` on matches:
+For the script to find the nav links, we add a `data-navlink-href` attribute to each `<Link>`. The script walks every element with that attribute, compares its `href` to `location.pathname`, and sets `aria-current` on matches:
 
 ```tsx
-export function SeedNavLinks() {
+export function NavLinkScript() {
   const html = `(function(){
   var p = location.pathname;
-  document.querySelectorAll('[data-nav-link]').forEach(function(el) {
-    var href = el.getAttribute('href');
-    var active = (href === '/')
+  document.querySelectorAll('[data-navlink-href]').forEach(function(el) {
+    var href = el.getAttribute('data-navlink-href');
+    var exact = el.hasAttribute('data-navlink-exact');
+    var active = (exact || href === '/')
       ? p === href
       : (p === href || p.startsWith(href + '/'));
     if (active) el.setAttribute('aria-current', 'page');
@@ -478,22 +480,23 @@ export function SeedNavLinks() {
 }
 ```
 
-The script type flips to `text/plain` on the client so it only runs once during the initial HTML parse. On soft navigations React handles the active state as usual.
+The script type flips to `text/plain` on the client so it only runs on the initial page load. On soft navigations React handles the active state as usual.
 
-We also need to add `data-nav-link` and `suppressHydrationWarning` to the `<Link>` in `NavLink`, since the script will have set `aria-current` before React hydrates:
+We also need to add `data-navlink-href` and `suppressHydrationWarning` to the `<Link>` in `NavLink`, since the script will have set `aria-current` before React hydrates:
 
 ```tsx
 <Link
   href={href}
   aria-current={isActive ? "page" : undefined}
   className={resolve(className, { isActive, isPending: false })}
-  data-nav-link
+  data-navlink-href={href.toString()}
+  data-navlink-exact={exact || undefined}
   suppressHydrationWarning
   {...rest}
 >
 ```
 
-Render `<SeedNavLinks />` anywhere alongside your nav links and the active link is correct from the first paint.
+Render `<NavLinkScript />` at the end of your `<body>` in the root layout, after all other content. This is important: with streaming, resolved Suspense chunks get swapped into the page via `$RC` scripts as they arrive. If the seed script runs too early, it sets `aria-current` on elements that later get replaced by streamed content. Placing it last ensures all nav links are in their final state when the script reads them.
 
 ## NavLink Under cacheComponents
 
@@ -681,15 +684,13 @@ function ActiveLink({ href, ...rest }) {
     <Link
       {...rest}
       href={href}
-      data-nav-link
       aria-current={isActive ? "page" : undefined}
-      suppressHydrationWarning
     />
   );
 }
 ```
 
-The trade-off is that segments-based matching is tied to the route structure. If you add a route group like `(marketing)`, the segments change and the matching breaks. It also doesn't work for links like our `ProfileLink` where the `href` depends on dynamic data (`/u/[handle]`), since you'd need the handle to know which segments to compare against. `usePathname()` is more resilient to those kinds of cases. Pick whichever fits your app.
+The trade-off is that segments-based matching is tied to the route structure. If you add a route group like `(marketing)`, the segments change and the matching breaks. `usePathname()` is more resilient to route structure changes. Pick whichever fits your app.
 
 ## Gotchas
 
