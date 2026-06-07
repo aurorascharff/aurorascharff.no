@@ -122,7 +122,7 @@ export function NavLink({ href, children }) {
 
 Notice that the wrapper is around `next/link`, not a plain `<a>`. This matters: `next/link` does client-side navigation, automatic prefetching of routes in the viewport, and scroll restoration. Falling back to `<a href>` for in-app navigation would mean a full page reload on every click, losing router state and any partially-streamed UI. Keep the underlying `Link` for any internal route.
 
-The [docs also recommend](https://nextjs.org/docs/app/api-reference/functions/use-selected-layout-segment#creating-an-active-link-component) `useSelectedLayoutSegment()` for active link components. It works well when your nav lives in a layout and each link maps to a top-level segment like `/search` or `/bookmarks`. But it gets fragile as soon as the route structure changes, a route group like `(marketing)` shifts what counts as a "segment," and a dynamic link like `/u/[handle]` still needs dynamic data to build the `href`, so you still need `usePathname()` for that. For a general-purpose `NavLink` we can drop anywhere without worrying about route structure, `usePathname()` is still the most natural API.
+The [docs also recommend](https://nextjs.org/docs/app/api-reference/functions/use-selected-layout-segment#creating-an-active-link-component) `useSelectedLayoutSegment()` for active link components. It works well when your nav lives in a layout and each link maps to a top-level segment like `/search` or `/bookmarks`. But it gets fragile as soon as the route structure changes, a route group like `(marketing)` shifts what counts as a "segment." For a general-purpose `NavLink` we can drop anywhere without worrying about route structure, `usePathname()` is still the most natural API.
 
 ### Accepting a className and activeClassName
 
@@ -227,7 +227,7 @@ export function NavLink({ href, className, children, ...rest }) {
   return (
     <Link
       href={href}
-      className={resolveClassName(className, { isActive })}
+      className={resolve(className, { isActive })}
       {...rest}
     >
       <NavLinkContent isActive={isActive}>{children}</NavLinkContent>
@@ -382,7 +382,7 @@ type Props<T extends string> = Omit<
   "href" | "className" | "children"
 > & {
   href: Route<T> | URL;
-  className?: string | ((props: { isActive: boolean }) => string | undefined);
+  className?: string | ((props: ActiveProps) => string | undefined);
   children?: Renderable<React.ReactNode>;
   exact?: boolean;
 };
@@ -399,8 +399,8 @@ function resolve<T>(value: Renderable<T> | undefined, props: RenderProps) {
 }
 
 function resolveClassName(
-  value: string | ((props: { isActive: boolean }) => string | undefined) | undefined,
-  props: { isActive: boolean },
+  value: string | ((props: ActiveProps) => string | undefined) | undefined,
+  props: ActiveProps,
 ) {
   return typeof value === "function" ? value(props) : value;
 }
@@ -731,7 +731,7 @@ export function useClientPathname(): string {
 
 This returns `""` on the server and the first client render, then the real pathname after mount. Replace `usePathname()` with `useClientPathname()` in `NavLink` and the mismatch is gone.
 
-That still leaves a flash: every link renders inactive until the effect fires. To fix that, you can add an [inline script that runs before paint](https://nextjs.org/docs/app/guides/preventing-flash-before-hydration) to read `location.pathname` and apply the correct class immediately. This is the same pattern Next.js recommends for themes and dates, and Ethan Niser's ["A Clock That Doesn't Snap"](https://ethanniser.dev/blog/a-clock-that-doesnt-snap/) covers the technique in depth.
+That still leaves a flash: every link renders inactive until the effect fires. To fix that, you can add an [inline script that runs before paint](https://nextjs.org/docs/app/guides/preventing-flash-before-hydration) to read `location.pathname` and apply the correct class immediately, the same pattern we used in the [Preventing Flickering](#preventing-flickering-on-first-paint) section.
 
 ## Conclusion
 
