@@ -19,7 +19,7 @@ Active link styling is something almost every Next.js app needs in some form. Th
 - **`usePathname()`** compares against each link's `href` directly. Works anywhere.
 - **`useSelectedLayoutSegment()`** matches route segments instead of the full pathname. Good for layouts where each link maps to a top-level segment.
 
-In this post we'll build a reusable `NavLink` component on top of `usePathname()`, taking inspiration from React Router. First we'll build it up piece by piece: the render-prop pattern, pending states with `useLinkStatus`, prefix matching, accessibility, and TypeScript. Then we'll try it under `cacheComponents` and see what breaks.
+In this post we'll build a reusable `NavLink` component on top of `usePathname()`, taking inspiration from React Router. First we'll build it up piece by piece: the render-prop pattern, pending states with `useLinkStatus`, prefix matching, accessibility, and TypeScript. Then we'll add an inline script to prevent flickering on first paint, try it under `cacheComponents`, and look at a `useSelectedLayoutSegments` alternative.
 
 It's a bit of a journey, so let's get started.
 
@@ -446,6 +446,55 @@ The `exact` prop on the Home link prevents `/` from prefix-matching every route.
 
 One thing to be aware of: a function `className` (or function `children`) is not serializable, so it cannot be passed across the server-client boundary. If your layout is a Server Component, you cannot use the render-prop form inline. The fix is either to mark the layout as `'use client'`, or to extract a small client component that holds the function internally and accepts only serializable props (`href`, `icon`, `label`) from the server. If you only need a plain string `className` and static children, none of this applies, you can use `NavLink` directly from a Server Component.
 
+## Preventing Flickering on First Paint
+
+The active class depends on `usePathname()`, which resolves on the client. During the App Shell prerender, the pathname isn't known yet, so no link is highlighted. The active style only appears when React hydrates, which causes a brief flash.
+
+We can fix this with an inline script that runs during HTML parsing, before the browser paints. This is the same pattern Next.js recommends for [preventing flash before hydration](https://nextjs.org/docs/app/guides/preventing-flash-before-hydration) with themes and dates, and the same class of problem Ethan Niser describes in ["A Clock That Doesn't Snap"](https://ethanniser.dev/blog/a-clock-that-doesnt-snap/). The script reads `location.pathname` and sets `aria-current="page"` on the matching nav link before the user sees anything. Since we're styling with `aria-[current=page]:` in Tailwind, that's all it takes.
+
+For the script to find the nav links, we add a `data-nav-link` attribute to each `<Link>`. The script walks every element with that attribute, compares its `href` to `location.pathname`, and sets `aria-current` on matches:
+
+```tsx
+export function SeedNavLinks() {
+  const html = `(function(){
+  var p = location.pathname;
+  document.querySelectorAll('[data-nav-link]').forEach(function(el) {
+    var href = el.getAttribute('href');
+    var active = (href === '/')
+      ? p === href
+      : (p === href || p.startsWith(href + '/'));
+    if (active) el.setAttribute('aria-current', 'page');
+    else el.removeAttribute('aria-current');
+  });
+})()`;
+
+  return (
+    <script
+      type={typeof window === 'undefined' ? 'text/javascript' : 'text/plain'}
+      suppressHydrationWarning
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
+}
+```
+
+The script type flips to `text/plain` on the client so it only runs once during the initial HTML parse. On soft navigations React handles the active state as usual.
+
+We also need to add `data-nav-link` and `suppressHydrationWarning` to the `<Link>` in `NavLink`, since the script will have set `aria-current` before React hydrates:
+
+```tsx
+<Link
+  href={href}
+  aria-current={isActive ? "page" : undefined}
+  className={resolve(className, { isActive, isPending: false })}
+  data-nav-link
+  suppressHydrationWarning
+  {...rest}
+>
+```
+
+Render `<SeedNavLinks />` anywhere alongside your nav links and the active link is correct from the first paint.
+
 ## NavLink Under cacheComponents
 
 [Cache Components](https://nextjs.org/docs/app/api-reference/config/next-config-js/cacheComponents) is where the App Router is heading and what we want to opt into for the new features like partial prerendering and [`'use cache'`](https://nextjs.org/docs/app/api-reference/directives/use-cache). With `cacheComponents` enabled, any component that reads dynamic data has to live behind a `Suspense` boundary. Everything outside those boundaries can become part of a static shell that is prerendered and served instantly.
@@ -602,6 +651,46 @@ function ActiveLinkIndicator({ href }: { href: string }) {
 
 The indicator still needs a `Suspense` boundary since `usePathname()` suspends under `cacheComponents`, but the fallback is empty so nothing flashes. All the styling happens through CSS.
 
+## Using useSelectedLayoutSegments Instead
+
+Everything so far uses `usePathname()` to match against the link's `href`. An alternative is [`useSelectedLayoutSegments()`](https://nextjs.org/docs/app/api-reference/functions/use-selected-layout-segment), which gives you the active route segments from the nearest layout. Instead of comparing pathnames as strings, you compare segments as arrays.
+
+This can be useful when your nav lives in a layout and you want matching that follows the route structure rather than the URL string. Here is what the same `NavLink` looks like with segments:
+
+```tsx
+"use client";
+
+import Link from "next/link";
+import { useSelectedLayoutSegments } from "next/navigation";
+import { Suspense } from "react";
+
+function NavLink({ href, ...rest }) {
+  return (
+    <Suspense fallback={<Link {...rest} href={href} data-nav-link />}>
+      <ActiveLink href={href} {...rest} />
+    </Suspense>
+  );
+}
+
+function ActiveLink({ href, ...rest }) {
+  const segments = useSelectedLayoutSegments();
+  const want = href.toString().split("/").filter(Boolean);
+  const isActive = want.length === segments.length && want.every((s, i) => s === segments[i]);
+
+  return (
+    <Link
+      {...rest}
+      href={href}
+      data-nav-link
+      aria-current={isActive ? "page" : undefined}
+      suppressHydrationWarning
+    />
+  );
+}
+```
+
+The trade-off is that segments-based matching is tied to the route structure. If you add a route group like `(marketing)`, the segments change and the matching breaks. It also doesn't work for links like our `ProfileLink` where the `href` depends on dynamic data (`/u/[handle]`), since you'd need the handle to know which segments to compare against. `usePathname()` is more resilient to those kinds of cases. Pick whichever fits your app.
+
 ## Gotchas
 
 **Hydration mismatch with rewrites.** If your app uses [rewrites in `next.config` or a `Proxy` file](https://nextjs.org/docs/app/api-reference/functions/use-pathname#avoid-hydration-mismatch-with-rewrites), `usePathname()` returns the source path on the server while the browser URL is the rewritten path. This means the server renders the wrong active state, and when the client hydrates it corrects itself, causing both a hydration mismatch and a visible flash.
@@ -630,7 +719,7 @@ That still leaves a flash: every link renders inactive until the effect fires. T
 
 ## Conclusion
 
-We started with a hardcoded `active` class and worked through quite a few iterations: the render-prop pattern, `useLinkStatus` for pending states, prefix matching, `aria-current`, TypeScript, and Suspense boundaries for `cacheComponents`. That's a lot of ground for one component, but each piece solves a real problem that comes up in production apps.
+We started with a hardcoded `active` class and worked through quite a few iterations: the render-prop pattern, `useLinkStatus` for pending states, prefix matching, `aria-current`, TypeScript, an inline script for flicker-free first paint, Suspense boundaries for `cacheComponents`, and a `useSelectedLayoutSegments` alternative. That's a lot of ground for one component, but each piece solves a real problem that comes up in production apps.
 
 You might not need all of this. A plain `usePathname()` call in a navbar component works fine for most apps. But if you want a single, reusable `NavLink` that handles every edge case, now you know how to build one. The examples in this post are inspired by [next16-social-media](https://github.com/aurorascharff/next16-social-media), which uses a variation of this pattern with the CSS indicator approach and a `useEffect` guard for rewrites.
 
