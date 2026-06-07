@@ -75,21 +75,15 @@ import { NavLink } from "react-router";
   Home
 </NavLink>
 
-// function children: change the rendered content based on isActive
+// function children with isPending: show a pending state while navigating
 <NavLink to="/">
-  {({ isActive }) => (
+  {({ isActive, isPending }) => (
     <>
       <HomeIcon filled={isActive} />
       Home
+      {isPending && <Spinner />}
     </>
   )}
-</NavLink>
-
-// function className with isPending: show a pending state while navigating
-<NavLink to="/" className={({ isActive, isPending }) =>
-  isPending ? "nav-item opacity-50" : isActive ? "nav-item font-bold" : "nav-item"
-}>
-  Home
 </NavLink>
 ```
 
