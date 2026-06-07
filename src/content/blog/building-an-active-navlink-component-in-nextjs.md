@@ -227,7 +227,7 @@ export function NavLink({ href, className, children, ...rest }) {
   return (
     <Link
       href={href}
-      className={resolve(className, { isActive, isPending: false })}
+      className={resolveClassName(className, { isActive })}
       {...rest}
     >
       <NavLinkContent isActive={isActive}>{children}</NavLinkContent>
@@ -278,7 +278,7 @@ A nav link is the canonical use case for [`aria-current="page"`](https://www.w3.
 <Link
   href={href}
   aria-current={isActive ? "page" : undefined}
-  className={resolve(className, { isActive, isPending: false })}
+  className={resolveClassName(className, { isActive })}
   {...rest}
 >
   <NavLinkContent isActive={isActive}>{children}</NavLinkContent>
@@ -314,7 +314,8 @@ The component works, but in TypeScript we want the render-prop shape to type-che
 ```tsx
 import type { Route } from "next";
 
-type RenderProps = { isActive: boolean; isPending: boolean };
+type ActiveProps = { isActive: boolean };
+type RenderProps = ActiveProps & { isPending: boolean };
 type Renderable<T> = T | ((props: RenderProps) => T);
 
 type Props<T extends string> = Omit<
@@ -322,19 +323,26 @@ type Props<T extends string> = Omit<
   "href" | "className" | "children"
 > & {
   href: Route<T> | URL;
-  className?: Renderable<string | undefined>;
+  className?: string | ((props: ActiveProps) => string | undefined);
   children?: Renderable<React.ReactNode>;
   exact?: boolean;
 };
 ```
 
-The `Renderable<T>` type encodes the "value or function" shape, applied to both `className` and `children`. Both receive `{ isActive, isPending }`, so the consumer can destructure whichever values they need. `className` consumers will typically only use `isActive`, while `children` consumers can use both. The `Props` type inherits everything from `next/link`'s props via `React.ComponentProps<typeof Link>` and `Omit`s the three we redefine, so consumers still get autocomplete for `prefetch`, `replace`, `transitionTypes`, event handlers, and anything else `Link` accepts. The `href: Route<T> | URL` generic matches the pattern the [Next.js docs recommend for wrapping `Link`](https://nextjs.org/docs/app/api-reference/config/typescript#statically-typed-links): with `typedRoutes` enabled, invalid hrefs are caught at compile time, and with it disabled, `Route<T>` falls back to a regular string. The `resolve` helper picks up a matching generic:
+The `className` prop accepts a function of `{ isActive }`, since `isPending` is only available inside `<Link>` children via `useLinkStatus`. The `children` prop gets the full `{ isActive, isPending }` through the `Renderable` type. The `Props` type inherits everything from `next/link`'s props via `React.ComponentProps<typeof Link>` and `Omit`s the three we redefine, so consumers still get autocomplete for `prefetch`, `replace`, `transitionTypes`, event handlers, and anything else `Link` accepts. The `href: Route<T> | URL` generic matches the pattern the [Next.js docs recommend for wrapping `Link`](https://nextjs.org/docs/app/api-reference/config/typescript#statically-typed-links): with `typedRoutes` enabled, invalid hrefs are caught at compile time, and with it disabled, `Route<T>` falls back to a regular string. We need two resolve helpers, one for each prop shape:
 
 ```tsx
 function resolve<T>(value: Renderable<T> | undefined, props: RenderProps) {
   return typeof value === "function"
     ? (value as (p: RenderProps) => T)(props)
     : value;
+}
+
+function resolveClassName(
+  value: string | ((props: ActiveProps) => string | undefined) | undefined,
+  props: ActiveProps,
+) {
+  return typeof value === "function" ? value(props) : value;
 }
 ```
 
@@ -374,7 +382,7 @@ type Props<T extends string> = Omit<
   "href" | "className" | "children"
 > & {
   href: Route<T> | URL;
-  className?: Renderable<string | undefined>;
+  className?: string | ((props: { isActive: boolean }) => string | undefined);
   children?: Renderable<React.ReactNode>;
   exact?: boolean;
 };
@@ -388,6 +396,13 @@ function resolve<T>(value: Renderable<T> | undefined, props: RenderProps) {
   return typeof value === "function"
     ? (value as (p: RenderProps) => T)(props)
     : value;
+}
+
+function resolveClassName(
+  value: string | ((props: { isActive: boolean }) => string | undefined) | undefined,
+  props: { isActive: boolean },
+) {
+  return typeof value === "function" ? value(props) : value;
 }
 
 export function NavLink<T extends string>({
@@ -404,7 +419,7 @@ export function NavLink<T extends string>({
     <Link
       href={href}
       aria-current={isActive ? "page" : undefined}
-      className={resolve(className, { isActive, isPending: false })}
+      className={resolveClassName(className, { isActive })}
       {...rest}
     >
       <NavLinkContent isActive={isActive}>{children}</NavLinkContent>
@@ -488,7 +503,7 @@ We also need to add `data-navlink-href` and `suppressHydrationWarning` to the `<
 <Link
   href={href}
   aria-current={isActive ? "page" : undefined}
-  className={resolve(className, { isActive, isPending: false })}
+  className={resolveClassName(className, { isActive })}
   data-navlink-href={href.toString()}
   data-navlink-exact={exact || undefined}
   suppressHydrationWarning
@@ -549,14 +564,14 @@ We can split the component into an outer `NavLink` that renders the Suspense bou
 // app/components/nav-link.tsx
 "use client";
 
-// ...imports, types, checkActive, resolve (same as before)
+// ...imports, types, checkActive, resolve, resolveClassName (same as before)
 
 export function NavLink({ href, className, children, exact, ...rest }) {
   const inactive = { isActive: false, isPending: false };
   return (
     <Suspense
       fallback={
-        <Link href={href} className={resolve(className, { isActive: false, isPending: false })} {...rest}>
+        <Link href={href} className={resolveClassName(className, { isActive: false })} {...rest}>
           {resolve(children, inactive)}
         </Link>
       }
@@ -576,7 +591,7 @@ function NavLinkInner({ href, className, children, exact, ...rest }) {
     <Link
       href={href}
       aria-current={isActive ? "page" : undefined}
-      className={resolve(className, { isActive, isPending: false })}
+      className={resolveClassName(className, { isActive })}
       {...rest}
     >
       <PendingIndicator isActive={isActive}>{children}</PendingIndicator>
