@@ -4,14 +4,14 @@ pubDatetime: 2026-05-23T10:00:00Z
 title: Building an Active NavLink Component in Next.js
 slug: building-an-active-navlink-component-in-nextjs
 featured: false
-draft: true
+draft: false
 tags:
   - Next.js 16
   - React Server Components
   - App Router
   - Cache Components
   - Navigation
-description: "Active link styling is one of the most common things you need in a real application. Here is how to build a reusable NavLink component for a Next.js app, taking inspiration from React Router, that handles Cache Components, with a simpler useSyncExternalStore alternative that skips Suspense."
+description: "Active link styling is one of the most common things you need in a real application. Here is how to build a reusable NavLink component for a Next.js app, taking inspiration from React Router, that handles Cache Components and flicker-free hydration."
 ---
 
 Active link styling is something almost every Next.js app needs in some form. The App Router gives us [`usePathname()`](https://nextjs.org/docs/app/api-reference/functions/use-pathname) and [`useSelectedLayoutSegment()`](https://nextjs.org/docs/app/api-reference/functions/use-selected-layout-segment) to read the current route, and from there it is up to us how to style the matching link.
@@ -19,7 +19,7 @@ Active link styling is something almost every Next.js app needs in some form. Th
 - **`usePathname()`** compares against each link's `href` directly. Works anywhere.
 - **`useSelectedLayoutSegment()`** matches route segments instead of the full pathname. Good for layouts where each link maps to a top-level segment.
 
-In this post we'll build a reusable `NavLink` component on top of `usePathname()`, taking inspiration from React Router. First we'll build it up piece by piece: the render-prop pattern, pending states with `useLinkStatus`, prefix matching, accessibility, and TypeScript. Then we'll try it under `cacheComponents` and see what breaks. Finally, we'll look at a simpler alternative using `useSyncExternalStore` that skips Suspense entirely, with an optional inline script to prevent the flicker that comes with it.
+In this post we'll build a reusable `NavLink` component on top of `usePathname()`, taking inspiration from React Router. First we'll build it up piece by piece: the render-prop pattern, pending states with `useLinkStatus`, prefix matching, accessibility, and TypeScript. Then we'll try it under `cacheComponents` and see what breaks.
 
 It's a bit of a journey, so let's get started.
 
@@ -93,7 +93,7 @@ import { NavLink } from "react-router";
 </NavLink>
 ```
 
-That looks a bit unusual at first glance. Why is a styling prop a function? Let's build a `NavLink` like that for the App Router, and it'll make more sense as we go.
+That looks unusual. Why is a styling prop a function? Let's build a `NavLink` like that for the App Router, and it'll make more sense as we go.
 
 ## Building NavLink
 
@@ -202,16 +202,13 @@ The function `className` swaps a `font-bold` modifier, and the function `childre
 
 ### Adding isPending
 
-React Router's `NavLink` also exposes `isPending`, which is `true` while the destination route is loading. Let's add that too.
-
-One approach is to intercept `<Link>`'s click with `useTransition` and `router.push()`, which gives us an `isPending` boolean we can pass to both `className` and `children`. But that means overriding `<Link>`'s click handler, which handles things like modifier-key detection, scroll restoration, and view transitions out of the box.
+React Router's `NavLink` also exposes `isPending`, which is `true` while the destination route is loading. One way to add this is with `useTransition` and `router.push()`, but that means overriding `<Link>`'s click handler and reimplementing things like modifier-key detection, scroll restoration, and view transitions.
 
 Next.js has a better option: [`useLinkStatus`](https://nextjs.org/docs/app/api-reference/functions/use-link-status). It tracks the pending state natively inside `<Link>` children without intercepting clicks. The catch is it has to be called from a component rendered *inside* `<Link>`, so we can expose `isPending` through the `children` render prop but not through `className`. That's a reasonable trade-off: `className` still gets `isActive`, and `children` gets both.
 
 We add a small inner component that reads the link status and resolves `children`:
 
 ```tsx
-// app/components/nav-link.tsx
 import { useLinkStatus } from "next/link";
 
 function NavLinkContent({ isActive, children }) {
@@ -230,7 +227,7 @@ export function NavLink({ href, className, children, ...rest }) {
   return (
     <Link
       href={href}
-      className={resolve(className, { isActive })}
+      className={resolve(className, { isActive, isPending: false })}
       {...rest}
     >
       <NavLinkContent isActive={isActive}>{children}</NavLinkContent>
@@ -239,10 +236,10 @@ export function NavLink({ href, className, children, ...rest }) {
 }
 ```
 
-Now the consumer can use `isPending` in the children render prop to swap content while navigating:
+Now the consumer can use `isPending` in the children render prop:
 
 ```tsx
-<NavLink href="/" className={({ isActive }) => (isActive ? "nav-item active" : "nav-item")}>
+<NavLink href="/" className={({ isActive }) => (isActive ? "nav-item font-bold" : "nav-item")}>
   {({ isActive, isPending }) => (
     <>
       <HomeIcon filled={isActive} />
@@ -281,10 +278,10 @@ A nav link is the canonical use case for [`aria-current="page"`](https://www.w3.
 <Link
   href={href}
   aria-current={isActive ? "page" : undefined}
-  className={resolve(className, { isActive })}
+  className={resolve(className, { isActive, isPending: false })}
   {...rest}
 >
-  {resolve(children, { isActive })}
+  <NavLinkContent isActive={isActive}>{children}</NavLinkContent>
 </Link>
 ```
 
@@ -308,7 +305,7 @@ In Tailwind, the `aria-` variant does the same thing:
 </NavLink>
 ```
 
-For consumers who prefer the render-prop approach, `isActive` is still available, so they can mix both freely.
+For consumers who prefer the render-prop approach, `isActive` is still available in both `className` and `children`, so they can mix both freely.
 
 ### Adding TypeScript
 
@@ -317,8 +314,7 @@ The component works, but in TypeScript we want the render-prop shape to type-che
 ```tsx
 import type { Route } from "next";
 
-type ActiveProps = { isActive: boolean };
-type RenderProps = ActiveProps & { isPending: boolean };
+type RenderProps = { isActive: boolean; isPending: boolean };
 type Renderable<T> = T | ((props: RenderProps) => T);
 
 type Props<T extends string> = Omit<
@@ -326,15 +322,13 @@ type Props<T extends string> = Omit<
   "href" | "className" | "children"
 > & {
   href: Route<T> | URL;
-  className?: string | ((props: ActiveProps) => string | undefined);
+  className?: Renderable<string | undefined>;
   children?: Renderable<React.ReactNode>;
   exact?: boolean;
 };
 ```
 
-The `className` prop accepts a function of `{ isActive }`, since `isPending` is only available inside `<Link>` children via `useLinkStatus`. The `children` prop gets the full `{ isActive, isPending }` through the `Renderable` type.
-
-The `Renderable<T>` type encodes the "value or function" shape, applied to both `className` and `children`. The `Props` type inherits everything from `next/link`'s props via `React.ComponentProps<typeof Link>` and `Omit`s the three we redefine, so consumers still get autocomplete for `prefetch`, `replace`, event handlers, and anything else `Link` accepts. The `href: Route<T> | URL` generic matches the pattern the [Next.js docs recommend for wrapping `Link`](https://nextjs.org/docs/app/api-reference/config/typescript#statically-typed-links): with `typedRoutes` enabled, invalid hrefs are caught at compile time, and with it disabled, `Route<T>` falls back to a regular string. The `resolve` helper picks up a matching generic:
+The `Renderable<T>` type encodes the "value or function" shape, applied to both `className` and `children`. Both receive `{ isActive, isPending }`, so the consumer can destructure whichever values they need. `className` consumers will typically only use `isActive`, while `children` consumers can use both. The `Props` type inherits everything from `next/link`'s props via `React.ComponentProps<typeof Link>` and `Omit`s the three we redefine, so consumers still get autocomplete for `prefetch`, `replace`, `transitionTypes`, event handlers, and anything else `Link` accepts. The `href: Route<T> | URL` generic matches the pattern the [Next.js docs recommend for wrapping `Link`](https://nextjs.org/docs/app/api-reference/config/typescript#statically-typed-links): with `typedRoutes` enabled, invalid hrefs are caught at compile time, and with it disabled, `Route<T>` falls back to a regular string. The `resolve` helper picks up a matching generic:
 
 ```tsx
 function resolve<T>(value: Renderable<T> | undefined, props: RenderProps) {
@@ -372,8 +366,7 @@ import type { Route } from "next";
 import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 
-type ActiveProps = { isActive: boolean };
-type RenderProps = ActiveProps & { isPending: boolean };
+type RenderProps = { isActive: boolean; isPending: boolean };
 type Renderable<T> = T | ((props: RenderProps) => T);
 
 type Props<T extends string> = Omit<
@@ -381,7 +374,7 @@ type Props<T extends string> = Omit<
   "href" | "className" | "children"
 > & {
   href: Route<T> | URL;
-  className?: string | ((props: ActiveProps) => string | undefined);
+  className?: Renderable<string | undefined>;
   children?: Renderable<React.ReactNode>;
   exact?: boolean;
 };
@@ -394,13 +387,6 @@ function resolve<T>(value: Renderable<T> | undefined, props: RenderProps) {
   return typeof value === "function"
     ? (value as (p: RenderProps) => T)(props)
     : value;
-}
-
-function resolveClassName(
-  value: string | ((props: ActiveProps) => string | undefined) | undefined,
-  props: ActiveProps,
-) {
-  return typeof value === "function" ? value(props) : value;
 }
 
 export function NavLink<T extends string>({
@@ -417,7 +403,7 @@ export function NavLink<T extends string>({
     <Link
       href={href}
       aria-current={isActive ? "page" : undefined}
-      className={resolveClassName(className, { isActive })}
+      className={resolve(className, { isActive, isPending: false })}
       {...rest}
     >
       <NavLinkContent isActive={isActive}>{children}</NavLinkContent>
@@ -459,8 +445,6 @@ Back in our sidebar, this is how we'd use it. Since the component sets `aria-cur
 The `exact` prop on the Home link prevents `/` from prefix-matching every route.
 
 One thing to be aware of: a function `className` (or function `children`) is not serializable, so it cannot be passed across the server-client boundary. If your layout is a Server Component, you cannot use the render-prop form inline. The fix is either to mark the layout as `'use client'`, or to extract a small client component that holds the function internally and accepts only serializable props (`href`, `icon`, `label`) from the server. If you only need a plain string `className` and static children, none of this applies, you can use `NavLink` directly from a Server Component.
-
-One more edge case: if your app uses [rewrites in `next.config` or a `Proxy` file](https://nextjs.org/docs/app/api-reference/functions/use-pathname#avoid-hydration-mismatch-with-rewrites), `usePathname()` can cause a hydration mismatch. The prerendered HTML is built for the source pathname, but the browser URL may differ after the rewrite. We'll come back to this later with a `useSyncExternalStore` alternative that sidesteps the problem entirely.
 
 ## NavLink Under cacheComponents
 
@@ -507,9 +491,7 @@ This is better. Only the active styling is delayed, the icon and label show imme
 
 ### Moving Suspense Inside NavLink
 
-The idea is to put the `Suspense` boundary inside `NavLink`, with the inactive version of the link as the fallback. The link becomes its own loading state. No spinner, no skeleton, no missing nav item, just the link in its default form, which then upgrades to active styling once `usePathname()` resolves on the client.
-
-Let's split the component into an outer `NavLink` that renders the Suspense boundary, and an inner `NavLinkInner` that reads `usePathname()`:
+We can split the component into an outer `NavLink` that renders the Suspense boundary, and an inner `NavLinkInner` that reads `usePathname()`. The fallback renders the same `<Link>` in its inactive state, so the layout matches exactly and there's no flash. `NavLinkInner` reads the pathname and renders the link with the correct active class. A small `PendingIndicator` inside `<Link>` reads `useLinkStatus()` and resolves `children` with `isPending`:
 
 ```tsx
 // app/components/nav-link.tsx
@@ -522,7 +504,7 @@ export function NavLink({ href, className, children, exact, ...rest }) {
   return (
     <Suspense
       fallback={
-        <Link href={href} className={resolve(className, inactive)} {...rest}>
+        <Link href={href} className={resolve(className, { isActive: false, isPending: false })} {...rest}>
           {resolve(children, inactive)}
         </Link>
       }
@@ -542,12 +524,17 @@ function NavLinkInner({ href, className, children, exact, ...rest }) {
     <Link
       href={href}
       aria-current={isActive ? "page" : undefined}
-      className={resolveClassName(className, { isActive })}
+      className={resolve(className, { isActive, isPending: false })}
       {...rest}
     >
-      <NavLinkContent isActive={isActive}>{children}</NavLinkContent>
+      <PendingIndicator isActive={isActive}>{children}</PendingIndicator>
     </Link>
   );
+}
+
+function PendingIndicator({ isActive, children }) {
+  const { pending } = useLinkStatus();
+  return <>{resolve(children, { isActive, isPending: pending })}</>;
 }
 
 export function NavLinkSkeleton({ children, className }) {
@@ -559,7 +546,9 @@ export function NavLinkSkeleton({ children, className }) {
 }
 ```
 
-The default Suspense fallback is the same `<Link>` rendered in its inactive state. This guarantees the layout matches the real link exactly, no element swap, no class drift, no CLS. We also export a small `NavLinkSkeleton` next to `NavLink`: a grayed-out `<span>` with `opacity-50` and `aria-hidden`, useful anywhere a consumer needs a placeholder that matches a `NavLink`'s layout.
+The server renders the active class correctly, so there's no flash on first paint. `className` gets `{ isActive }` and `children` gets `{ isActive, isPending }`. The duplicate `<Link>` in the fallback is the cost, but it guarantees the layout matches exactly.
+
+We also keep exporting `NavLinkSkeleton` for the `ProfileLink` case, where the async Server Component still needs an outer `Suspense` boundary.
 
 The two static links no longer need per-link wrappers. But what about `ProfileLink`? It's an async Server Component, so it still needs an outer `Suspense` boundary. Without a fallback, nothing renders in its place while the handle loads, and the nav jumps when the link pops in. We can use the exported `NavLinkSkeleton` as the fallback, sharing the same base layout class with the real link so the dimensions match:
 
@@ -585,267 +574,64 @@ The two static links no longer need per-link wrappers. But what about `ProfileLi
 
 The consumer no longer has to think about `Suspense` for the static links, and the one async link gets a clean, layout-stable fallback.
 
-This is a good place to stop for most apps. The component is self-contained: drop a `NavLink` anywhere and it just works under `cacheComponents`, with the active state rendered on the server so the correct link is highlighted on first paint. The cost is a bit of internal machinery (the inner Suspense, the fallback `<Link>`), and the fact that `usePathname()` does run on the server during prerendering, which is what we'll address next.
+This is a good place to stop for most apps. The component is self-contained: drop a `NavLink` anywhere and it just works under `cacheComponents`, with the active state rendered on the server so the correct link is highlighted on first paint.
 
-## An Alternative: Skipping SSR for the Pathname
-
-The Suspense version is more complex than it needs to be if you're okay with a brief flicker on first paint, or if you'd rather not think about Suspense boundaries inside `NavLink` at all. And if your app uses [rewrites](https://nextjs.org/docs/app/api-reference/functions/use-pathname#avoid-hydration-mismatch-with-rewrites), the Suspense version has another problem on top of that: `usePathname()` runs during prerendering against the source path, but the browser URL after the rewrite may differ, causing a hydration mismatch.
-
-For either of those cases, there's a simpler approach: skip reading the pathname on the server entirely and read `window.location.pathname` on the client instead. Ideally Next.js would ship a `usePathname({ ssr: false })` option for this, but until then we can build it ourselves with `useSyncExternalStore`:
+If you don't need the render-prop flexibility and just want CSS-based active styling under `cacheComponents`, there's a simpler option. Render a small indicator component inside `<Link>` that sets `data-active` and `data-pending` attributes, and style the parent with Tailwind's `has-data-*` variants:
 
 ```tsx
-// hooks/use-client-pathname.ts
 "use client";
 
-import { useSyncExternalStore } from "react";
+import Link, { useLinkStatus } from "next/link";
+import { usePathname } from "next/navigation";
 
-const listeners = new Set<() => void>();
-
-function subscribe(callback: () => void) {
-  listeners.add(callback);
-  window.addEventListener("popstate", callback);
-  return () => {
-    listeners.delete(callback);
-    window.removeEventListener("popstate", callback);
-  };
+function ActiveLinkIndicator({ href }: { href: string }) {
+  const pathname = usePathname();
+  const { pending } = useLinkStatus();
+  const isActive = pathname === href || pathname.startsWith(`${href}/`);
+  return <span hidden data-active={isActive || undefined} data-pending={pending || undefined} />;
 }
 
-// Patch pushState/replaceState once to notify subscribers on soft navigations.
-if (typeof window !== "undefined") {
-  const original = { pushState: history.pushState, replaceState: history.replaceState };
-  for (const method of ["pushState", "replaceState"] as const) {
-    history[method] = function (...args: Parameters<typeof history.pushState>) {
-      original[method].apply(this, args);
-      listeners.forEach((fn) => fn());
-    };
-  }
-}
-
-export function useClientPathname(): string | null {
-  return useSyncExternalStore(
-    subscribe,
-    () => window.location.pathname,
-    () => null,
-  );
-}
-```
-
-The server snapshot returns `null`, so nothing dynamic runs during prerendering. On the client, `window.location.pathname` is always the real browser URL, regardless of rewrites. The `pushState`/`replaceState` patching ensures the hook re-fires on soft navigations.
-
-Now we can drop the Suspense boundary and `NavLink` simplifies back down:
-
-```tsx
-// app/components/nav-link.tsx
-"use client";
-
-// ...imports, types, resolve, resolveClassName (same as before)
-import { useClientPathname } from "@/hooks/use-client-pathname";
-
-export function NavLink({ href, className, children, exact, ...rest }) {
-  const pathname = useClientPathname();
-  const isActive = checkActive(pathname, href.toString(), exact);
-
-  return (
-    <Link
-      href={href}
-      aria-current={isActive ? "page" : undefined}
-      className={resolveClassName(className, { isActive })}
-      {...rest}
-    >
-      <NavLinkContent isActive={isActive}>{children}</NavLinkContent>
-    </Link>
-  );
-}
-
-// NavLinkContent, NavLinkSkeleton (same as before)
-```
-
-The Suspense split is gone. Just `usePathname` with a flag. But there's a catch: the link now renders inactive on the server and only flips to active after hydration. That means every active link briefly flashes from inactive to active when the page loads. If you don't mind the flicker, you can stop here. If you do, the next section adds an inline script to fix it.
-
-## Preventing Flickering During Hydration
-
-With `useClientPathname`, the link renders inactive on the server and upgrades on the client. That means every link briefly flashes from its inactive to its active state as React hydrates.
-
-We can fix this with an inline script that runs during HTML parsing, before the browser paints. This is the same pattern Next.js recommends for [preventing flash before hydration](https://nextjs.org/docs/app/guides/preventing-flash-before-hydration) with themes, dates, and persisted UI state, and the same class of problem Ethan Niser describes in ["A Clock That Doesn't Snap"](https://ethanniser.dev/blog/a-clock-that-doesnt-snap/): client-only state that the server can't know, corrected before the user sees anything. In our case, the "client-only state" is `location.pathname`, and the script reads it and applies the active class immediately.
-
-The script can't call our `resolveClassName` function since it runs outside React, so we can pre-compute both the active and inactive class strings on the server and store them as `data-` attributes on each link. The script then reads the attributes and picks the right one based on the current pathname. We also add `suppressHydrationWarning` because the script will have already changed the `className` by the time React hydrates:
-
-```tsx
-// NavLink: add data attributes for the script to read
-<Link
-  href={href}
-  aria-current={isActive ? "page" : undefined}
-  className={resolveClassName(className, { isActive })}
-  data-navlink-href={href.toString()}
-  data-navlink-exact={exact || undefined}
-  data-navlink-active={resolveClassName(className, { isActive: true })}
-  data-navlink-inactive={resolveClassName(className, { isActive: false })}
-  suppressHydrationWarning
-  {...rest}
->
-  {/* ... */}
+// usage
+<Link href="/search" className="has-data-active:font-bold has-data-pending:opacity-50">
+  <Suspense>
+    <ActiveLinkIndicator href="/search" />
+  </Suspense>
+  <SearchIcon /> Search
 </Link>
 ```
 
-Then we add a script component that runs before paint:
+The indicator still needs a `Suspense` boundary since `usePathname()` suspends under `cacheComponents`, but the fallback is empty so nothing flashes. All the styling happens through CSS.
+
+## Gotchas
+
+**Hydration mismatch with rewrites.** If your app uses [rewrites in `next.config` or a `Proxy` file](https://nextjs.org/docs/app/api-reference/functions/use-pathname#avoid-hydration-mismatch-with-rewrites), `usePathname()` returns the source path on the server while the browser URL is the rewritten path. This means the server renders the wrong active state, and when the client hydrates it corrects itself, causing both a hydration mismatch and a visible flash.
+
+The [docs recommend](https://nextjs.org/docs/app/api-reference/functions/use-pathname#avoid-hydration-mismatch-with-rewrites) deferring the pathname read until after mount. We can wrap that in a hook:
 
 ```tsx
-// app/components/nav-link-script.tsx
-export function NavLinkScript() {
-  const html = `(function(){
-  var p = location.pathname;
-  document.querySelectorAll('[data-navlink-href]').forEach(function(el) {
-    var href = el.getAttribute('data-navlink-href');
-    var exact = el.hasAttribute('data-navlink-exact');
-    var active = (exact || href === '/')
-      ? p === href
-      : (p === href || p.startsWith(href + '/'));
-    el.className = el.getAttribute(active ? 'data-navlink-active' : 'data-navlink-inactive');
-    if (active) el.setAttribute('aria-current', 'page');
-    else el.removeAttribute('aria-current');
-  });
-})()`;
-
-  return (
-    <script
-      type={typeof window === 'undefined' ? 'text/javascript' : 'text/plain'}
-      suppressHydrationWarning
-      dangerouslySetInnerHTML={{ __html: html }}
-    />
-  );
-}
-```
-
-The script type flips to `text/plain` on the client so it only runs once, during the initial HTML parse. On soft navigations React handles the active state as usual. Drop `<NavLinkScript />` anywhere that renders alongside your nav links and the active link is correct from the first paint.
-
-## The Full Suspense-Free NavLink
-
-Here is the complete `NavLink` for the alternative path, with `useClientPathname` for `cacheComponents` support without Suspense, `useLinkStatus` for pending states, the data attributes for flicker-free hydration, and TypeScript. The examples in this post are inspired by [next16-social-media](https://github.com/aurorascharff/next16-social-media), where you can find the full working implementation.
-
-```tsx
-// app/components/nav-link.tsx
 "use client";
 
-import type { Route } from "next";
-import Link, { useLinkStatus } from "next/link";
-import { useClientPathname } from "@/hooks/use-client-pathname";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
-type ActiveProps = { isActive: boolean };
-type RenderProps = ActiveProps & { isPending: boolean };
-type Renderable<T> = T | ((props: RenderProps) => T);
-
-type Props<T extends string> = Omit<
-  React.ComponentProps<typeof Link>,
-  "href" | "className" | "children"
-> & {
-  href: Route<T> | URL;
-  className?: string | ((props: ActiveProps) => string | undefined);
-  children?: Renderable<React.ReactNode>;
-  exact?: boolean;
-};
-
-function checkActive(pathname: string | null, href: string, exact?: boolean) {
-  if (pathname === null) return false;
-  return exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
-}
-
-function resolve<T>(value: Renderable<T> | undefined, props: RenderProps) {
-  return typeof value === "function"
-    ? (value as (p: RenderProps) => T)(props)
-    : value;
-}
-
-function resolveClassName(
-  value: string | ((props: ActiveProps) => string | undefined) | undefined,
-  props: ActiveProps,
-) {
-  return typeof value === "function" ? value(props) : value;
-}
-
-export function NavLink<T extends string>({
-  href,
-  className,
-  children,
-  exact,
-  ...rest
-}: Props<T>) {
-  const pathname = useClientPathname();
-  const isActive = checkActive(pathname, href.toString(), exact);
-
-  return (
-    <Link
-      href={href}
-      aria-current={isActive ? "page" : undefined}
-      className={resolveClassName(className, { isActive })}
-      data-navlink-href={href.toString()}
-      data-navlink-exact={exact || undefined}
-      data-navlink-active={resolveClassName(className, { isActive: true })}
-      data-navlink-inactive={resolveClassName(className, { isActive: false })}
-      suppressHydrationWarning
-      {...rest}
-    >
-      <NavLinkContent isActive={isActive}>{children}</NavLinkContent>
-    </Link>
-  );
-}
-
-function NavLinkContent({
-  isActive,
-  children,
-}: {
-  isActive: boolean;
-  children?: Renderable<React.ReactNode>;
-}) {
-  const { pending } = useLinkStatus();
-  return <>{resolve(children, { isActive, isPending: pending })}</>;
-}
-
-export function NavLinkSkeleton({
-  children,
-  className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <span aria-hidden className={`text-gray opacity-50 ${className ?? ""}`}>
-      {children}
-    </span>
-  );
+export function useClientPathname(): string {
+  const pathname = usePathname();
+  const [clientPathname, setClientPathname] = useState("");
+  useEffect(() => {
+    setClientPathname(pathname);
+  }, [pathname]);
+  return clientPathname;
 }
 ```
 
-Copy this file into your project along with the `NavLinkScript` component below, and render `<NavLinkScript />` alongside your nav links:
+This returns `""` on the server and the first client render, then the real pathname after mount. Replace `usePathname()` with `useClientPathname()` in `NavLink` and the mismatch is gone.
 
-```tsx
-// app/components/nav-link-script.tsx
-export function NavLinkScript() {
-  const html = `(function(){
-  var p = location.pathname;
-  document.querySelectorAll('[data-navlink-href]').forEach(function(el) {
-    var href = el.getAttribute('data-navlink-href');
-    var exact = el.hasAttribute('data-navlink-exact');
-    var active = (exact || href === '/')
-      ? p === href
-      : (p === href || p.startsWith(href + '/'));
-    el.className = el.getAttribute(active ? 'data-navlink-active' : 'data-navlink-inactive');
-    if (active) el.setAttribute('aria-current', 'page');
-    else el.removeAttribute('aria-current');
-  });
-})()`;
-
-  return (
-    <script
-      type={typeof window === 'undefined' ? 'text/javascript' : 'text/plain'}
-      suppressHydrationWarning
-      dangerouslySetInnerHTML={{ __html: html }}
-    />
-  );
-}
-```
+That still leaves a flash: every link renders inactive until the effect fires. To fix that, you can add an [inline script that runs before paint](https://nextjs.org/docs/app/guides/preventing-flash-before-hydration) to read `location.pathname` and apply the correct class immediately. This is the same pattern Next.js recommends for themes and dates, and Ethan Niser's ["A Clock That Doesn't Snap"](https://ethanniser.dev/blog/a-clock-that-doesnt-snap/) covers the technique in depth.
 
 ## Conclusion
 
-Which version should you reach for? The Suspense version is the better default: the active state renders on the server, so the correct link is highlighted on first paint. The `useClientPathname` version is simpler and handles rewrites cleanly, but needs `NavLinkScript` to avoid the flicker. Either way, if Next.js ships a native `usePathname({ ssr: false })` down the line, the custom hook becomes a one-liner swap.
+We started with a hardcoded `active` class and worked through quite a few iterations: the render-prop pattern, `useLinkStatus` for pending states, prefix matching, `aria-current`, TypeScript, and Suspense boundaries for `cacheComponents`. That's a lot of ground for one component, but each piece solves a real problem that comes up in production apps.
+
+You might not need all of this. A plain `usePathname()` call in a navbar component works fine for most apps. But if you want a single, reusable `NavLink` that handles every edge case, now you know how to build one. The examples in this post are inspired by [next16-social-media](https://github.com/aurorascharff/next16-social-media), which uses a variation of this pattern with the CSS indicator approach and a `useEffect` guard for rewrites.
 
 I hope this post has been helpful. Please let me know if you have any questions or comments, and follow me on [Bluesky](https://bsky.app/profile/aurorascharff.no) or [X](https://x.com/aurorascharff) for more updates. Happy coding! 🚀
