@@ -4,7 +4,7 @@ pubDatetime: 2026-05-23T10:00:00Z
 title: Building an Active NavLink Component in Next.js
 slug: building-an-active-navlink-component-in-nextjs
 featured: false
-draft: false
+draft: true
 tags:
   - Next.js 16
   - React Server Components
