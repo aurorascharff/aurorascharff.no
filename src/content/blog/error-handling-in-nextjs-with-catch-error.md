@@ -13,7 +13,7 @@ tags:
 description: react-error-boundary has issues with Server Components in Next.js. catchError is a framework-aware alternative that handles notFound(), redirect(), and server data re-fetching correctly.
 ---
 
-If you've used `react-error-boundary` in the Next.js App Router, you've probably run into its limitations with Server Components. It catches errors it shouldn't, and its recovery mechanism doesn't re-fetch server data. `unstable_catchError` from `next/error` is a framework-aware alternative that handles both problems. In this post, I'll walk through what breaks, the workaround we used before, and how `catchError` fixes it.
+If you've used `react-error-boundary` in the Next.js App Router, you've probably run into its limitations with Server Components. It catches errors it shouldn't, and its recovery mechanism doesn't re-fetch server data. `catchError` from `next/error` is a framework-aware alternative that handles both problems. In this post, I'll walk through what breaks, the workaround we used before, and how `catchError` fixes it.
 
 ## Table of contents
 
@@ -142,7 +142,7 @@ export default async function UserProfile() {
 
 ## catchError: framework-aware error boundaries
 
-[`unstable_catchError`](https://nextjs.org/docs/app/api-reference/functions/catchError), introduced in Next.js 16.2, is a framework-aware error boundary that solves both problems out of the box.
+[`catchError`](https://nextjs.org/docs/app/api-reference/functions/catchError), introduced as `unstable_catchError` in Next.js 16.2 and stable since 16.3, is a framework-aware error boundary that solves both problems out of the box.
 
 You define a fallback function that receives props and an error info object with the error and a `retry()` callback:
 
@@ -150,11 +150,11 @@ You define a fallback function that receives props and an error info object with
 // ErrorBoundary.tsx
 "use client";
 
-import { unstable_catchError as catchError, type ErrorInfo } from "next/error";
+import { catchError, type ErrorInfo } from "next/error";
 
 function ErrorFallback(
   props: { title?: string },
-  { unstable_retry: retry }: ErrorInfo
+  { retry }: ErrorInfo
 ) {
   return (
     <div>
@@ -214,32 +214,32 @@ The same `retry()` pattern works at the route level too. [`error.tsx`](https://n
 
 `layout.tsx` and `template.tsx` stay mounted. If the root layout itself throws, use [`global-error.tsx`](https://nextjs.org/docs/app/api-reference/file-conventions/error#global-error).
 
-The `error.tsx` export receives the error and an `unstable_retry` callback, just like the `retry()` in `catchError`:
+The `error.tsx` export receives the error and a `retry` callback, just like the `retry()` in `catchError`:
 
 ```tsx
 // error.tsx
 "use client";
 
 export default function Error({
-  unstable_retry,
+  retry,
 }: {
   error: Error & { digest?: string };
-  unstable_retry: () => void;
+  retry: () => void;
 }) {
   return (
     <div>
       <h2>Something went wrong!</h2>
-      <button onClick={() => unstable_retry()}>Try again</button>
+      <button onClick={() => retry()}>Try again</button>
     </div>
   );
 }
 ```
 
-Calling `unstable_retry()` re-fetches and re-renders the segment on the server.
+Calling `retry()` re-fetches and re-renders the segment on the server.
 
 ## Conclusion
 
-If you've been building the digest detection and refresh-plus-key workarounds yourself, `catchError` replaces all of that with a single function call. It's still `unstable_` but usable today, and worth adopting now if you need component-level error boundaries in Server Components.
+If you've been building the digest detection and refresh-plus-key workarounds yourself, `catchError` replaces all of that with a single function call. It's stable as of Next.js 16.3 and worth adopting if you need component-level error boundaries in Server Components.
 
 You can [see it live](https://next-16-2-error-handling.vercel.app/before) or find the full source with all three approaches (before, workaround, and after) on [GitHub](https://github.com/aurorascharff/next-16-2-error-handling).
 
