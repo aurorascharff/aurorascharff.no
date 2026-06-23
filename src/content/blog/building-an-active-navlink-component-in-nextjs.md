@@ -586,7 +586,7 @@ This is better. Only the active styling is delayed, the icon and label show imme
 
 ### Moving Suspense Inside NavLink
 
-We can split the component into an outer `NavLink` that renders the Suspense boundary, and an inner `NavLinkInner` that reads `usePathname()`. The fallback renders the same `<Link>` in its inactive state, so the layout matches exactly and there's no flash. `NavLinkInner` reads the pathname and renders the link with the correct active class. A small `PendingIndicator` inside `<Link>` reads `useLinkStatus()` and resolves `children` with `isPending`:
+We can split the component into an outer `NavLink` that renders the Suspense boundary, and an inner `NavLinkInner` that reads `usePathname()`. Both the fallback and the resolved tree go through a shared `NavLinkShell`, so the only thing that changes when the boundary resolves is the `isActive` prop.
 
 ```tsx
 // app/components/nav-link.tsx
@@ -594,32 +594,27 @@ We can split the component into an outer `NavLink` that renders the Suspense bou
 
 // ...imports, types, checkActive, resolve, resolveClassName (same as before)
 
-export function NavLink({ href, className, children, exact, ...rest }) {
-  const inactive = { isActive: false, isPending: false };
+export function NavLink(props) {
   return (
-    <Suspense
-      fallback={
-        <Link href={href} className={resolveClassName(className, { isActive: false })} {...rest}>
-          {resolve(children, inactive)}
-        </Link>
-      }
-    >
-      <NavLinkInner href={href} className={className} exact={exact} {...rest}>
-        {children}
-      </NavLinkInner>
+    <Suspense fallback={<NavLinkShell {...props} isActive={false} />}>
+      <NavLinkInner {...props} />
     </Suspense>
   );
 }
 
-function NavLinkInner({ href, className, children, exact, ...rest }) {
+function NavLinkInner(props) {
   const pathname = usePathname();
-  const isActive = checkActive(pathname, href.toString(), exact);
+  const isActive = checkActive(pathname, props.href.toString(), props.exact);
+  return <NavLinkShell {...props} isActive={isActive} />;
+}
 
+function NavLinkShell({ href, className, children, isActive, exact, ...rest }) {
   return (
     <Link
       href={href}
       aria-current={isActive ? "page" : undefined}
       className={resolveClassName(className, { isActive })}
+      suppressHydrationWarning
       {...rest}
     >
       <PendingIndicator isActive={isActive}>{children}</PendingIndicator>
@@ -641,7 +636,7 @@ export function NavLinkSkeleton({ children, className }) {
 }
 ```
 
-The server renders the active class correctly, so there's no flash on first paint. `className` gets `{ isActive }` and `children` gets `{ isActive, isPending }`. The duplicate `<Link>` in the fallback is the cost, but it guarantees the layout matches exactly.
+The fallback renders inactive, so the active styling only appears once the boundary resolves on the client. The [inline script from earlier](#preventing-flickering-on-first-paint) handles that: it sets `aria-current` during HTML parse, so the active style is correct on first paint.
 
 We also keep exporting `NavLinkSkeleton` for the `ProfileLink` case, where the async Server Component still needs an outer `Suspense` boundary.
 
