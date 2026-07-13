@@ -1,0 +1,29 @@
+---
+/**
+ * Banner Studio sponsor banner (affiliate code: AURORA).
+ *
+ * Embedded as a cross-origin <iframe>, so the remotely-scheduled banner
+ * content is isolated from this site — it cannot read aurorascharff.no's
+ * cookies, DOM, or localStorage. The `sandbox` attribute adds defense in depth
+ * while still allowing the banner's own scripts to run and its links to open.
+ *
+ * The strip collapses to nothing when no campaign is live.
+ * Setup guide: https://banners.bitterbrains.com/embed-guide/AURORA
+ *
+ * To remove: delete this file and its <BannerStudio /> usage in Layout.astro.
+ */
+const AFFILIATE = "AURORA";
+const TYPE = "top";
+const SRC = `https://banners-api.bitterbrains.com/embed/page?affiliate=${AFFILIATE}&type=${TYPE}`;
+---
+
+<iframe
+  src={SRC}
+  title="Sponsor banner"
+  width="100%"
+  height="90"
+  loading="lazy"
+  referrerpolicy="no-referrer"
+  sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox allow-same-origin"
+  style="display:block;width:100%;border:none;overflow:hidden;"
+></iframe>
