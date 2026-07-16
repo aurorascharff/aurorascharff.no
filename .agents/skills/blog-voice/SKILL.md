@@ -1,95 +1,114 @@
 ---
 name: blog-voice
-description: Write and edit blog posts for aurorascharff.no in Aurora's voice, without AI-generated phrasing. Use whenever drafting, rewriting, or reviewing any post under src/content/blog. Captures her intro pattern, prose style, the anti-AI patterns from the Vercel technical-writing guide, and the specific feedback she gives.
+description: Write, edit, or review any blog post for aurorascharff.no in Aurora's voice, without AI-generated phrasing. Use for any post under src/content/blog. Captures her intro pattern, prose style, snippet conventions, and the anti-AI patterns she flags.
 ---
 
 # Aurora's blog voice
 
 Write like Aurora Scharff writing her own blog: a working engineer explaining something she built or learned. First person, calm, specific. Not marketing, not a docs page, not an AI think-piece.
 
-Before writing, read two or three existing posts in `src/content/blog/*.md` **end to end** and match their rhythm. The `error-handling-in-nextjs-with-catch-error` and `the-precompute-pattern-*` posts are the best references. Don't work from the intros alone; the body is where the voice lives.
+This applies to every post in `src/content/blog`, and the checklist at the end works as a review pass on an existing one too.
+
+Before writing, read two or three existing posts **end to end** and match their rhythm. `error-handling-in-nextjs-with-catch-error`, `the-precompute-pattern-*`, and `component-architecture-for-react-server-components` are the best references. Don't work from the intros alone; the body is where the voice lives.
 
 ## What her voice actually is
 
 She writes like a concrete technical explainer, not a narrative essayist. The posts explain how something works, step by step, with real code and honest notes on trade-offs.
 
 - **Concrete and mechanism-first.** "Any component that calls a dynamic API like `cookies()` or `headers()` opts into dynamic rendering. When that happens in a root layout, every page nested under it becomes dynamic too."
-- **Present tense, direct address.** "The browser still shows `/products` while the server routes to the encoded path. The encoded segment is invisible to the user."
-- **Short clarifying sentences are welcome** when they land a point. "The user clicks retry and nothing changes." Not everything has to flow; clarity wins.
+- **Present tense, direct address.** "The browser still shows `/products` while the server routes to the encoded path."
+- **Short clarifying sentences are welcome** when they land a point. "The user clicks retry and nothing changes." "Everything flows through props." Clarity beats flow; the enemy is the rhetorical punch line, not the short sentence.
 - **Honest and plain about trade-offs.** "This pattern is not something I invented." "ISR itself has trade-offs here." "This is a known limitation."
-- **Some concrete, slightly colloquial texture is hers**, so don't sterilize: "shipping different red text", "runs whatever the agent throws at it", "hope you remember to tear it down".
+- **Some concrete, slightly colloquial texture is hers**, so don't sterilize: "shipping different red text", "popcorn UI", "hope you remember to tear it down".
 - **Functional colons and inline lists are fine**: "the trade-offs these teams face: high cardinality, ISR limitations, and what cache components mean for it."
+- **She'll coin and italicize a term** when it earns it (*popcorn UI*), and use "we" for a teaching walkthrough, "I" for her own experience.
 
-The failure mode to avoid is the opposite of hers: a polished reflective essay with literary rhythm and neat closers. She doesn't do that.
+The failure mode to avoid is the opposite of hers: a polished reflective essay with literary rhythm and neat closers.
 
 ## Source of truth
 
-Never invent facts, numbers, PR titles, code, or scope claims. Verify against, in order:
+Never invent facts, numbers, PR titles, code, quotes, or claims about what she works on or how she works. Verify against, in order:
 
-1. The actual code and repos (for example `~/Documents/Development/dxagent`, the `vercel/next.js` repo, `gh pr list --author aurorascharff`)
-2. Her real data (runs and logs in the dxagent Redis store, merged PRs)
+1. The actual code and repos (for example the project being written about, the relevant framework repo, `gh pr list --author aurorascharff`)
+2. Her real data (logs, runs, merged PRs)
 3. Published posts, for voice only
 
-If you can't verify something, ask or leave it out. A confident wrong claim about what she works on, or what a PR did, is the worst failure mode. She checks.
+If you can't verify something, ask or leave it out. A confident wrong claim is the worst failure mode, and she checks. This is the rule that gets broken most; treat every plausible-sounding detail as something to confirm, not assume.
 
-The full technical-writing rules live at `~/Documents/Development/front/.agents/skills/vercel-technical-writing/`. Read `SKILL.md` and `style-rules.md` there; the anti-AI patterns below are the ones that matter most for the blog.
+The full technical-writing rules live at `~/Documents/Development/front/.agents/skills/vercel-technical-writing/`. Read `SKILL.md` and `style-rules.md`; the anti-AI patterns below are the ones that matter most for the blog.
 
 ## Intro pattern
 
-Her intros are short, one to two paragraphs, in this shape:
+Short, one to two paragraphs:
 
-1. State the topic or the situation plainly. No "these days", no dramatic scene, no broad think-piece opener unless she asks for one.
+1. State the topic or situation plainly. No "these days", no dramatic scene, no broad think-piece opener unless she asks for one.
 2. A roadmap line: "In this post, I'll walk through ...".
 
-Keep the background (the why, the mechanism) out of the intro. If it runs past two paragraphs, some of it belongs in a background section, not the intro.
+Keep the background (the why, the mechanism) out of the intro. If it runs past two paragraphs, some of it belongs in a background section.
 
 ## Structure
 
-- Headings in Title Case, matching the existing posts.
+- Headings in Title Case, descriptive not clever. "Background", "The Use Case", "The Problem: Dynamic Rendering" over "X, Not Y" turns of phrase.
 - `## Table of contents` immediately after the intro, exactly that string. The TOC plugin keys on it.
-- One idea per section; each section should stand on its own.
-- Separate different things into different UI. A friction finding and the PR that fixed it are two things: use a table (`Friction | Fix`), not one run-on sentence.
+- One idea per section; each stands on its own.
+- When two kinds of information pair up (a before and an after, a finding and its fix, an option and its trade-off), a table or list is clearer than cramming them into one sentence.
 - Close with the standard sign-off (follow on Bluesky / X, "Happy coding! 🚀").
 
 ## Prose style
 
-- Flowing, connected sentences. Show the relationship (because, so, while) instead of listing disconnected facts.
+- Connected sentences that show the relationship (because, so, while), with short sentences to land a point.
 - First person. Past tense for what she did, present tense for how things work.
-- Let code and real examples carry the weight. Don't narrate around them.
-- Describe a process, don't list personal capabilities. "The task stays fixed and one thing changes" reads better than "I can hold the task fixed, and I can swap the model, and I can ...".
-- Link a tool once, at the point it's used, with a short note on what it does and why. Show a real snippet. Don't relist the link later.
+- Let code and real examples carry the weight; the prose points at them, it doesn't restate them.
+- Describe a process, don't list personal capabilities. "The task stays fixed and one thing changes" beats "I can hold the task fixed, and I can swap the model, and I can ...".
+- Link a tool once, at the point it's used, with a short note on what it does and why. Don't relist the link later.
+
+## Code snippets
+
+Snippets do a lot of the explaining in her posts. Match how she writes them:
+
+- **Start most snippets with a file-path or context comment**: `// app/layout.tsx`, `// proxy.ts`, `// error.tsx`. It tells the reader where the code lives.
+- **Keep each snippet to the one point** the surrounding paragraph makes. Abstract away CSS and unrelated markup, use generic elements.
+- **Collapse the parts that don't matter** with `// ...` or `// ...fetch logic...` rather than showing them in full.
+- **Use an inline comment to flag the key line**, the way she does: `const loggedIn = getIsAuthenticated(); // no await, no blocking`, `// Read from params instead of cookies()`.
+- **Make snippets look real, not pseudocode.** Include the imports that matter, so the reader sees how it fits together.
+- **Always tag the fence language** (```tsx, ```ts, ```bash, ```text). Use ```text for terminal output, build output, route tables, and file trees.
+- **Show expected output when it makes the point** (a build table, a route listing, a printed error), in its own ```text block.
+- **A before/after pair** is a pattern she reaches for when contrasting two approaches.
+- Anything quoted verbatim (a real log, a terminal transcript) is data: keep it exact, and its em dashes and backticks are fine.
 
 ## Patterns that read as AI (never do these)
 
-She flags these every time:
-
-- **Em dashes for emphasis.** Use commas, periods, or parentheses. Em dashes inside quoted logs or transcripts are fine, they're data.
+- **Em dashes for emphasis.** Use commas, periods, or parentheses. (Em dashes inside quoted data are fine.)
 - **"It's not X, it's Y"** and other tidy inversions. State the point directly.
-- **Choppy declarative flourishes** dropped in as a punch line: "That's the whole game." "The agent never does." Connect the idea into the surrounding sentence.
+- **Choppy declarative flourishes** dropped in as a punch line: "That's the whole game." Connect the idea into the sentence.
 - **Repetitive series / tricolons**: "No config. No setup. No maintenance." Combine naturally.
-- **See-saw balance**: "a developer learns to route around it, while an agent walks into the wall", "the green line is X, the red is Y". Rephrase so it isn't a matched pair.
-- **Signposting**: "The job behind all of this is the same", "Findings at this level", "Underneath, it's a memory thing", "It's worth noting that". Say the thing.
-- **Over-explaining and self-justifying**: don't defend tool choices ("not because I'm pitching them"), don't announce what you're about to explain, don't add a disclaimer nobody asked for.
-- **Superlatives and hype**: "the truest test", "unusually honest", "surprisingly good". Be plain.
-- **Literary flourishes**: "the friction quietly disappears", "the docs are the whole game", "the bot finally grew up", "the detours end up on paper". Say it plainly instead.
-- **Aphorism closers**: don't end a section or the post on a neat one-liner like "If agents love your framework, humans will too." Let the last real point be the ending, then the standard sign-off.
+- **See-saw balance**: "a developer routes around it, while an agent walks into the wall"; "the green line is X, the red is Y". Rephrase so it isn't a matched pair.
+- **Signposting**: "The job behind all of this is the same", "Underneath, it's a memory thing", "It's worth noting that". Say the thing.
+- **Over-explaining and self-justifying**: don't defend choices, don't announce what you're about to explain, don't add a disclaimer nobody asked for.
+- **Presenting your own setup as a finished, handed-down feature**: stating a design choice as if it happens on its own, like "the agent gets a Vercel Sandbox per run" or "the run produces a log". She describes her own work as a choice or a capability, what you can do, not what the system does for you. Prefer "we can give the agent a sandbox" or "the agent can get a sandbox". The "X gets a Y" framing reads like a docs page announcing a settled thing.
+- **Superlatives and hype**: "the truest test", "unusually honest", "surprisingly good".
+- **Literary flourishes**: "the friction quietly disappears", "the bot finally grew up", "the detours end up on paper". Say it plainly.
+- **Aphorism closers**: don't end a section or the post on a neat one-liner. Let the last real point be the ending, then the standard sign-off.
+- **Generalizing "every" and "each"**: "every prompt is a task", "each run shows its log", "check every quoted output". She hates these; they read as AI. Rephrase with a plural, with "the", or drop the quantifier ("runs start from identical state", "the log header records"). Natural idioms like "everything went fine" are fine.
 - **Minimizing and filler words**: just, very, simply, basically, obviously, seamless, robust, leverage, utilize, "in order to".
-- **Inline colon introducing a list mid-sentence.** Use "including", or break into a real list.
+- **Inline colon introducing a list mid-sentence** when it's really a list. Use "including" or a real list.
 
-## What Aurora has asked for specifically
+## What Aurora has asked for
 
-- Don't overstate scope. Check her PRs before describing her work. "Developer experience, mostly the dev overlay and its error and insight system, plus the docs, codemods, and adoption skills" is accurate; "error messages and docs" is not.
-- Fix contradictions. If one paragraph says an agent works around a problem and the next says it doesn't, the distinction is usually memory (it works around it in the moment but keeps no memory between runs).
-- Prefer real excerpts (real runs, real PR numbers, real log text) over invented examples.
-- Stay honest and non-promotional about Vercel tools without saying that you're being honest.
-- Show, don't tell: a real snippet or a trimmed real log beats a description of one.
+- Don't overstate scope. Check her PRs before describing her work; verify the claim against a real source rather than writing what sounds right.
+- Read the whole post for contradictions. Claims across sections have to line up; if two paragraphs disagree, find the real distinction and state it once.
+- Prefer real excerpts (real runs, real PR numbers, real quoted text) over invented examples.
+- Stay honest and non-promotional about tools without saying that you're being honest.
+- Show, don't tell: a real snippet or a trimmed real artifact beats a description of one.
+- **Never describe how she works, reads, or does something unless you've confirmed it.** Inventing her behavior or workflow to make a point land is worse than leaving it out.
 
-## Before finishing
+## Before finishing (also a review checklist)
 
-- [ ] Every claim about her work, PRs, or numbers is verified against a real source
+- [ ] Every claim about her work, PRs, numbers, or behavior is verified against a real source
 - [ ] Intro is one to two paragraphs: topic plus roadmap
-- [ ] No em dashes in prose, no "it's not X, it's Y", no choppy flourishes, no signposting
+- [ ] No em dashes in prose, no "it's not X, it's Y", no choppy flourishes, no signposting, no aphorism closer
 - [ ] No just / very / simply / hype words in prose
-- [ ] Findings and fixes are separated, not run together
-- [ ] It reads like the other posts in `src/content/blog`, not like a docs page or an AI essay
+- [ ] Snippets have file-path comments, tagged fences, and are trimmed to the point
+- [ ] Paired information (before/after, finding/fix) is a table or list, not a run-on sentence
+- [ ] It reads like the other posts in `src/content/blog`, not a docs page or an AI essay
 - [ ] `npx astro build` passes

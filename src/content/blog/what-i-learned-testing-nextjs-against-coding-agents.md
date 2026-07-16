@@ -22,9 +22,9 @@ In this post, I'll walk through the setup I built to test Next.js against coding
 
 ## Why Agents Make Good Test Subjects
 
-Testing a feature with someone who has never seen it is one of the most useful things you can do in DX. They hit the confusing parts that the people who built it have learned to ignore. The catch is that you run out of fresh testers fast, because everyone is only new once. An agent is new on every run, and you can run it as often as you want.
+Testing a feature with someone who has never seen it is one of the most useful things you can do in DX. They hit the confusing parts that the people who built it have learned to ignore. The catch is that you run out of fresh testers fast, because everyone is only new once. An agent starts fresh, and you can run it as often as you want.
 
-This works because the agent doesn't remember. A developer hits a rough edge, works it out, and stops noticing it after a while. An agent starts over every run and hits it again. In production that's a problem, but for testing it's the point, since the friction never drops out of the logs.
+This works because the agent doesn't remember. A developer hits a rough edge, works it out, and stops noticing it after a while. An agent starts over from scratch and hits it again. In production that's a problem, but for testing it's the point, since the friction never drops out of the logs.
 
 It matters most for new features. On an older API the agent can fall back on training data, but that data is months out of date, so for anything new it has nothing to go on except the docs and error messages I wrote.
 
@@ -52,55 +52,57 @@ That was the situation I was in: good eval numbers, agents still stumbling throu
 
 My first attempt was to ask agents afterward what they struggled with, and it didn't work. The agent would tell me everything went fine, invent a plausible reason for what it did, and the three round trips it spent finding a config key never made it into the summary.
 
-In one run a server-action call failed because the action id in the build manifest had changed. The agent re-fetched the page, retried, and moved on, three tool calls it would never have mentioned afterward, the kind of detour that eats twenty minutes of a developer's afternoon. The logging has to happen while the agent works, so the detours get recorded.
+In one run a server-action call failed because the action id in the build manifest had changed. The agent re-fetched the page, retried, and moved on, three tool calls it would never have mentioned afterward, the kind of detour that costs a developer twenty minutes. The logging has to happen while the agent works, so the detours get recorded.
 
 ## A Skill That Makes Friction Visible
 
 Friction logging is an old practice I wasn't especially familiar with when I started: an engineer works through a task and writes down everything that confuses them along the way. That's genuinely valuable, but it's manual, and it only ever gives you the human's point of view. I wanted to automate it and get the agent's.
 
-So I made a skill, [friction-log](https://github.com/aurorascharff/skills/tree/main/skills/friction-log), that changes how the agent behaves during a task. It logs gaps in real time instead of guessing past them, tags each step green, yellow, or red, and cites where its decisions came from, whether that's the docs, a web search, training data, or the sandbox.
+So I made a skill, [friction-log](https://github.com/aurorascharff/skills/tree/main/skills/friction-log), that changes how the agent behaves during a task. It logs gaps in real time instead of guessing past them, tags steps green, yellow, or red, and cites where its decisions came from, whether that's the docs, a web search, training data, or the sandbox.
 
-What comes out is a structured markdown file rather than a loose stream of notes. It has a header, the prompt, a tool timeline, a summary, the tagged log itself, and a set of action items split by where the fix belongs: 🔧 for docs and framework changes, 🔍 for DX and research questions, and 🔁 for feedback on the skills themselves. Those action items are what I take back to the framework.
+What comes out is a structured markdown file rather than a loose stream of notes: a header, the prompt, a summary, a set of action items split into docs, framework, and DX or research, and the tagged log.
 
 Here's one run's log, trimmed but kept whole so the shape is clear:
 
 ```text
-# Friction Log: cacheComponents + use cache Root Layout with Cookie-Based Auth
+# Friction Log: `cacheComponents` + `use cache` Root Layout with Cookie-Based Auth
 
-Model:      claude-sonnet-4-6
-Harness:    Claude Code
-Next.js:    16.3.0-canary.42
-Build time: 26s (3 builds)
+**Model:** anthropic/claude-sonnet-4-6
+**Harness:** DX Agent (Slack bot)
+**Next.js version:** Next.js v16.3.0-canary.42
+**Build time:** 26s (3 builds: 8.68s + 8.81s + 8.82s)
 
 ## Prompt
-> Build an app with cacheComponents enabled where the root layout uses
-> 'use cache' and also checks auth by reading cookies(). The protected pages
-> should render their cached shell instantly.
+
+> Build an app with `cacheComponents` enabled where the root layout uses `'use cache'` and also checks auth by reading `cookies()`. The protected pages below should render their cached shell instantly.
 
 ## Summary
-use cache and cookies() are mutually exclusive in the same scope, so the
-literal prompt is impossible. It took two build failures to discover that every
-async component reading cookies() must be wrapped in <Suspense>, even in
-layouts — a constraint the error message and docs don't make clear.
 
-## Log
-🟢 use cache docs include a key callout: read cookies or headers outside cached
-   scopes and pass the values as arguments  [docs]
-🔴 First build failed on /_not-found: "encountered uncached or runtime data
-   during prerendering" — the real cause was app/layout.tsx  [sandbox]
-🔴 Second build failed on /dashboard: same error, now app/dashboard/layout.tsx  [sandbox]
-🟢 Build passed: all 6 routes compiled as Partial Prerenders (◐)  [sandbox]
-🟡 Cache key per user name creates unbounded entries; the docs don't discuss
-   this tradeoff  [training data]
+The task contains a structural contradiction: `use cache` and `cookies()` are mutually exclusive in the same scope, so the literal reading of the prompt is impossible. Two build failures were needed to discover that every async component reading `cookies()` must be wrapped in `<Suspense>` even in layouts and pages, not just leaf components.
 
 ## Action Items
-🔧 docs      add an "auth with cacheComponents" recipe (Suspense + dynamic guard)
-🔧 fix       the prerender error should name the offending component and its
-             missing <Suspense>, not just the route
-🔍 research  could `use cache: private` on the auth check replace the pattern?
+
+### Docs
+- 🔧 Add a dedicated "auth with cacheComponents" guide or prominent recipe to the `use cache` docs
+
+### Framework
+- 🔧 The build error "encountered uncached or runtime data during prerendering" should name the offending component and its missing `<Suspense>` ancestor
+
+### DX / Research
+- 🔍 Explore whether `use cache: private` on the root layout's auth function could replace the Suspense-based pattern
+
+## Log
+
+- 🟢 `use cache` docs include a key callout: "To use cookies or headers, read them **outside** cached scopes and pass values as arguments" [docs]
+- 🔴 **First build failed on `/_not-found`**: "Next.js encountered uncached or runtime data during prerendering". The error cited `/_not-found`, but the actual problem was in `app/layout.tsx` [sandbox]
+- 🔴 **Second build failed on `/dashboard`**: same error. Every async layout or page that calls `cookies()` needs its own `<Suspense>` ancestor [sandbox]
+- 🟢 Build passed cleanly, all 6 routes compiled as Partial Prerenders (◐) [sandbox]
+- 🟡 **Cache key per user-name creates unbounded entries**: `CachedShell` receives `userName` as a prop, so Alice's shell and Bob's shell are separate cache entries. The docs don't discuss this tradeoff. [training data]
 ```
 
-The source tags are the part I read first, because a finding tagged `[training data]` tells me the agent leaned on its own memory instead of the bundled docs, which is a different fix than a `[docs]` gap or a `[sandbox]` build failure.
+This is an early run, before the error-message work in 16.3 landed. An agent hitting the same error on two builds, with the message pointing at the wrong file and no obvious fix, was a common shape then, and it's the friction that work was built to remove.
+
+The summary and the action items are what I actually read. The action items are already sorted by where the fix belongs, so I turn the ones worth doing into tracked issues and come back to them later. The `[docs]`, `[training data]`, and `[sandbox]` tags on the log entries are there for tracing a finding back to its source.
 
 There's also a passive companion, `friction-report`, that doesn't steer the run at all but scans the session at the end, drafts a report if it found friction, and stays silent if the run was clean. The skill is open source, and I [shared a full log](https://x.com/aurorascharff/status/2055328557480714309) when I published it.
 
@@ -120,7 +122,7 @@ The cold starts have a side benefit too: the logs are honest in a way human ones
 
 A skill alone doesn't run code, and a cold agent needs a fresh place to work. I needed a real Next.js project with `next@canary` installed, somewhere the agent could build, edit, and run a dev server, and I was not about to spin up containers myself.
 
-So the agent gets a [Vercel Sandbox](https://vercel.com/docs/vercel-sandbox) per run, an ephemeral cloud machine that boots from a snapshot in a second or two, runs whatever the agent throws at it, and gets torn down at the end, with a nightly job keeping the snapshot on the latest canary. Three calls do almost everything I need, which is to create it, run a command, and read the log back.
+So we can give the agent a [Vercel Sandbox](https://vercel.com/docs/vercel-sandbox) per run, an ephemeral cloud machine that boots from a snapshot in a second or two, runs whatever the agent throws at it, and gets torn down at the end, with a nightly job keeping the snapshot on the latest canary. Three calls do almost everything I need, which is to create it, run a command, and read the log back.
 
 ```ts
 const sandbox = await Sandbox.create({
@@ -134,16 +136,16 @@ const log = await sandbox.readFileToBuffer({
 });
 ```
 
-Because every run starts from identical state, two of them are actually comparable.
+Runs start from identical state, so two of them are comparable.
 
 ## Giving the Agent Real Tasks
 
-Every prompt is a concrete task to build. The friction shows up in the attempt, so I give the agent something to make rather than something to explain. The tasks range from building to investigating to reproducing a crash from a GitHub issue, and here are some real ones from my runs:
+The prompts are concrete tasks for the agent to do, and the friction shows up in the doing. They range from building an app to reproducing or triaging a bug from a GitHub issue, and most of mine center on Cache Components. Real ones from my runs:
 
-- `build a product catalog with 'use cache' and cache tag invalidation`
-- `build an e-commerce app with Link prefetch={true}, then adopt Partial Prefetching`
-- `do module-level values leak into 'use cache' keys?`
-- `triage #95395: constructor as a route name throws in the dev overlay`
+- `Build a product catalog with cacheComponents where the list updates immediately after editing a product via a form, with no stale page`
+- `Build a contact form with cacheComponents that validates on the server and shows inline error messages`
+- `Try to reproduce vercel/next.js#95268: document.title dropped on client-side navigation with cacheComponents`
+- `Triage vercel/next.js#95395: constructor as a route name crashes the dev overlay`
 
 Runs are independent sessions with their own sandboxes, so they parallelize, and I lean on that in a few ways. I batch the same prompt several times to rule out one-offs, I group prompts into suites and run the whole set against a new canary or a PR preview, and I compare two runs to see what friction appeared or went away.
 
@@ -151,7 +153,7 @@ Comparing logs is what makes friction measurable, and any way of storing and com
 
 ## Comparing Models and Harnesses
 
-A run is only a task in a fresh sandbox, and every log header already records the model, the harness, and the Next.js version, so two runs are directly comparable. The model is a gateway string, so swapping it is a one-field change and the same task runs on a different model without anything else moving.
+A run is only a task in a fresh sandbox, and the log header records the model, the harness, and the Next.js version, so two runs are directly comparable. The model is a gateway string, so swapping it is a one-field change and the same task runs on a different model without anything else moving.
 
 That makes it easy to hold the task fixed and change one thing at a time. The same prompt across a few models shows whether a rough error message trips all of them or only the weaker ones, and the same prompt in a different harness, Claude Code instead of the DX Agent, shows whether the friction is really about Next.js or about the tool reading it. It only holds up when one variable changes at a time, the model or the version but never both, otherwise the comparison stops meaning much.
 
@@ -194,7 +196,7 @@ The result comes back in the thread when it's done. A few real mentions from the
 @dxagent triage https://github.com/vercel/next.js/issues/95265
 @dxagent test the dev overlay Copy prompt feature under cacheComponents
 @dxagent what are the most common friction points with Cache Components?
-@dxagent favorite my run about ImageResponse
+@dxagent favorite my run about the blocking-prerender error
 
 dxagent  📋 Triage: getAll() drops duplicate-named cookies (#95265)
          🔴 1 · 🟡 3 · 🟢 4 · 16.3.0-canary.69 · claude-opus-4.8 · 1m 35s
@@ -203,9 +205,11 @@ dxagent  📋 Triage: getAll() drops duplicate-named cookies (#95265)
 
 ## Turning the Logs into a Next.js Dashboard
 
-By this point the runs lived in Slack threads, and they got hard to manage as they piled up. I also wanted more visualization around them, like tracking friction on the same task over time, or seeing which features confused agents the most.
+By this point the runs lived in Slack threads and got hard to keep track of, so I built a Next.js dashboard around them. A run shows its log with the severity dots, the source the agent produced sits next to it, and a red or yellow entry can become a tracked issue.
 
-So I built a Next.js dashboard around the runs, where logs render with their severity dots, red and yellow entries can become tracked issues, the source code the agent produced sits next to the log, and charts show friction per version. The dashboard is itself a Next.js 16 app with Cache Components enabled, so I'm building on the same features I'm testing.
+The suites feed the part I use most. I run the same suite whenever a new canary lands, and the dashboard charts its friction rate per version. When that rate drops from one canary to the next, the framework got easier to build against for whatever the suite covers. A goal ties a suite to a target, like keeping Cache Components under 20%, and shows whether it's there yet.
+
+The dashboard is a Next.js 16 app with Cache Components enabled, so it runs on the features it helps me test.
 
 ## Testing My 16.3 Work Before It Shipped
 
@@ -217,7 +221,7 @@ Without per-run sandboxes, "test this PR before it merges" turns into "set up a 
 
 ### The Error Messages
 
-With Cache Components, an await on the server is a choice, and [Instant Insights](https://nextjs.org/blog/next-16-3-instant-navigations#stream-cache-or-block) in the overlay present it as three fixes, Stream, Cache, or Block, each with a [**Copy prompt** button](https://nextjs.org/blog/next-16-3-ai-improvements#actionable-errors) and its own [docs page](https://nextjs.org/docs/messages/blocking-prerender-dynamic). The same menu prints in the terminal, which is where agents actually read it:
+With Cache Components, an await on the server is a choice, and [Instant Insights](https://nextjs.org/blog/next-16-3-instant-navigations#stream-cache-or-block) in the overlay present it as three fixes, Stream, Cache, or Block, all with a [**Copy prompt** button](https://nextjs.org/blog/next-16-3-ai-improvements#actionable-errors) and a [docs page](https://nextjs.org/docs/messages/blocking-prerender-dynamic). The same menu prints in the terminal, which is where agents actually read it:
 
 ```text
 Ways to fix this:
@@ -233,11 +237,11 @@ When I reword one of those errors, a run against the PR preview shows me whether
 
 ```text
 ## Log
-🔴 No documentation exists for the "Copy as prompt" / Instant guidance feature.
+- 🔴 No documentation exists for the "Copy as prompt" / Instant guidance feature.
    Grepping the bundled docs for `copy prompt` or `clipboard` returns nothing  [docs]
-🟡 The fix-card docs anchors are runtime-only: the cards link to
+- 🟡 The fix-card docs anchors are runtime-only: the cards link to
    blocking-prerender-dynamic#... anchors with no entry point from the docs  [sandbox]
-🟢 The overlay renders one "Copy as prompt" button per fix card, so the copied
+- 🟢 The overlay renders one "Copy as prompt" button per fix card, so the copied
    prompt is scoped to the specific fix the developer chose, not a generic dump  [sandbox]
 ```
 
@@ -249,30 +253,38 @@ Runs like this shaped the details that shipped. I restructured the Copy prompt b
 
 ### The Skills
 
-The [first-party Skills](https://nextjs.org/blog/next-16-3-ai-improvements#first-party-skills) went through the same treatment, which meant isolated runs following each skill end to end against its PR preview, plus trying the same tasks myself in my own agent to feel the experience. Here's a run trying the Partial Prefetching adoption skill:
+The [first-party Skills](https://nextjs.org/blog/next-16-3-ai-improvements#first-party-skills) went through the same treatment, which meant isolated runs of the skills end to end against their PR previews, plus trying the same tasks myself in my own agent to feel the experience. Here's a run trying the Partial Prefetching adoption skill:
 
 ```text
 ## Log
-🟢 Skill is well-structured. The `## requires` section, the offline-docs note,
+- 🟢 Skill is well-structured. The `## requires` section, the offline-docs note,
    and the "empty sweep is success" callout in step 4 made the sequencing obvious
-🔴 Guide docs push users to a codemod that doesn't exist yet.
+- 🔴 Guide docs push users to a codemod that doesn't exist yet.
    adopting-partial-prefetching.mdx says to run
    `npx @next/codemod@canary remove-partial-prefetch ./app`, but that transform
    isn't shipped in @next/codemod yet  [sandbox]
-🟢 Build with the flag on passes, and the banner shows "Partial Prefetching enabled"  [sandbox]
+- 🟢 Build with the flag on passes, and the banner shows "Partial Prefetching enabled"  [sandbox]
 ```
 
 The green line means the skill's recipe works as written. The red one caught the guide sending people to a command that didn't exist yet, since the codemod hadn't been published, and the runs hit it before any user could. Watching agents stumble through runs like these is what fed into the [`next-cache-components-adoption`](https://github.com/vercel/next.js/tree/canary/skills/next-cache-components-adoption) skill.
 
 ### The Docs
 
-I wrote a [Building guide](https://github.com/vercel/next.js/pull/94999) that walks through `next build` under Cache Components, where you build a product page, hit the `blocking-prerender-dynamic` error, and the guide shows the terminal output at each step, copy-pasted transcripts included. Before it shipped, I had an agent follow it end to end against the PR's preview build and check the claims against what the terminal actually prints. From its log:
+I wrote a [Building guide](https://github.com/vercel/next.js/pull/94999) that walks through `next build` under Cache Components: you build a product page, hit the `blocking-prerender-dynamic` error, and the guide shows the terminal output step by step, copy-pasted transcripts included. Copy-pasted output goes stale, so before it shipped I had an agent run the guide end to end against the PR's own preview build and check its quoted transcripts against what the binary actually printed. It flagged three:
 
-> The **one substantive problem** is the transcript for the `blocking-prerender-dynamic` error: the message printed by `next build` on this same branch has been reworded and expanded, but the guide reproduces the *old* wording — which is still what `next dev` prints, so the guide is only half wrong depending on where you read it from.
+```text
+## Log
+- 🟡 Error text drift: the guide quotes "Next.js encountered uncached data during
+  prerendering", but the binary now prints "encountered uncached or runtime data
+  during prerendering", and the fix list changed too  [sandbox]
+- 🟡 The --debug-prerender stack trace is off by one line: the guide points the
+  arrow at `const product = await db.product.find(id)`, the binary points it one
+  line up, at `const { id } = await props.params`  [sandbox]
+- 🟡 Two links to /docs/app/guides/instant-navigation 404 on the live docs site,
+  even though the PR's link-checker bot reported all links fixed  [sandbox]
+```
 
-While the guide sat in review, the error message itself had been reworded on the same branch, so the guide was quoting terminal output the terminal no longer printed. I would have skimmed right past it, because it read correctly a week earlier, and the run also surfaced a second problem hiding in there, which was that `next dev` and `next build` were printing two different messages for the same error.
-
-Other runs on the same guide caught a section whose predicted build output was wrong, two links that 404ed on the live docs site even though the PR's link-checker bot had reported all links fixed, and a code frame in the guide with the caret on the wrong line. The guide showed the error pointing at the database lookup:
+The off-by-one is the kind of thing I would never catch by rereading. The guide showed the error pointing at the database lookup:
 
 ```text
 > 5 |   const product = await db.product.find(id)
@@ -286,11 +298,11 @@ while the branch actually printed it one line up, because `params` had become a 
     |                              ^
 ```
 
-Instead of reviewing a docs PR by reading it back and guessing whether it's clear, I get to watch an agent try to use it.
+Rereading a docs PR catches unclear writing. It doesn't catch a transcript that has drifted from what the binary prints, and running an agent through the guide does.
 
 ### Smaller Findings Along the Way
 
-Most of the small stuff never gets its own run. It surfaces in the middle of a bigger task, gets a severity dot in the log, and becomes a tracked issue in the dashboard so none of them get lost. A few from different runs, with the PR each one turned into:
+None of these got their own run. They're small things an agent happened to notice while doing something else, the kind of thing I wasn't looking for and would never have filed on its own. Running real tasks turns up more than you set out to find, and a few of these were worth a PR:
 
 | Friction | Fix |
 | --- | --- |
@@ -304,11 +316,11 @@ When a fix goes up as a PR, the same prompt runs against its preview build to ch
 
 The first version used Vercel Workflow for durable runs, the AI SDK with AI Gateway for the model, the chat SDK for Slack, and Redis and Blob for storage, with a sentinel string for human-in-the-loop.
 
-I was already running the loop regularly by the time [eve](https://eve.dev), Vercel's framework for durable agents, came out, and migrating to it deleted around 1,900 lines of my code for the same surface: the same dashboard, the same Slack bot, the same loop. A whole `workflows/` package, roughly 2,600 lines of durable-run orchestration, including the `DurableAgent` run loop from the Slack section, collapsed into eve's session loop.
+I was already running the loop regularly by the time [eve](https://eve.dev), Vercel's framework for durable agents, came out, and migrating to it deleted around 1,900 lines of my code for the same surface: the same dashboard, the same Slack bot, the same loop. The whole `workflows/` package of durable-run orchestration, including the `DurableAgent` run loop from the Slack section, collapsed into eve's session loop.
 
-Slack shows the change most clearly. The first version used the chat SDK with a `slack-manifest.json` checked into the repo, every scope and event subscription maintained by hand, a 441-line chat handler, and pattern-matched thread replies faking human-in-the-loop, because questions came back as free text I had to answer in prose. All it could really do was start a run and report back.
+Slack shows the change most clearly. The first version used the chat SDK with a `slack-manifest.json` checked into the repo, its scopes and event subscriptions maintained by hand, and pattern-matched thread replies faking human-in-the-loop, because questions came back as free text I had to answer in prose. All it could really do was start a run and report back.
 
-On eve the whole channel is one 480-line file, `ask_question` renders as real buttons and resumes with structured input, and Vercel Connect provisioned the new Slack app in one CLI call instead of the api.slack.com walkthrough, with no manifest in the repo anymore.
+On eve the whole channel is one file, `ask_question` renders as real buttons and resumes with structured input, and Vercel Connect provisioned the new Slack app in one CLI call instead of the api.slack.com walkthrough, with no manifest in the repo anymore.
 
 The pieces are all still there, they moved into eve's file structure, and now the framework owns the sessions, the sandbox lifecycle, the channels, and the scheduling:
 
