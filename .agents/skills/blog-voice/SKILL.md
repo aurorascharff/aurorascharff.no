@@ -61,6 +61,8 @@ Keep the background (the why, the mechanism) out of the intro. If it runs past t
 - Let code and real examples carry the weight; the prose points at them, it doesn't restate them.
 - Describe a process, don't list personal capabilities. "The task stays fixed and one thing changes" beats "I can hold the task fixed, and I can swap the model, and I can ...".
 - Link a tool once, at the point it's used, with a short note on what it does and why. Don't relist the link later.
+- Open a paragraph so it introduces itself: start with what it's about and why it's here, so a reader landing on it gets the point without the paragraph before it. Don't open on a back-reference ("None of these got their own run", "They're small things...") that only parses if you already know the topic.
+- When linking a guide or doc that has shipped, link the live page a reader can actually read (for Next.js, the rendered docs like `preview.nextjs.org/...`), not the GitHub PR. A PR link is for citing a specific change; a guide link is for reading.
 
 ## Code snippets
 
@@ -86,6 +88,7 @@ Snippets do a lot of the explaining in her posts. Match how she writes them:
 - **Signposting**: "The job behind all of this is the same", "Underneath, it's a memory thing", "It's worth noting that". Say the thing.
 - **Over-explaining and self-justifying**: don't defend choices, don't announce what you're about to explain, don't add a disclaimer nobody asked for.
 - **Presenting your own setup as a finished, handed-down feature**: stating a design choice as if it happens on its own, like "the agent gets a Vercel Sandbox per run" or "the run produces a log". She describes her own work as a choice or a capability, what you can do, not what the system does for you. Prefer "we can give the agent a sandbox" or "the agent can get a sandbox". The "X gets a Y" framing reads like a docs page announcing a settled thing.
+- **Empty frame sentences that add length but no information**: a lead-in that only sets up the real sentence, like "None of these got their own run." before a list of findings, or "The thing to notice here is...". Cut the frame and start with the point, or fold it into the next sentence.
 - **Superlatives and hype**: "the truest test", "unusually honest", "surprisingly good".
 - **Literary flourishes**: "the friction quietly disappears", "the bot finally grew up", "the detours end up on paper". Say it plainly.
 - **Aphorism closers**: don't end a section or the post on a neat one-liner. Let the last real point be the ending, then the standard sign-off.

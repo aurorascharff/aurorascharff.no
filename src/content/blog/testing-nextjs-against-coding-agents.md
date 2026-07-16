@@ -1,8 +1,8 @@
 ---
 author: Aurora Scharff
 pubDatetime: 2026-07-16T15:00:00Z
-title: What I Learned Testing Next.js Against Coding Agents
-slug: what-i-learned-testing-nextjs-against-coding-agents
+title: Testing Next.js Against Coding Agents
+slug: testing-nextjs-against-coding-agents
 featured: false
 draft: true
 tags:
@@ -155,11 +155,11 @@ Comparing logs is what makes friction measurable, and any way of storing and com
 
 A run is only a task in a fresh sandbox, and the log header records the model, the harness, and the Next.js version, so two runs are directly comparable. The model is a gateway string, so swapping it is a one-field change and the same task runs on a different model without anything else moving.
 
-That makes it easy to hold the task fixed and change one thing at a time. The same prompt across a few models shows whether a rough error message trips all of them or only the weaker ones, and the same prompt in a different harness, Claude Code instead of the DX Agent, shows whether the friction is really about Next.js or about the tool reading it. It only holds up when one variable changes at a time, the model or the version but never both, otherwise the comparison stops meaning much.
+That makes it easy to hold the task fixed and change one thing at a time. The same prompt across a few models shows whether a rough error message trips all of them or only the weaker ones, and the same prompt in a different harness, like Claude Code, shows whether the friction is really about Next.js or about the tool reading it. It only holds up when one variable changes at a time, the model or the version but never both, otherwise the comparison stops meaning much.
 
 ## Driving It from Slack
 
-I wired the agent up to Slack with the [chat SDK](https://chat-sdk.dev), Vercel's toolkit for building chat apps. A few lines turn the agent into a bot that listens for mentions:
+I wired the agent up to Slack with the [chat SDK](https://chat-sdk.dev), Vercel's toolkit for building chat apps. This is where the pieces became the DX Agent, the thing I built to run all of this. A few lines turn it into a bot that listens for mentions:
 
 ```ts
 import { Chat } from "chat";
@@ -195,8 +195,6 @@ The result comes back in the thread when it's done. A few real mentions from the
 @dxagent build a commerce app with Cache Components
 @dxagent triage https://github.com/vercel/next.js/issues/95265
 @dxagent test the dev overlay Copy prompt feature under cacheComponents
-@dxagent what are the most common friction points with Cache Components?
-@dxagent favorite my run about the blocking-prerender error
 
 dxagent  📋 Triage: getAll() drops duplicate-named cookies (#95265)
          🔴 1 · 🟡 3 · 🟢 4 · 16.3.0-canary.69 · claude-opus-4.8 · 1m 35s
@@ -217,7 +215,7 @@ The error messages, Skills, and docs I worked on all shipped with [Next.js 16.3:
 
 Next.js publishes a preview build for PRs as an installable tarball, so a run takes a PR URL, resolves it to that tarball, and installs it into the sandbox app before the agent starts. I change something on a branch, push, and watch how an agent reacts before it merges.
 
-Without per-run sandboxes, "test this PR before it merges" turns into "set up a test rig and hope you remember to tear it down."
+The nice part is being able to run this before a merge at all, and a sandbox is what makes it easy, with nothing to clean up afterward and a lot it handles that I'd otherwise get wrong myself.
 
 ### The Error Messages
 
@@ -247,7 +245,7 @@ When I reword one of those errors, a run against the PR preview shows me whether
 
 The green line is the feature working. The problem is that it's undocumented, so an agent grepping for the Copy prompt affordance finds nothing, even though the affordance itself is good.
 
-Runs like this shaped the details that shipped. I restructured the Copy prompt body into a step-by-step checklist ([#95186](https://github.com/vercel/next.js/pull/95186)) and dropped the fix cards that didn't apply to the failing code ([#94926](https://github.com/vercel/next.js/pull/94926)). A few runs also noticed that the `/docs/messages` pages the errors link to aren't bundled offline, something only an agent stuck in a sandbox would ever hit.
+Runs like this shaped the details that shipped. Both docs findings became PRs. [#94564](https://github.com/vercel/next.js/pull/94564) moved the Insight error pages into canary so the sandbox app installs them offline and their links resolve, something only an agent stuck in a sandbox would notice was missing, and [#95193](https://github.com/vercel/next.js/pull/95193) restructured those pages to orient the reader and point at the new 16.3 guides. On the overlay side, I restructured the Copy prompt body into a step-by-step checklist ([#95186](https://github.com/vercel/next.js/pull/95186)) and dropped the fix cards that didn't apply to the failing code ([#94926](https://github.com/vercel/next.js/pull/94926)).
 
 ![The dev overlay Instant Insights panel with the Stream, Cache, and Block fix cards and a Copy prompt button](@assets/dev-overlay-insights.avif)
 
@@ -270,7 +268,7 @@ The green line means the skill's recipe works as written. The red one caught the
 
 ### The Docs
 
-I wrote a [Building guide](https://github.com/vercel/next.js/pull/94999) that walks through `next build` under Cache Components: you build a product page, hit the `blocking-prerender-dynamic` error, and the guide shows the terminal output step by step, copy-pasted transcripts included. Copy-pasted output goes stale, so before it shipped I had an agent run the guide end to end against the PR's own preview build and check its quoted transcripts against what the binary actually printed. It flagged three:
+I wrote a [Building guide](https://preview.nextjs.org/docs/app/guides/building) that walks through `next build` under Cache Components: you build a product page, hit the `blocking-prerender-dynamic` error, and the guide shows the terminal output step by step, copy-pasted transcripts included. Copy-pasted output goes stale, so before it shipped I had an agent run the guide end to end against the PR's own preview build and check its quoted transcripts against what the binary actually printed. It flagged three:
 
 ```text
 ## Log
@@ -302,7 +300,7 @@ Rereading a docs PR catches unclear writing. It doesn't catch a transcript that 
 
 ### Smaller Findings Along the Way
 
-None of these got their own run. They're small things an agent happened to notice while doing something else, the kind of thing I wasn't looking for and would never have filed on its own. Running real tasks turns up more than you set out to find, and a few of these were worth a PR:
+Agents would sometimes flag small things they weren't asked to look for, the kind I'd never have filed on their own. Running real tasks turns up more than you set out to find, and a few were worth a PR:
 
 | Friction | Fix |
 | --- | --- |
@@ -351,6 +349,16 @@ export default defineSandbox({
 ```
 
 The migration changed the agent's role too. Before, it was something the workflow kicked off once per run, with no way to coordinate the runs or even see the others. On eve it became the orchestrator of all of them, with past runs indexed, so it can answer questions about older ones and act like one continuous assistant instead of a series of one-shot triggers.
+
+That opened up things the first version had no way to do, because it only knew about the run in front of it:
+
+```text
+@dxagent how did this run do compared to the one without partialPrefetching?
+@dxagent did the Cache Components suite improve on the latest canary?
+@dxagent how many runs hit the blocking-prerender error this week?
+@dxagent are we close to Cache Components being ready for default?
+@dxagent favorite this run
+```
 
 Runs also got faster, and the suite runs that used to die halfway with no error now finish, a bug I'd sunk real time into and never fixed. The framework your agent runs on is a DX surface too, and I didn't notice until I replaced mine.
 
