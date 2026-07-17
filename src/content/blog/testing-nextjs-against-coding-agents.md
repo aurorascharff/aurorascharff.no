@@ -14,15 +14,15 @@ tags:
 description: More code is written by coding agents, and they trip in the same places developers do. Here is the friction-logging workflow I built to test Next.js against agents, and what it taught me about error messages, docs, and DX.
 ---
 
-I work on developer experience on the Next.js team at Vercel: the docs, error messages, codemods, and adoption skills that make a feature usable for whoever picks it up next. That's now an agent as often as a person, and a coding agent reads all of it when it builds with Next.js, usually before any developer does. It takes it at face value, guesses when something is unclear, and gets stuck in the same places a developer would. So I started running agents against our work to find those places on purpose.
+I work on developer experience on the Next.js team at Vercel: the docs, error messages, [codemods](https://nextjs.org/docs/app/guides/upgrading/codemods), and [adoption skills](https://github.com/vercel/next.js/tree/canary/skills) that make a feature usable for whoever picks it up next. That's now an agent as often as a person, and a coding agent reads all of it when it builds with Next.js, usually before any developer does. It takes it at face value, guesses when something is unclear, and gets stuck in the same places a developer would. So I started running agents against our work to find those places on purpose.
 
-In this post, I'll walk through the setup I built to test Next.js against coding agents, and what it taught me about error messages, docs, and DX. I built it up one piece at a time, from a friction-logging skill and a Vercel Sandbox per run to models through the AI SDK, a Slack bot, and a dashboard, before folding the whole thing onto eve.
+In this post, I'll walk through the setup I built to test Next.js against coding agents, and what it taught me about error messages, docs, and DX. I built it up one piece at a time, from a friction-logging skill and a Vercel Sandbox per run to models through the AI SDK, a Slack bot, and a dashboard, before folding the whole thing onto [eve](https://eve.dev), Vercel's framework for durable agents.
 
 ## Table of contents
 
 ## The Goal
 
-I built this because agents were doing a bad job. Building with newer APIs like Cache Components, they weren't getting it right even though the docs were bundled in the project, and I wanted to understand what they actually did and why. At Vercel we build agents for everything, and I'd been wanting to automate my own DX work, so this felt like the thing to build.
+I built this because agents were doing a bad job. Building with newer APIs like [Cache Components](https://nextjs.org/docs/app/api-reference/config/next-config-js/cacheComponents), they weren't getting it right even though the docs were bundled in the project, and I wanted to understand what they actually did and why. At Vercel we build agents for everything, and I'd been wanting to automate my own DX work, so this felt like the thing to build.
 
 It also became a way to test my own changes. Error messages have been neglected for a long time, and the AI era is changing that, because an agent has to read an error, work out what it means, and act on it the same way a developer does, and a vague one leaves it guessing. So whenever I changed an error message or a docs page, I wanted to know whether it actually helped or whether I was shipping different red text, fast enough to matter during design instead of after merge.
 
@@ -32,7 +32,7 @@ Testing a feature with someone who has never seen it is one of the most useful t
 
 That only holds if the agent stays fresh, and a real one doesn't by default. Claude Code keeps memory between sessions, which is great for real work and bad for testing, because a second run tests the framework plus whatever the agent learned last time, and the friction quietly drops out even though it's still there for a real user. So I start each run cold, with no history. A cold run is also more honest than a human account, because the agent doesn't know it's being tested and has no reason to smooth over or play up what it hit.
 
-A developer hits a rough edge, works it out, and stops noticing it after a while. A cold agent starts over from scratch and hits it again. In the early tests they kept hitting the same Cache Components wall run after run, whatever I asked them to build. That repetition would be a problem for a real user, but it's what makes an agent useful for testing, because the friction keeps surfacing instead of fading away.
+A developer hits a rough edge, works it out, and stops noticing it after a while. A cold agent starts over from scratch and hits it again. That repetition would be a problem for a real user, but it's what makes an agent useful for testing, because the friction keeps surfacing instead of fading away.
 
 It matters most for new features. On an older API the agent can fall back on training data, but that data is months out of date, so for anything new it has nothing to go on except the docs and error messages we wrote.
 
@@ -44,7 +44,7 @@ The trouble tends to come in the later part of a task, where an agent drifts fro
 
 Asking the agent afterward what it struggled with didn't work either. It would tell me everything went fine and give a plausible reason for whatever it did, and the reason often wasn't the true one.
 
-The run that made me drop this was one where Sonnet kept ignoring AGENTS.md and deviating from its guidance, and I couldn't tell why. Asking it directly got me plausible answers that didn't hold up, and it took asking the same question several times before I got the real reason. In that harness it had no tool to read into node_modules, which was what kept it from following the guidance. Prying one specific fact out of an agent after the fact was that hard, so the logging has to happen while it works.
+The run that made me drop this was one where Sonnet kept ignoring [AGENTS.md](https://agents.md) and deviating from its guidance, and I couldn't tell why. Asking it directly got me plausible answers that didn't hold up, and it took asking the same question several times before I got the real reason. In that harness it had no tool to read into node_modules, which was what kept it from following the guidance. Prying one specific fact out of an agent after the fact was that hard, so the logging has to happen while it works.
 
 ## A Skill That Makes Friction Visible
 
@@ -136,13 +136,9 @@ A run still needs something to do. The prompts are concrete tasks for the agent,
 
 Runs are independent sessions with their own sandboxes, so they parallelize, and we can lean on that in a few ways. We batch the same prompt several times to rule out one-offs, group prompts into suites and run the whole set against a new canary or a PR preview, and compare two runs to see what friction appeared or went away.
 
-Comparing logs is what makes friction measurable, and any way of storing and comparing them would do.
+Comparing two runs is easy because a run is only a task in a fresh sandbox, and the log header records the model, the harness, and the Next.js version. The model is a gateway string, so swapping it means changing that string and nothing else, and the same task runs on a different model.
 
-## Comparing Models and Harnesses
-
-A run is only a task in a fresh sandbox, and the log header records the model, the harness, and the Next.js version, so two runs are directly comparable. The model is a gateway string, so swapping it is a one-field change and the same task runs on a different model without anything else moving.
-
-That makes it easy to hold the task fixed and change one thing at a time. The same prompt across a few models shows whether a rough error message trips all of them or only the weaker ones, and the same prompt in a different harness, like Claude Code, shows whether the friction is really about Next.js or about the tool reading it. It only holds up when one variable changes at a time, the model or the version but never both, otherwise the comparison stops meaning much.
+That lets me hold the task fixed and change one thing at a time. The same prompt across a few models shows whether a rough error message trips all of them or only the weaker ones, and the same prompt in a different harness, like Claude Code, shows whether the friction is about Next.js or about the tool reading it. It only holds up when one variable changes at a time, the model or the version but never both, otherwise the comparison stops meaning much.
 
 ## Driving It from Slack
 
@@ -311,7 +307,7 @@ When a fix felt worth re-checking, I could run the same prompt against its previ
 
 Everything so far ran on the first version of this setup. It used Vercel Workflow for durable runs, the AI SDK with AI Gateway for the model, the chat SDK for Slack, and Redis and Blob for storage, with a sentinel string for human-in-the-loop.
 
-I was already running the loop regularly by the time [eve](https://eve.dev), Vercel's framework for durable agents, came out, and migrating to it deleted around 1,900 lines of my code for the same surface: the same dashboard, the same Slack bot, the same loop. The whole `workflows/` package of durable-run orchestration, including the `DurableAgent` run loop from the Slack section, collapsed into eve's session loop.
+I was already running the loop regularly by the time [eve](https://eve.dev) came out, and migrating to it deleted around 1,900 lines of my code for the same surface: the same dashboard, the same Slack bot, the same loop. The whole `workflows/` package of durable-run orchestration, including the `DurableAgent` run loop from the Slack section, collapsed into eve's session loop.
 
 ### What Moved Into eve
 

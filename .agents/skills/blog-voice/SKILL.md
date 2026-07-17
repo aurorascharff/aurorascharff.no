@@ -68,7 +68,7 @@ Keep the background (the why, the mechanism) out of the intro. If it runs past t
 - Let code and real examples carry the weight; the prose points at them, it doesn't restate them.
 - Prefer plain words over formal ones. She writes "the logs in this post", not "the excerpts"; "trimmed", not "excerpted". If a fancier word (excerpt, showcase, leverage, utilize) does no more than a plain one, use the plain one.
 - Describe a process, don't list personal capabilities. "The task stays fixed and one thing changes" beats "I can hold the task fixed, and I can swap the model, and I can ...".
-- Link a tool once, at the point it's used, with a short note on what it does and why. Don't relist the link later.
+- Link a tool where it's used, with a short note on what it does and why. Linking once is the default, but re-linking in a later section is fine when a reader might land there without scrolling up and it wasn't just linked. Don't relist the same link in adjacent paragraphs.
 - Open a paragraph so it introduces itself: start with what it's about and why it's here, so a reader landing on it gets the point without the paragraph before it. Don't open on a back-reference ("None of these got their own run", "They're small things...") that only parses if you already know the topic.
 - When linking a guide or doc that has shipped, link the live page a reader can actually read (for Next.js, the rendered docs like `preview.nextjs.org/...`), not the GitHub PR. A PR link is for citing a specific change; a guide link is for reading.
 
