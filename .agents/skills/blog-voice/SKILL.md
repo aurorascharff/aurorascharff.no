@@ -58,6 +58,7 @@ Keep the background (the why, the mechanism) out of the intro. If it runs past t
 
 - Connected sentences that show the relationship (because, so, while), with short sentences to land a point.
 - First person. Past tense for what she did, present tense for how things work.
+- She leans on "we" more than "I", especially in explanatory and walkthrough passages (one reference post runs ~50 "we" to 7 "I"). Use "we"/"our" for work the team shares (the docs and error messages "we write") and for walking the reader through something; reserve "I" for her own initiative and specific contributions (a thing she built, a choice she made). When a sentence could go either way, prefer "we".
 - Let code and real examples carry the weight; the prose points at them, it doesn't restate them.
 - Describe a process, don't list personal capabilities. "The task stays fixed and one thing changes" beats "I can hold the task fixed, and I can swap the model, and I can ...".
 - Link a tool once, at the point it's used, with a short note on what it does and why. Don't relist the link later.

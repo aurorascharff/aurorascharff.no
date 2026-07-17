@@ -14,25 +14,17 @@ tags:
 description: More code is written by coding agents, and they trip in the same places developers do. Here is the friction-logging workflow I built to test Next.js against agents, and what it taught me about error messages, docs, and DX.
 ---
 
-When a coding agent builds with Next.js, it reads the same error messages and docs I write, usually before any developer does. It takes them at face value, guesses when something is unclear, and gets stuck in the same places a developer would. So I started running agents against my own work to find those places on purpose.
+When a coding agent builds with Next.js, it reads the same error messages and docs we write, usually before any developer does. It takes them at face value, guesses when something is unclear, and gets stuck in the same places a developer would. So I started running agents against our work to find those places on purpose.
 
 In this post, I'll walk through the setup I built to test Next.js against coding agents, and what it taught me about error messages, docs, and DX.
 
 ## Table of contents
 
-## Why Agents Make Good Test Subjects
-
-Testing a feature with someone who has never seen it is one of the most useful things you can do in DX. They hit the confusing parts that the people who built it have learned to ignore. The catch is that you run out of fresh testers fast, because everyone is only new once. An agent starts fresh, and you can run it as often as you want.
-
-This works because the agent doesn't remember. A developer hits a rough edge, works it out, and stops noticing it after a while. An agent starts over from scratch and hits it again. In production that's a problem, but for testing it's the point, since the friction never drops out of the logs.
-
-It matters most for new features. On an older API the agent can fall back on training data, but that data is months out of date, so for anything new it has nothing to go on except the docs and error messages I wrote.
-
 ## What I Work On
 
-I work on developer experience on the Next.js team at Vercel. A lot of it is the dev overlay and its error and insight system, the messages and fix cards you get when a build or a navigation goes wrong, and it runs through the docs, the codemods, and the adoption skills too. For 16.3 most of that was in service of Cache Components and [Instant Navigations](https://nextjs.org/blog/next-16-3-instant-navigations), which shipped with [Next.js 16.3: AI Improvements](https://nextjs.org/blog/next-16-3-ai-improvements).
+I work on developer experience on the Next.js team at Vercel. A lot of it is the dev overlay and its error and insight system, the messages and fix cards you get when a build or a navigation goes wrong, and it runs through the docs, the codemods, and the adoption skills too. For 16.3 most of that was in service of Cache Components and [Instant Navigations](https://nextjs.org/blog/next-16-3-instant-navigations), and the AI-facing side of it shipped with [Next.js 16.3: AI Improvements](https://nextjs.org/blog/next-16-3-ai-improvements).
 
-All of it is about making a feature usable for whoever picks it up next, and these days that's an agent as often as a person.
+All of it is about making a feature usable for whoever picks it up next, which is now an agent as often as a person.
 
 ## The Goal
 
@@ -40,15 +32,21 @@ I built this because agents were doing a bad job. Building with newer APIs like 
 
 It also became a way to test my own changes. Whenever I changed an error message or a docs page, I wanted to know whether it actually helped or whether I was shipping different red text, and I wanted to know it fast enough to matter during design instead of after merge.
 
-The workflow that came out of it is a friction-logging skill, a Vercel Sandbox per run, models called through the AI SDK and AI Gateway, and a Slack bot plus a Next.js dashboard to drive them. I built it up one piece at a time and much later folded the whole thing into [eve](#letting-eve-own-the-plumbing). Here's what I learned along the way.
+The workflow that came out of it is a friction-logging skill, a Vercel Sandbox per run, models called through the AI SDK and AI Gateway, and a Slack bot plus a Next.js dashboard to drive them. I built it up one piece at a time and much later folded the whole thing into [eve](#letting-eve-own-the-plumbing).
+
+## Why Agents Make Good Test Subjects
+
+Testing a feature with someone who has never seen it is one of the most useful things you can do in DX. They hit the confusing parts that the people who built it have learned to ignore. The catch is that you run out of fresh testers fast, because everyone is only new once. An agent starts fresh, and you can run it as often as you want.
+
+An agent doesn't remember between runs. A developer hits a rough edge, works it out, and stops noticing it after a while. An agent starts over from scratch and hits it again. For a real user that repetition is a problem, but it's what makes an agent useful for testing, because the friction keeps showing up in the logs instead of dropping out.
+
+It matters most for new features. On an older API the agent can fall back on training data, but that data is months out of date, so for anything new it has nothing to go on except the docs and error messages I wrote.
 
 ## Why Evals Weren't Enough
 
 We already measure agents with evals, and the bundled docs work scored great on them. But an eval only tells you whether a task passed, and a task can pass while the agent guessed twice and misread an error on the way.
 
 That was the situation I was in: good eval numbers, agents still stumbling through Cache Components. I wanted to see what happened during the task, not only how it ended.
-
-## Logging While the Agent Works
 
 My first attempt was to ask agents afterward what they struggled with, and it didn't work. The agent would tell me everything went fine and give a plausible reason for whatever it did, and the reason often wasn't the true one.
 
@@ -125,6 +123,7 @@ A skill alone doesn't run code, and a cold agent needs a fresh place to work. I 
 So we can give the agent a [Vercel Sandbox](https://vercel.com/docs/vercel-sandbox) per run, an ephemeral cloud machine that boots from a snapshot in a second or two, runs whatever the agent throws at it, and gets torn down at the end, with a nightly job keeping the snapshot on the latest canary. Three calls do almost everything I need, which is to create it, run a command, and read the log back.
 
 ```ts
+// per-run sandbox: create it, run a command, read the log back
 const sandbox = await Sandbox.create({
   source: { type: "snapshot", snapshotId },
 });
@@ -147,7 +146,7 @@ The prompts are concrete tasks for the agent to do, and the friction shows up in
 - `Try to reproduce vercel/next.js#95268: document.title dropped on client-side navigation with cacheComponents`
 - `Triage vercel/next.js#95395: constructor as a route name crashes the dev overlay`
 
-Runs are independent sessions with their own sandboxes, so they parallelize, and I lean on that in a few ways. I batch the same prompt several times to rule out one-offs, I group prompts into suites and run the whole set against a new canary or a PR preview, and I compare two runs to see what friction appeared or went away.
+Runs are independent sessions with their own sandboxes, so they parallelize, and we can lean on that in a few ways. We batch the same prompt several times to rule out one-offs, group prompts into suites and run the whole set against a new canary or a PR preview, and compare two runs to see what friction appeared or went away.
 
 Comparing logs is what makes friction measurable, and any way of storing and comparing them would do.
 
@@ -162,6 +161,7 @@ That makes it easy to hold the task fixed and change one thing at a time. The sa
 I wired the agent up to Slack with the [chat SDK](https://chat-sdk.dev), Vercel's toolkit for building chat apps. This is where the pieces became the DX Agent, the thing I built to run all of this. A few lines turn it into a bot that listens for mentions:
 
 ```ts
+// the DX Agent as a Slack bot
 import { Chat } from "chat";
 import { createSlackAdapter } from "@chat-adapter/slack";
 
@@ -180,6 +180,7 @@ chat.onNewMention(async (thread, message) => {
 I mention it with a task, and the run happens in the background as a durable [Vercel Workflow](https://vercel.com/docs/workflow), a way to run a long job so it survives restarts and retries instead of dying when a function times out. The run loop itself is a `DurableAgent` from `@workflow/ai`, which wraps an [AI SDK](https://ai-sdk.dev) model call in that workflow so it can pause for input mid-run and pick up where it left off. The model is a `provider/model` string that [AI Gateway](https://vercel.com/docs/ai-gateway) resolves, so there are no per-provider keys to juggle:
 
 ```ts
+// the run loop
 import { DurableAgent } from "@workflow/ai/agent";
 
 const agent = new DurableAgent({
@@ -205,7 +206,7 @@ dxagent  📋 Triage: getAll() drops duplicate-named cookies (#95265)
 
 By this point the runs lived in Slack threads and got hard to keep track of, so I built a Next.js dashboard around them. This is where the setup grew from a Slack bot into something with real features. A run shows its log with the severity dots and the source the agent produced next to it, and a red or yellow entry can become a tracked issue.
 
-Suites group prompts so I can run a whole set at once, and the dashboard charts a suite's friction rate per version. When that rate drops from one canary to the next, the framework got easier to build against for whatever the suite covers. A goal ties a suite to a target, like keeping Cache Components under 20%, and shows whether it's there yet.
+Suites group prompts so we can run a whole set at once, and the dashboard charts a suite's friction rate per version. When that rate drops from one canary to the next, the framework got easier to build against for whatever the suite covers. A goal ties a suite to a target, like keeping Cache Components under 20%, and shows whether it's there yet.
 
 A run can also point at a specific branch, so I could test a PR's preview build before it merged.
 
@@ -245,7 +246,7 @@ When I reworded one of those errors, I could point a run at the PR preview to se
    prompt is scoped to the specific fix the developer chose, not a generic dump  [sandbox]
 ```
 
-The green line is the feature working. The problem is that it's undocumented, so an agent grepping for the Copy prompt affordance finds nothing, even though the affordance itself is good.
+The feature itself works. What the log caught is that it's undocumented, so an agent grepping for the Copy prompt affordance finds nothing.
 
 Runs like this shaped the details that shipped. Both docs findings became PRs. [#94564](https://github.com/vercel/next.js/pull/94564) moved the Insight error pages into canary so the sandbox app installs them offline and their links resolve, something only an agent stuck in a sandbox would notice was missing, and [#95193](https://github.com/vercel/next.js/pull/95193) restructured those pages to orient the reader and point at the new 16.3 guides. On the overlay side, I restructured the Copy prompt body into a step-by-step checklist ([#95186](https://github.com/vercel/next.js/pull/95186)) and dropped the fix cards that didn't apply to the failing code ([#94926](https://github.com/vercel/next.js/pull/94926)).
 
@@ -268,7 +269,7 @@ I checked the [first-party Skills](https://nextjs.org/blog/next-16-3-ai-improvem
    ◐ (Partial Prerender); /dashboard stays ƒ (Dynamic)  [sandbox]
 ```
 
-The green lines mean the skill's sequencing works as written. The red one caught a real gotcha. The blanket opt-out the codemod applies clears validation but not synchronous-IO reads, so a `new Date()` in the root layout footer still failed `/_not-found` even after opting out. Watching agents hit edges like this is what fed into the [`next-cache-components-adoption`](https://github.com/vercel/next.js/tree/canary/skills/next-cache-components-adoption) skill.
+The skill's sequencing works as written, and the run also caught a real gotcha. The blanket opt-out the codemod applies clears validation but not synchronous-IO reads, so a `new Date()` in the root layout footer still failed `/_not-found` even after opting out. Watching agents hit edges like this is what fed into the [`next-cache-components-adoption`](https://github.com/vercel/next.js/tree/canary/skills/next-cache-components-adoption) skill.
 
 ### The Docs
 
@@ -304,13 +305,17 @@ Rereading a docs PR catches unclear writing. It doesn't catch a transcript that 
 
 ### Smaller Findings Along the Way
 
-Agents would sometimes flag small things they weren't asked to look for, the kind I'd never have filed on their own. Running real tasks turns up more than you set out to find, and a few were worth a PR:
+Agents would sometimes flag small things they weren't asked to look for, the kind I'd never have filed on their own. Running real tasks turns up more than you set out to find, and several were worth a PR:
 
 | Friction | Fix |
 | --- | --- |
 | 🟡 No build output confirming `partialPrefetching` is active | [#95593](https://github.com/vercel/next.js/pull/95593) logs "Partial Prefetching enabled" during `next build` |
 | 🔴 First build failed on `/_not-found`: "uncached or runtime data during prerendering" | [#95163](https://github.com/vercel/next.js/pull/95163) clarifies `/_not-found` failures under Cache Components |
 | 🟡 `partialPrefetching` is a separate required flag, not co-located in `cacheComponents.md` | [#94818](https://github.com/vercel/next.js/pull/94818) tightens the Partial Prefetching API references |
+| 🟡 The `[block]` fix said "silence this warning", but it's surfaced as an Error, not a warning | [#95187](https://github.com/vercel/next.js/pull/95187) removes "silence this warning" from the instant validation fix output |
+| 🟡 The upgrade codemod hard-aborts without a git repo, with no `--yes`/`--no-git` path for agents or CI | [#95312](https://github.com/vercel/next.js/pull/95312) makes the codemod upgrade non-interactive for agents and CI |
+| 🟡 The `cacheTag` docs don't show `updateTag` next to `revalidateTag` | [#94508](https://github.com/vercel/next.js/pull/94508) adds an `updateTag` example to the `cacheTag` page |
+| 🟡 `export const prefetch = 'allow-runtime'` has no docs page, discoverable only via the reference app | [#94997](https://github.com/vercel/next.js/pull/94997) documents `allow-runtime`, sync-IO, and `instant = false` |
 
 When a fix felt worth re-checking, I could run the same prompt against its preview build to confirm the friction was gone before it merged.
 
@@ -319,6 +324,8 @@ When a fix felt worth re-checking, I could run the same prompt against its previ
 The first version used Vercel Workflow for durable runs, the AI SDK with AI Gateway for the model, the chat SDK for Slack, and Redis and Blob for storage, with a sentinel string for human-in-the-loop.
 
 I was already running the loop regularly by the time [eve](https://eve.dev), Vercel's framework for durable agents, came out, and migrating to it deleted around 1,900 lines of my code for the same surface: the same dashboard, the same Slack bot, the same loop. The whole `workflows/` package of durable-run orchestration, including the `DurableAgent` run loop from the Slack section, collapsed into eve's session loop.
+
+### What Moved Into eve
 
 Slack shows the change most clearly. The first version used the chat SDK with a `slack-manifest.json` checked into the repo, its scopes and event subscriptions maintained by hand, and pattern-matched thread replies faking human-in-the-loop, because questions came back as free text I had to answer in prose. All it could really do was start a run and report back.
 
@@ -352,7 +359,9 @@ export default defineSandbox({
 });
 ```
 
-The migration changed the agent's role too. Before, it was something the workflow kicked off once per run, with no way to coordinate the runs or even see the others. On eve it became the orchestrator of all of them, with past runs indexed, so it can answer questions about older ones and act like one continuous assistant instead of a series of one-shot triggers.
+### What It Let the Agent Do
+
+The migration also changed the agent's role. Before, it was something the workflow kicked off once per run, with no way to coordinate the runs or even see the others. On eve it became the orchestrator of all of them, with past runs indexed, so it can answer questions about older ones and act like one continuous assistant instead of a series of one-shot triggers.
 
 That opened up things the first version had no way to do, because it only knew about the run in front of it:
 
@@ -364,12 +373,12 @@ That opened up things the first version had no way to do, because it only knew a
 @dxagent favorite this run
 ```
 
-Runs also got faster, and the suite runs that used to die halfway with no error now finish, a bug I'd sunk real time into and never fixed. The framework your agent runs on is a DX surface too, and I didn't notice until I replaced mine.
+Runs also got faster, and the suite runs that used to die halfway with no error now finish, a bug I'd sunk real time into that the migration cleared on its own. The framework the agent runs on is a DX surface too.
 
 ## Anyone Can Build This
 
 The skill and the viewer are open source, and nothing else in the setup is specific to Next.js. You can give a fresh agent a real task in a clean sandbox, have it log where it gets stuck, and read the parts you'd otherwise skim.
 
-The friction it hits is the friction your users hit, so what you fix for the agent you fix for the person too. It won't catch regressions on its own, that's what evals are for, but they go well together: the eval tells you the task still passes, the friction log tells you how rough getting there was.
+The friction it hits is the same friction your users hit, so fixing it for the agent fixes it for the person. It won't catch regressions on its own, that's what evals are for, but the two go together: an eval tells you the task still passes, and a friction log tells you how rough getting there was.
 
 I hope this post has been helpful. Please let me know if you have any questions or comments, and follow me on [Bluesky](https://bsky.app/profile/aurorascharff.no) or [X](https://x.com/aurorascharff) for more updates. Happy coding! 🚀
