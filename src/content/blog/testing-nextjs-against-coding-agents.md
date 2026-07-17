@@ -14,47 +14,41 @@ tags:
 description: More code is written by coding agents, and they trip in the same places developers do. Here is the friction-logging workflow I built to test Next.js against agents, and what it taught me about error messages, docs, and DX.
 ---
 
-When a coding agent builds with Next.js, it reads the same error messages and docs we write, usually before any developer does. It takes them at face value, guesses when something is unclear, and gets stuck in the same places a developer would. So I started running agents against our work to find those places on purpose.
+I work on developer experience on the Next.js team at Vercel: the docs, error messages, codemods, and adoption skills that make a feature usable for whoever picks it up next. That's now an agent as often as a person, and a coding agent reads all of it when it builds with Next.js, usually before any developer does. It takes it at face value, guesses when something is unclear, and gets stuck in the same places a developer would. So I started running agents against our work to find those places on purpose.
 
-In this post, I'll walk through the setup I built to test Next.js against coding agents, and what it taught me about error messages, docs, and DX.
+In this post, I'll walk through the setup I built to test Next.js against coding agents, and what it taught me about error messages, docs, and DX. I built it up one piece at a time, from a friction-logging skill and a Vercel Sandbox per run to models through the AI SDK, a Slack bot, and a dashboard, before folding the whole thing onto eve.
 
 ## Table of contents
-
-## What I Work On
-
-I work on developer experience on the Next.js team at Vercel. A lot of it is the dev overlay and its error and insight system, the messages and fix cards you get when a build or a navigation goes wrong, and it runs through the docs, the codemods, and the adoption skills too. For 16.3 most of that was in service of Cache Components and [Instant Navigations](https://nextjs.org/blog/next-16-3-instant-navigations), and the AI-facing side of it shipped with [Next.js 16.3: AI Improvements](https://nextjs.org/blog/next-16-3-ai-improvements).
-
-All of it is about making a feature usable for whoever picks it up next, which is now an agent as often as a person.
 
 ## The Goal
 
 I built this because agents were doing a bad job. Building with newer APIs like Cache Components, they weren't getting it right even though the docs were bundled in the project, and I wanted to understand what they actually did and why. At Vercel we build agents for everything, and I'd been wanting to automate my own DX work, so this felt like the thing to build.
 
-It also became a way to test my own changes. Whenever I changed an error message or a docs page, I wanted to know whether it actually helped or whether I was shipping different red text, and I wanted to know it fast enough to matter during design instead of after merge.
-
-The workflow that came out of it is a friction-logging skill, a Vercel Sandbox per run, models called through the AI SDK and AI Gateway, and a Slack bot plus a Next.js dashboard to drive them. I built it up one piece at a time and much later folded the whole thing into [eve](#letting-eve-own-the-plumbing).
+It also became a way to test my own changes. Error messages have been neglected for a long time, and the AI era is changing that, because an agent has to read an error, work out what it means, and act on it the same way a developer does, and a vague one leaves it guessing. So whenever I changed an error message or a docs page, I wanted to know whether it actually helped or whether I was shipping different red text, fast enough to matter during design instead of after merge.
 
 ## Why Agents Make Good Test Subjects
 
 Testing a feature with someone who has never seen it is one of the most useful things you can do in DX. They hit the confusing parts that the people who built it have learned to ignore. The catch is that you run out of fresh testers fast, because everyone is only new once. An agent starts fresh, and you can run it as often as you want.
 
-An agent doesn't remember between runs. A developer hits a rough edge, works it out, and stops noticing it after a while. An agent starts over from scratch and hits it again. For a real user that repetition is a problem, but it's what makes an agent useful for testing, because the friction keeps showing up in the logs instead of dropping out.
+That only holds if the agent stays fresh, and a real one doesn't by default. Claude Code keeps memory between sessions, which is great for real work and bad for testing, because a second run tests the framework plus whatever the agent learned last time, and the friction quietly drops out even though it's still there for a real user. So I start each run cold, with no history. A cold run is also more honest than a human account, because the agent doesn't know it's being tested and has no reason to smooth over or play up what it hit.
 
-It matters most for new features. On an older API the agent can fall back on training data, but that data is months out of date, so for anything new it has nothing to go on except the docs and error messages I wrote.
+A developer hits a rough edge, works it out, and stops noticing it after a while. A cold agent starts over from scratch and hits it again. In the early tests they kept hitting the same Cache Components wall run after run, whatever I asked them to build. That repetition would be a problem for a real user, but it's what makes an agent useful for testing, because the friction keeps surfacing instead of fading away.
+
+It matters most for new features. On an older API the agent can fall back on training data, but that data is months out of date, so for anything new it has nothing to go on except the docs and error messages we wrote.
 
 ## Why Evals Weren't Enough
 
-We already measure agents with evals, and the bundled docs work scored great on them. But an eval only tells you whether a task passed, and a task can pass while the agent guessed twice and misread an error on the way.
+So agents surface friction. The question is how to capture it. We already measure agents with evals, and the bundled docs work scored great on them. But an eval only checks whether a task passed start to finish, and a task can pass while the agent guessed twice and misread an error on the way.
 
-That was the situation I was in: good eval numbers, agents still stumbling through Cache Components. I wanted to see what happened during the task, not only how it ended.
+The trouble tends to come in the later part of a task, where an agent drifts from the plan it started with, so the green run is often one where it quietly stopped doing what it set out to do. That was my situation, good eval numbers and agents still stumbling through Cache Components.
 
-My first attempt was to ask agents afterward what they struggled with, and it didn't work. The agent would tell me everything went fine and give a plausible reason for whatever it did, and the reason often wasn't the true one.
+Asking the agent afterward what it struggled with didn't work either. It would tell me everything went fine and give a plausible reason for whatever it did, and the reason often wasn't the true one.
 
 The run that made me drop this was one where Sonnet kept ignoring AGENTS.md and deviating from its guidance, and I couldn't tell why. Asking it directly got me plausible answers that didn't hold up, and it took asking the same question several times before I got the real reason. In that harness it had no tool to read into node_modules, which was what kept it from following the guidance. Prying one specific fact out of an agent after the fact was that hard, so the logging has to happen while it works.
 
 ## A Skill That Makes Friction Visible
 
-Friction logging is an old practice I wasn't especially familiar with when I started: an engineer works through a task and writes down everything that confuses them along the way. That's genuinely valuable, but it's manual, and it only ever gives you the human's point of view. I wanted to automate it and get the agent's.
+Logging while the agent works has a name, friction logging. It's an old practice I wasn't especially familiar with when I started, where an engineer works through a task and writes down everything that confuses them along the way. That's genuinely valuable, but it's manual, and it only ever gives you the human's point of view. I wanted to automate it and get the agent's.
 
 So I made a skill, [friction-log](https://github.com/aurorascharff/skills/tree/main/skills/friction-log), that changes how the agent behaves during a task. It logs gaps in real time instead of guessing past them, tags steps green, yellow, or red, and cites where its decisions came from, whether that's the docs, a web search, training data, or the sandbox.
 
@@ -102,34 +96,28 @@ This is an early run, before the error-message work in 16.3 landed. An agent hit
 
 The summary and the action items are what I actually read. The action items are already sorted by where the fix belongs, so I turn the ones worth doing into tracked issues and come back to them later. The `[docs]`, `[training data]`, and `[sandbox]` tags on the log entries are there for tracing a finding back to its source.
 
-There's also a passive companion, `friction-report`, that doesn't steer the run at all but scans the session at the end, drafts a report if it found friction, and stays silent if the run was clean. The skill is open source, and I [shared a full log](https://x.com/aurorascharff/status/2055328557480714309) when I published it.
+The skill is open source, and I [shared a full log](https://x.com/aurorascharff/status/2055328557480714309) when I published it.
 
 ```bash
 npx skills add aurorascharff/skills/skills/friction-log
 ```
 
-The excerpts in this post are trimmed pieces of logs like these. You can [see a full one in the viewer](https://agent-friction-skill.vercel.app/view#log=g:H4sIAAAAAAAC_41YzXIUyRG-z1NUiAOjkbqHBRuMYAmzAhGyMd4AbawjFMR2TXfNTKGert6qao3GJ5_8AI69E-tn8BPtE-wj-Musqp4eCQEXxPRfZX6Z-eWXeUecWF16bRrx2izEb__6RbxQl8JcKlvLjdg7Nu1GSCdaa1at3xNdUykrjmW5VOIYl0yjGu9Go8nkjbry-Qcn8KbD544mE_HNw_xBfi8rZSPtJn90D0-9kF7Rrfv37j_M7j3M7j_Gxe86XVfC6xXfuufE2HYN_ZxW6jJLtujmUjmvF5KsfSIaQ0ZVXTB-xp9olKpUtY9PPm9b-lYxXRt74VpZqum8hiWwOyvhUxYcKkajO3fE9_z_0eiZ8DhBePhWDUCg5yMAYq6k76zCM9KLpWxb1TixXqpGrJXonBJ8xBYZIZsK1-payLXUXjizUn6pmwUf_K5brQDNaPT7x4__FZPJGU5OJ7DhQjVV5k2GPznc-VH7pSiuHXEkvO1UwSfJBhHi-5Uo-ERcDx61cqFErS5VLcbAruiNLQ4Jy-Lpu86RN-pZsX8oigbhJBQKYaV2yvE39vqPV9JLUXUWngAaZRXlBX7sidPG6cXSsznhcnh3MsEdLxsvFp2uZFMqOBQhzsVLfFaYOT_pl1YBB30F-2yFbEiWienQbPya1aa8IBOs6bzap-ethq0awJt1gzOvJzDOnHXeI2M4gggtPS8RvbrOHIAsCXwAuQC0KejesF1lrduZgUniUksgJC8pGY3N-xv52mqvzgBdkY9GFE0-oEof0k7gu51uVL0RS8Akfu5krf3mCCZ47WtECDfFuED-4hE69fzpAt61z96LvafA5NkeIZPnOUVJikcwWrUCeJQXtUbyjiurLxXuzKxZO9Tqb__-j9AVvNHzjZhLXRNepakU37FKIkwdDj5gxCtTOr4h2YBWeq9sw1cQKvoEUIvVyVf5ZDbULYEhXGzueqHg7SYekIVHnJ7R0Y7MRmrQG8paY0MQBZcSijdgC5SUBVW8pCdOm7kZ7xe5OMWHL1FqHgeFpAphQnw05RaOp4ucuxlRR21MWwh3ocmwOdICGULmXcMoWmSE43rU_0TclrJZUCY1oq0l_WsNMg82LYEpcqcRqlwawpJTI-Efwz5PpIqnFYV9Mqm0Kynd5UxTxCcTKjsQCkqKnjzi76TixxtgWlN2K_hH6RgRi7lbyxmV8fXk3kf4FOO_kh71JJuNcEpaODNDhBHJFTkUPtRUNdUx4n0Y-KFDfErx_PtTwGDnYMxDYWwoyE2rRCNXwGNcEBvS56j-ihN9dYy8L_Zz8byJ0RjjrYp4xrTK7gvTII_muqmoLMVsI3C5SbgliiX_ECyq5ZyZ8XmA79SrlaMLd8QLWDrKxO8ff_kf0HxjRIKH-4FQV0DfiXk0-Ubjmorr9JPAJmJ9ZVXbJqOoVuwWoqJBsfy0QquplZtSbk0RS_wDg6YFn1gMWgTotBh2GPqZ-AE_lC9zFAUORuNAAiyZvhSIGbblN8g9X1VF72nI-XktF31C9NwrYCByAgmCLnhJv8kN07jUzvo-mvwPYe9pto_2wPiYbwguqttYtC8V4hJkwHVjKSUkn-WNQYXSSXS2K62eJXRTGLyc3bAgecUmSJeskHOAHGK2Nh36_EpeqJ16ofyipMzFOYXlPSfKx19TS9VXGZ0Q2A3fgS_4i_cik2WUpJQHTNncdMBVF0QJTCYfXG7sIkQcVeCQ6G6amk_WxyCrNqgSXd4heu7PGa-tbDPdZG7bxhg4QquuzTpLX0IVwQA8wMkcKgcpnOg20CUZ5lioERWpu5RFlLIWCQg-AqMAtIgiEGs9OkxwnNsY6Dt6wIoAgDmgPjNX70OZnVjUOWmPLYTfDUnn0uVDPiAQdYOTHCyGFURr66UG-Th45nDwOvFCIsANeyl-AM_Ijbu1R2-ZB2SYiCbv2SfkjsbJfH-34mIeJXQcsAX_ob1TEspkEHqBWKDwhSxB7o5BOgD_HcA0YEU5NUwyVEGtF0xdFGX8Gat8kffVSfQm3afZZ5vB-zGF0SzbIfiMdtKAqf0NhYO6KtH26BzyDhGCFJQV8PSa_KPsRX-coTK4a8nQr3UZ6JE6IWQ1SBn9_oBSY65tSBNHDFrG9t2i13lU4rat9-JrjmSdSVy1ypkaWvzwc83_8EbnDyLNcZLDH3ZJlj7KnJ6VOTaOpTx7qj2CWHYWJUbPYgrQ9EGo7QZ87MTGdKTMoh2JsI4pI4mjQi-j4xEe4EJUK-ENqBdATTnoN-Lwa-gwK1Qp5FhGIok7aGyMfZdJRhP4ff8D2wSuIw-5ZJeSiy-pDnyu7uXZmNph3wdJMXHeMV2xvmLXeqnWt5J9-uJCRW3PWcJ1lXJ-rmvFwn6J10ji4L_Hr0-5e4QCwQVSBLqBNYhMyyUnKXw6dhqHEhcDUUxMPThq-3pwk_mqtTo1qgf8wqxD1uLKAUEd2CsoHy4t3ByI14HECcocgwGs8al3bPW4FBcNUQuYMyQ4qQ5ScB7OQlOqJaEo2d1UcjAjZRckYRtOi2FAbtKkZXV7gxFf_ANp8lYFIZXq9K2CLZTDeAWKtY7jTq0pT45undEOYBLRbhYGsTSiYfDZnay-Ta2SRymUKhX1aqUqDVYAynAYF4FY8erlmZgWn2CSs4G8SnMYjLnJTRHwyQRyrW_GSOjxA1av0OvOpK68O8uAz1tVpfEINFES4fA3ougIIhARJvFMPYsCLwO_4cmqWwHvNxol5U1XLq9hTyuJ0eibPDh0HI4vZijfDONCwVVRfHKsf5LWEEF7X19ETCY5Iohy6jXe81cv35y9I7WV-lcF0EukykoFGfA5ETiwW5yHFMOn3o_u54FN3nHuqGpHdvcskkQMtDE11aixv05O8r0TY1-__huJcKatJeqXGOlrtSQ1W27FSY7KmelurkF6hobZbGDi2hPORKRq87kZppdmD2I8T6jkQhdftbXaSvkoLm9BPA13LDGHC6JpQVP0DlhBH8TFSKGD8oRmLxMmFGXgHe9kPZ97d0XgXr-eUXHyzSDVRJFXOele0ikQakh4UMFNsYJR7celCqOjidXInt_lYnx-GoN9N2KKSY6MLl7Fc_8KMitIZ9VdRQEq3KYpM23C0qfolSh32CKJw0QvGQOa3VTrJSppp_n9IeYruYbWTMrxL-8okEztcXQE5aPMPzMYEbroPtW1UMEHdZV_cKiWl1fe4vuqigKEdBk4cme61bdIw7Ef4I6jWHo5qavIbD2Ye4wDrKV5FFLIE5N1ZUmiIRyxFyhlb3fwoDWe--J6B2IQtKh2HOFuFjcyuwskSKIazD3E-o-xDGj5SZxIsK4AuKXOchTmjpx12oJdXX9x9ycKVvSUnqGTx_i7QXMJA0poMmO84ZQ_w2yBvKHmhEPXgla04_1iP5y4uypMwmG4LRw69TA6VcQrP_EGcdi5arNYRLhSe-ubmVU_d8r5IzHZe0uZLO5O7x6JtFhWGDMwCSlSIl_eQ06C-dtdYiv9MsxNxTkyTsnV-6IXt6j1c_4iru1sRotzLi66rK5aGoFp1vEiMgMaNWSxUzsgPIogvLDmE3qvhyZeKfaPeCVCBTXFiSz48GPv7yQMtXOAJHHwIFMlJ7IOyyThGtliQvc0pq_x8mQSHL-l2Tsa00gMDFs-vl0b1CHN7OHwvkthnt2Lgyf9VJJa9bsSJzThVHkZdMBw3552u22z2IHnT6mfR0f92qTN723mArU_q28eUTzw9zFyM2iJIDzdk7BLIo7ixSaFOklA3FnxhPjZeh6HA2nJeHNr--1wNXtwc-V6EAKSFpjDrSbP4rdsM09in4yzmOKhjjdgA7AeR0Z-o_x2qQh3rm0Tv2p7eG0cptE32y4GEbSGh9uwEtyuA0PO_XCax46t42ZituGRpF-BRtaPGof0Pknj3UXfjlAKcuD_iGA_AYIaAAA), the collapsible, severity-coded layout they come from, or paste your own at [agent-friction-skill.vercel.app](https://agent-friction-skill.vercel.app). Nothing leaves your browser, because the log travels as a URL fragment, which also makes the link shareable.
-
-## Starting the Agent Cold
-
-Claude Code keeps memory between sessions, which is great for real work and bad for testing, because a second run tests the framework plus whatever the agent learned last time. The friction disappears from the logs even though it's still there for real users, so for these runs I want a fresh agent with no history.
-
-The cold starts have a side benefit too: the logs are honest in a way human ones aren't, because the agent doesn't know it's being tested and has no reason to smooth over or play up what it hit.
+The logs in this post are trimmed from runs like these. You can [see a full one in the viewer](https://agent-friction-skill.vercel.app/view#log=g:H4sIAAAAAAAC_41YzXIUyRG-z1NUiAOjkbqHBRuMYAmzAhGyMd4AbawjFMR2TXfNTKGert6qao3GJ5_8AI69E-tn8BPtE-wj-Musqp4eCQEXxPRfZX6Z-eWXeUecWF16bRrx2izEb__6RbxQl8JcKlvLjdg7Nu1GSCdaa1at3xNdUykrjmW5VOIYl0yjGu9Go8nkjbry-Qcn8KbD544mE_HNw_xBfi8rZSPtJn90D0-9kF7Rrfv37j_M7j3M7j_Gxe86XVfC6xXfuufE2HYN_ZxW6jJLtujmUjmvF5KsfSIaQ0ZVXTB-xp9olKpUtY9PPm9b-lYxXRt74VpZqum8hiWwOyvhUxYcKkajO3fE9_z_0eiZ8DhBePhWDUCg5yMAYq6k76zCM9KLpWxb1TixXqpGrJXonBJ8xBYZIZsK1-payLXUXjizUn6pmwUf_K5brQDNaPT7x4__FZPJGU5OJ7DhQjVV5k2GPznc-VH7pSiuHXEkvO1UwSfJBhHi-5Uo-ERcDx61cqFErS5VLcbAruiNLQ4Jy-Lpu86RN-pZsX8oigbhJBQKYaV2yvE39vqPV9JLUXUWngAaZRXlBX7sidPG6cXSsznhcnh3MsEdLxsvFp2uZFMqOBQhzsVLfFaYOT_pl1YBB30F-2yFbEiWienQbPya1aa8IBOs6bzap-ethq0awJt1gzOvJzDOnHXeI2M4gggtPS8RvbrOHIAsCXwAuQC0KejesF1lrduZgUniUksgJC8pGY3N-xv52mqvzgBdkY9GFE0-oEof0k7gu51uVL0RS8Akfu5krf3mCCZ47WtECDfFuED-4hE69fzpAt61z96LvafA5NkeIZPnOUVJikcwWrUCeJQXtUbyjiurLxXuzKxZO9Tqb__-j9AVvNHzjZhLXRNepakU37FKIkwdDj5gxCtTOr4h2YBWeq9sw1cQKvoEUIvVyVf5ZDbULYEhXGzueqHg7SYekIVHnJ7R0Y7MRmrQG8paY0MQBZcSijdgC5SUBVW8pCdOm7kZ7xe5OMWHL1FqHgeFpAphQnw05RaOp4ucuxlRR21MWwh3ocmwOdICGULmXcMoWmSE43rU_0TclrJZUCY1oq0l_WsNMg82LYEpcqcRqlwawpJTI-Efwz5PpIqnFYV9Mqm0Kynd5UxTxCcTKjsQCkqKnjzi76TixxtgWlN2K_hH6RgRi7lbyxmV8fXk3kf4FOO_kh71JJuNcEpaODNDhBHJFTkUPtRUNdUx4n0Y-KFDfErx_PtTwGDnYMxDYWwoyE2rRCNXwGNcEBvS56j-ihN9dYy8L_Zz8byJ0RjjrYp4xrTK7gvTII_muqmoLMVsI3C5SbgliiX_ECyq5ZyZ8XmA79SrlaMLd8QLWDrKxO8ff_kf0HxjRIKH-4FQV0DfiXk0-Ubjmorr9JPAJmJ9ZVXbJqOoVuwWoqJBsfy0QquplZtSbk0RS_wDg6YFn1gMWgTotBh2GPqZ-AE_lC9zFAUORuNAAiyZvhSIGbblN8g9X1VF72nI-XktF31C9NwrYCByAgmCLnhJv8kN07jUzvo-mvwPYe9pto_2wPiYbwguqttYtC8V4hJkwHVjKSUkn-WNQYXSSXS2K62eJXRTGLyc3bAgecUmSJeskHOAHGK2Nh36_EpeqJ16ofyipMzFOYXlPSfKx19TS9VXGZ0Q2A3fgS_4i_cik2WUpJQHTNncdMBVF0QJTCYfXG7sIkQcVeCQ6G6amk_WxyCrNqgSXd4heu7PGa-tbDPdZG7bxhg4QquuzTpLX0IVwQA8wMkcKgcpnOg20CUZ5lioERWpu5RFlLIWCQg-AqMAtIgiEGs9OkxwnNsY6Dt6wIoAgDmgPjNX70OZnVjUOWmPLYTfDUnn0uVDPiAQdYOTHCyGFURr66UG-Th45nDwOvFCIsANeyl-AM_Ijbu1R2-ZB2SYiCbv2SfkjsbJfH-34mIeJXQcsAX_ob1TEspkEHqBWKDwhSxB7o5BOgD_HcA0YEU5NUwyVEGtF0xdFGX8Gat8kffVSfQm3afZZ5vB-zGF0SzbIfiMdtKAqf0NhYO6KtH26BzyDhGCFJQV8PSa_KPsRX-coTK4a8nQr3UZ6JE6IWQ1SBn9_oBSY65tSBNHDFrG9t2i13lU4rat9-JrjmSdSVy1ypkaWvzwc83_8EbnDyLNcZLDH3ZJlj7KnJ6VOTaOpTx7qj2CWHYWJUbPYgrQ9EGo7QZ87MTGdKTMoh2JsI4pI4mjQi-j4xEe4EJUK-ENqBdATTnoN-Lwa-gwK1Qp5FhGIok7aGyMfZdJRhP4ff8D2wSuIw-5ZJeSiy-pDnyu7uXZmNph3wdJMXHeMV2xvmLXeqnWt5J9-uJCRW3PWcJ1lXJ-rmvFwn6J10ji4L_Hr0-5e4QCwQVSBLqBNYhMyyUnKXw6dhqHEhcDUUxMPThq-3pwk_mqtTo1qgf8wqxD1uLKAUEd2CsoHy4t3ByI14HECcocgwGs8al3bPW4FBcNUQuYMyQ4qQ5ScB7OQlOqJaEo2d1UcjAjZRckYRtOi2FAbtKkZXV7gxFf_ANp8lYFIZXq9K2CLZTDeAWKtY7jTq0pT45undEOYBLRbhYGsTSiYfDZnay-Ta2SRymUKhX1aqUqDVYAynAYF4FY8erlmZgWn2CSs4G8SnMYjLnJTRHwyQRyrW_GSOjxA1av0OvOpK68O8uAz1tVpfEINFES4fA3ougIIhARJvFMPYsCLwO_4cmqWwHvNxol5U1XLq9hTyuJ0eibPDh0HI4vZijfDONCwVVRfHKsf5LWEEF7X19ETCY5Iohy6jXe81cv35y9I7WV-lcF0EukykoFGfA5ETiwW5yHFMOn3o_u54FN3nHuqGpHdvcskkQMtDE11aixv05O8r0TY1-__huJcKatJeqXGOlrtSQ1W27FSY7KmelurkF6hobZbGDi2hPORKRq87kZppdmD2I8T6jkQhdftbXaSvkoLm9BPA13LDGHC6JpQVP0DlhBH8TFSKGD8oRmLxMmFGXgHe9kPZ97d0XgXr-eUXHyzSDVRJFXOele0ikQakh4UMFNsYJR7celCqOjidXInt_lYnx-GoN9N2KKSY6MLl7Fc_8KMitIZ9VdRQEq3KYpM23C0qfolSh32CKJw0QvGQOa3VTrJSppp_n9IeYruYbWTMrxL-8okEztcXQE5aPMPzMYEbroPtW1UMEHdZV_cKiWl1fe4vuqigKEdBk4cme61bdIw7Ef4I6jWHo5qavIbD2Ye4wDrKV5FFLIE5N1ZUmiIRyxFyhlb3fwoDWe--J6B2IQtKh2HOFuFjcyuwskSKIazD3E-o-xDGj5SZxIsK4AuKXOchTmjpx12oJdXX9x9ycKVvSUnqGTx_i7QXMJA0poMmO84ZQ_w2yBvKHmhEPXgla04_1iP5y4uypMwmG4LRw69TA6VcQrP_EGcdi5arNYRLhSe-ubmVU_d8r5IzHZe0uZLO5O7x6JtFhWGDMwCSlSIl_eQ06C-dtdYiv9MsxNxTkyTsnV-6IXt6j1c_4iru1sRotzLi66rK5aGoFp1vEiMgMaNWSxUzsgPIogvLDmE3qvhyZeKfaPeCVCBTXFiSz48GPv7yQMtXOAJHHwIFMlJ7IOyyThGtliQvc0pq_x8mQSHL-l2Tsa00gMDFs-vl0b1CHN7OHwvkthnt2Lgyf9VJJa9bsSJzThVHkZdMBw3552u22z2IHnT6mfR0f92qTN723mArU_q28eUTzw9zFyM2iJIDzdk7BLIo7ixSaFOklA3FnxhPjZeh6HA2nJeHNr--1wNXtwc-V6EAKSFpjDrSbP4rdsM09in4yzmOKhjjdgA7AeR0Z-o_x2qQh3rm0Tv2p7eG0cptE32y4GEbSGh9uwEtyuA0PO_XCax46t42ZituGRpF-BRtaPGof0Pknj3UXfjlAKcuD_iGA_AYIaAAA), the collapsible, severity-coded layout they come from, or paste your own at [agent-friction-skill.vercel.app](https://agent-friction-skill.vercel.app). Nothing leaves your browser, because the log travels as a URL fragment, which also makes the link shareable.
 
 ## A Vercel Sandbox per Run
 
-A skill alone doesn't run code, and a cold agent needs a fresh place to work. I needed a real Next.js project with `next@canary` installed, somewhere the agent could build, edit, and run a dev server, and I was not about to spin up containers myself.
+The friction-log skill changes how the agent behaves, but it can't run code. A cold agent still needs a real Next.js project on `next@canary` to build, edit, and run a dev server against, and I wasn't about to spin up containers by hand.
 
-So we can give the agent a [Vercel Sandbox](https://vercel.com/docs/vercel-sandbox) per run, an ephemeral cloud machine that boots from a snapshot in a second or two, runs whatever the agent throws at it, and gets torn down at the end, with a nightly job keeping the snapshot on the latest canary. Three calls do almost everything I need, which is to create it, run a command, and read the log back.
+So we can give the agent a [Vercel Sandbox](https://vercel.com/docs/vercel-sandbox) per run, an ephemeral cloud machine that boots in a second or two and gets torn down at the end. The agent runs its own commands in it to build and run the app, and I read the friction log back when it's done.
 
 ```ts
-// per-run sandbox: create it, run a command, read the log back
-const sandbox = await Sandbox.create({
-  source: { type: "snapshot", snapshotId },
-});
+// a fresh Next.js sandbox per run
+const sandbox = await Sandbox.create();
 
+// the agent runs its own commands in it
 await sandbox.runCommand({ cmd: "pnpm", args: ["build"] });
 
+// and I read the friction log back at the end
 const log = await sandbox.readFileToBuffer({
   path: "/workspace/friction-log.md",
 });
@@ -139,7 +127,7 @@ Runs start from identical state, so two of them are comparable.
 
 ## Giving the Agent Real Tasks
 
-The prompts are concrete tasks for the agent to do, and the friction shows up in the doing. They range from building an app to reproducing or triaging a bug from a GitHub issue, and most of mine center on Cache Components. Real ones from my runs:
+A run still needs something to do. The prompts are concrete tasks for the agent, and the friction shows up in the doing. They range from building an app to reproducing or triaging a bug from a GitHub issue, and most of mine center on Cache Components. Real ones from my runs:
 
 - `Build a product catalog with cacheComponents where the list updates immediately after editing a product via a form, with no stale page`
 - `Build a contact form with cacheComponents that validates on the server and shows inline error messages`
@@ -158,7 +146,7 @@ That makes it easy to hold the task fixed and change one thing at a time. The sa
 
 ## Driving It from Slack
 
-I wired the agent up to Slack with the [chat SDK](https://chat-sdk.dev), Vercel's toolkit for building chat apps. This is where the pieces became the DX Agent, the thing I built to run all of this. A few lines turn it into a bot that listens for mentions:
+So far I'd been kicking runs off by hand. To drive them from where I already work, I wired the agent up to Slack with the [chat SDK](https://chat-sdk.dev), Vercel's toolkit for building chat apps. This is where the pieces became the DX Agent, the thing I built to run all of this. A few lines turn it into a bot that listens for mentions:
 
 ```ts
 // the DX Agent as a Slack bot
@@ -214,7 +202,7 @@ The dashboard is a Next.js 16 app with Cache Components enabled, so it runs on t
 
 ## Testing My 16.3 Work Before It Shipped
 
-The error messages, Skills, and docs I worked on all shipped with [Next.js 16.3: AI Improvements](https://nextjs.org/blog/next-16-3-ai-improvements), and because a run can point at any branch, I could check them against a preview build before they merged. None of this was a fixed pipeline. It was a mix of automated and manual, and it was up to me what felt worth testing, but the option was always there.
+That branch-pointing is how I tested my own 16.3 work. The error messages, Skills, and docs I worked on all shipped with [Next.js 16.3: AI Improvements](https://nextjs.org/blog/next-16-3-ai-improvements), and I could check them against a preview build before they merged. None of this was a fixed pipeline. It was a mix of automated and manual, and it was up to me what felt worth testing, but the option was always there.
 
 Next.js publishes a preview build for PRs as an installable tarball, so a run can take a PR URL, resolve it to that tarball, and install it into the sandbox app before the agent starts. When a change felt worth checking, I could push the branch and watch how an agent reacted to it before it merged.
 
@@ -222,7 +210,7 @@ The nice part is being able to run this before a merge at all, and a sandbox is 
 
 ### The Error Messages
 
-With Cache Components, an await on the server is a choice, and [Instant Insights](https://nextjs.org/blog/next-16-3-instant-navigations#stream-cache-or-block) in the overlay present it as three fixes, Stream, Cache, or Block, all with a [**Copy prompt** button](https://nextjs.org/blog/next-16-3-ai-improvements#actionable-errors) and a [docs page](https://nextjs.org/docs/messages/blocking-prerender-dynamic). The same menu prints in the terminal, which is where agents actually read it:
+Start with the error messages. With Cache Components, an await on the server is a choice, and [Instant Insights](https://nextjs.org/blog/next-16-3-instant-navigations#stream-cache-or-block) in the overlay present it as Stream, Cache, or Block, all with a [**Copy prompt** button](https://nextjs.org/blog/next-16-3-ai-improvements#actionable-errors) and a [docs page](https://nextjs.org/docs/messages/blocking-prerender-dynamic). The same menu prints in the terminal, which is where agents actually read it:
 
 ```text
 Ways to fix this:
@@ -321,7 +309,7 @@ When a fix felt worth re-checking, I could run the same prompt against its previ
 
 ## Letting eve Own the Plumbing
 
-The first version used Vercel Workflow for durable runs, the AI SDK with AI Gateway for the model, the chat SDK for Slack, and Redis and Blob for storage, with a sentinel string for human-in-the-loop.
+Everything so far ran on the first version of this setup. It used Vercel Workflow for durable runs, the AI SDK with AI Gateway for the model, the chat SDK for Slack, and Redis and Blob for storage, with a sentinel string for human-in-the-loop.
 
 I was already running the loop regularly by the time [eve](https://eve.dev), Vercel's framework for durable agents, came out, and migrating to it deleted around 1,900 lines of my code for the same surface: the same dashboard, the same Slack bot, the same loop. The whole `workflows/` package of durable-run orchestration, including the `DurableAgent` run loop from the Slack section, collapsed into eve's session loop.
 
@@ -379,6 +367,6 @@ Runs also got faster, and the suite runs that used to die halfway with no error 
 
 The skill and the viewer are open source, and nothing else in the setup is specific to Next.js. You can give a fresh agent a real task in a clean sandbox, have it log where it gets stuck, and read the parts you'd otherwise skim.
 
-The friction it hits is the same friction your users hit, so fixing it for the agent fixes it for the person. It won't catch regressions on its own, that's what evals are for, but the two go together: an eval tells you the task still passes, and a friction log tells you how rough getting there was.
+The friction it hits is the same friction your users hit, so fixing it for the agent fixes it for the person. It won't catch regressions on its own, that's what evals are for, but the two go together. An eval tells you the task still passes, and a friction log tells you how rough getting there was.
 
 I hope this post has been helpful. Please let me know if you have any questions or comments, and follow me on [Bluesky](https://bsky.app/profile/aurorascharff.no) or [X](https://x.com/aurorascharff) for more updates. Happy coding! 🚀

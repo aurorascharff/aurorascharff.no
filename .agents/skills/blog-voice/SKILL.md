@@ -51,6 +51,8 @@ Keep the background (the why, the mechanism) out of the intro. If it runs past t
 - Headings in Title Case, descriptive not clever. "Background", "The Use Case", "The Problem: Dynamic Rendering" over "X, Not Y" turns of phrase.
 - `## Table of contents` immediately after the intro, exactly that string. The TOC plugin keys on it.
 - One idea per section; each stands on its own.
+- Explain the progression between sections. When one piece follows another (the skill, then the sandbox it runs in, then the tasks), open the new section by saying why the last one made it necessary, so the build reads as one story instead of a parts list.
+- Her section seams have a shape: end a section on the leftover need (often a "But..." / "Problem is..." sentence) or a short confirmation beat, and open the next by addressing exactly that. Openers state the point at once, a "Let's..." imperative in a walkthrough, a "We want to..." goal, a "Let's say we have..." setup, or a question that carries the prior result forward ("Now that X, the question is Y"). Reach back with a single clause, never a recap paragraph, and thread a shared subject (an API name, "the problem") across the seam. No "In this section we'll", no heading echo, no academic connectives.
 - When two kinds of information pair up (a before and an after, a finding and its fix, an option and its trade-off), a table or list is clearer than cramming them into one sentence.
 - When a post builds several parallel examples, keep their structure consistent but vary the prose; don't reuse the same transition sentences between them.
 - Introduce a usage or example section conversationally ("Let's say we wanted to X in a Y, where..."). Keep the progressive teaching sections on generic examples, and save specific use cases for the usage sections.
@@ -64,6 +66,7 @@ Keep the background (the why, the mechanism) out of the intro. If it runs past t
 - First person. Past tense for what she did, present tense for how things work.
 - She leans on "we" more than "I", especially in explanatory and walkthrough passages (one reference post runs ~50 "we" to 7 "I"). Use "we"/"our" for work the team shares (the docs and error messages "we write") and for walking the reader through something; reserve "I" for her own initiative and specific contributions (a thing she built, a choice she made). When a sentence could go either way, prefer "we".
 - Let code and real examples carry the weight; the prose points at them, it doesn't restate them.
+- Prefer plain words over formal ones. She writes "the logs in this post", not "the excerpts"; "trimmed", not "excerpted". If a fancier word (excerpt, showcase, leverage, utilize) does no more than a plain one, use the plain one.
 - Describe a process, don't list personal capabilities. "The task stays fixed and one thing changes" beats "I can hold the task fixed, and I can swap the model, and I can ...".
 - Link a tool once, at the point it's used, with a short note on what it does and why. Don't relist the link later.
 - Open a paragraph so it introduces itself: start with what it's about and why it's here, so a reader landing on it gets the point without the paragraph before it. Don't open on a back-reference ("None of these got their own run", "They're small things...") that only parses if you already know the topic.
@@ -85,7 +88,7 @@ Snippets do a lot of the explaining in her posts. Match how she writes them:
 
 ## Patterns that read as AI (never do these)
 
-- **Em dashes for emphasis.** Use commas, periods, or parentheses. (Em dashes inside quoted data are fine.)
+- **Em dashes, semicolons, and colons that splice clauses.** She doesn't use em dashes or semicolons at all, and uses a colon only to introduce a list or a code block, never to join two sentences ("That was my situation: good numbers..." should be a period or comma). Use commas, periods, or parentheses instead. (Punctuation inside quoted data, like a real log, is fine.)
 - **"It's not X, it's Y"** and other tidy inversions. State the point directly.
 - **Choppy declarative flourishes** dropped in as a punch line: "That's the whole game." Connect the idea into the sentence.
 - **Repetitive series / tricolons**: "No config. No setup. No maintenance." Combine naturally.
@@ -95,6 +98,8 @@ Snippets do a lot of the explaining in her posts. Match how she writes them:
 - **Presenting your own setup as a finished, handed-down feature**: stating a design choice as if it happens on its own, like "the agent gets a Vercel Sandbox per run" or "the run produces a log". She describes her own work as a choice or a capability, what you can do, not what the system does for you. Prefer "we can give the agent a sandbox" or "the agent can get a sandbox". The "X gets a Y" framing reads like a docs page announcing a settled thing.
 - **Empty frame sentences that add length but no information**: a lead-in that only sets up the real sentence, like "None of these got their own run." before a list of findings, or "The thing to notice here is...". Cut the frame and start with the point, or fold it into the next sentence.
 - **Describing an optional workflow as a fixed pipeline**: writing something she chose to do sometimes as if it ran every time, like "when a fix goes up, the same prompt runs against its preview before it merges". Her setup was a mix of automated and manual, and it was up to her what felt worth testing. Frame it as a capability she could reach for ("I could point a run at the preview"), not a routine that always happens.
+- **Gratuitous counts**: telling the reader how many when the number carries nothing, like "three calls do everything", "one command", "four routes". Say what it does, not how many. Real load-bearing numbers (a build that failed twice, a run's severity counts) are fine.
+- **Explaining a mechanism before the reader needs it**: introducing a snapshot-refresh scheme before anything has been built, or naming "the logs" before logging exists, lands as noise. Introduce each mechanism at the point it does work in the story, not earlier.
 - **Superlatives and hype**: "the truest test", "unusually honest", "surprisingly good".
 - **Literary flourishes**: "the friction quietly disappears", "the bot finally grew up", "the detours end up on paper". Say it plainly.
 - **Aphorism closers**: don't end a section or the post on a neat one-liner. Let the last real point be the ending, then the standard sign-off.
