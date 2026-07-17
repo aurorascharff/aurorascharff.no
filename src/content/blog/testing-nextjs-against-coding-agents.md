@@ -50,9 +50,9 @@ That was the situation I was in: good eval numbers, agents still stumbling throu
 
 ## Logging While the Agent Works
 
-My first attempt was to ask agents afterward what they struggled with, and it didn't work. The agent would tell me everything went fine, invent a plausible reason for what it did, and the three round trips it spent finding a config key never made it into the summary.
+My first attempt was to ask agents afterward what they struggled with, and it didn't work. The agent would tell me everything went fine and give a plausible reason for whatever it did, and the reason often wasn't the true one.
 
-In one run a server-action call failed because the action id in the build manifest had changed. The agent re-fetched the page, retried, and moved on, three tool calls it would never have mentioned afterward, the kind of detour that costs a developer twenty minutes. The logging has to happen while the agent works, so the detours get recorded.
+The run that made me drop this was one where Sonnet kept ignoring AGENTS.md and deviating from its guidance, and I couldn't tell why. Asking it directly got me plausible answers that didn't hold up, and it took asking the same question several times before I got the real reason. In that harness it had no tool to read into node_modules, which was what kept it from following the guidance. Prying one specific fact out of an agent after the fact was that hard, so the logging has to happen while it works.
 
 ## A Skill That Makes Friction Visible
 
@@ -203,17 +203,19 @@ dxagent  📋 Triage: getAll() drops duplicate-named cookies (#95265)
 
 ## Turning the Logs into a Next.js Dashboard
 
-By this point the runs lived in Slack threads and got hard to keep track of, so I built a Next.js dashboard around them. A run shows its log with the severity dots, the source the agent produced sits next to it, and a red or yellow entry can become a tracked issue.
+By this point the runs lived in Slack threads and got hard to keep track of, so I built a Next.js dashboard around them. This is where the setup grew from a Slack bot into something with real features. A run shows its log with the severity dots and the source the agent produced next to it, and a red or yellow entry can become a tracked issue.
 
-The suites feed the part I use most. I run the same suite whenever a new canary lands, and the dashboard charts its friction rate per version. When that rate drops from one canary to the next, the framework got easier to build against for whatever the suite covers. A goal ties a suite to a target, like keeping Cache Components under 20%, and shows whether it's there yet.
+Suites group prompts so I can run a whole set at once, and the dashboard charts a suite's friction rate per version. When that rate drops from one canary to the next, the framework got easier to build against for whatever the suite covers. A goal ties a suite to a target, like keeping Cache Components under 20%, and shows whether it's there yet.
+
+A run can also point at a specific branch, so I could test a PR's preview build before it merged.
 
 The dashboard is a Next.js 16 app with Cache Components enabled, so it runs on the features it helps me test.
 
 ## Testing My 16.3 Work Before It Shipped
 
-The error messages, Skills, and docs I worked on all shipped with [Next.js 16.3: AI Improvements](https://nextjs.org/blog/next-16-3-ai-improvements), and because the runs are cheap to point at a branch, I could test all of them this way before they merged.
+The error messages, Skills, and docs I worked on all shipped with [Next.js 16.3: AI Improvements](https://nextjs.org/blog/next-16-3-ai-improvements), and because a run can point at any branch, I could check them against a preview build before they merged. None of this was a fixed pipeline. It was a mix of automated and manual, and it was up to me what felt worth testing, but the option was always there.
 
-Next.js publishes a preview build for PRs as an installable tarball, so a run takes a PR URL, resolves it to that tarball, and installs it into the sandbox app before the agent starts. I change something on a branch, push, and watch how an agent reacts before it merges.
+Next.js publishes a preview build for PRs as an installable tarball, so a run can take a PR URL, resolve it to that tarball, and install it into the sandbox app before the agent starts. When a change felt worth checking, I could push the branch and watch how an agent reacted to it before it merged.
 
 The nice part is being able to run this before a merge at all, and a sandbox is what makes it easy, with nothing to clean up afterward and a lot it handles that I'd otherwise get wrong myself.
 
@@ -231,7 +233,7 @@ Ways to fix this:
     https://nextjs.org/docs/messages/blocking-prerender-dynamic#allow-blocking-route
 ```
 
-When I reword one of those errors, a run against the PR preview shows me whether the agent picks the right fix or falls back to training data, using the same prompt and the same model before and after my change. Here's a run that went looking for the Copy prompt feature itself, from its log:
+When I reworded one of those errors, I could point a run at the PR preview to see whether the agent picked the right fix or fell back to training data, using the same prompt and the same model before and after my change. Here's a run that went looking for the Copy prompt feature itself, from its log:
 
 ```text
 ## Log
@@ -251,20 +253,22 @@ Runs like this shaped the details that shipped. Both docs findings became PRs. [
 
 ### The Skills
 
-The [first-party Skills](https://nextjs.org/blog/next-16-3-ai-improvements#first-party-skills) went through the same treatment, which meant isolated runs of the skills end to end against their PR previews, plus trying the same tasks myself in my own agent to feel the experience. Here's a run trying the Partial Prefetching adoption skill:
+I checked the [first-party Skills](https://nextjs.org/blog/next-16-3-ai-improvements#first-party-skills) the same way, with isolated runs end to end against their PR previews, plus trying the same tasks myself in my own agent to feel the experience. Here's a run following the Cache Components adoption skill:
 
 ```text
 ## Log
-- 🟢 Skill is well-structured. The `## requires` section, the offline-docs note,
-   and the "empty sweep is success" callout in step 4 made the sequencing obvious
-- 🔴 Guide docs push users to a codemod that doesn't exist yet.
-   adopting-partial-prefetching.mdx says to run
-   `npx @next/codemod@canary remove-partial-prefetch ./app`, but that transform
-   isn't shipped in @next/codemod yet  [sandbox]
-- 🟢 Build with the flag on passes, and the banner shows "Partial Prefetching enabled"  [sandbox]
+- 🟢 The skill is well structured, and sequences the work into Milestone A
+   (a green build) and Milestone B (removing the opt-outs top-down)
+- 🟡 The GitHub blob URL truncated the middle of SKILL.md, the most operationally
+   important steps, so I re-fetched the raw URL to get the full text  [url]
+- 🔴 First build failed on /_not-found even with `instant = false` on every segment:
+   the blanket opt-out clears validation but not synchronous-IO reads, and the
+   root layout renders a `new Date()` in the footer  [sandbox]
+- 🟢 Milestone A green: /, /_not-found, and /products/[id] now print
+   ◐ (Partial Prerender); /dashboard stays ƒ (Dynamic)  [sandbox]
 ```
 
-The green line means the skill's recipe works as written. The red one caught the guide sending people to a command that didn't exist yet, since the codemod hadn't been published, and the runs hit it before any user could. Watching agents stumble through runs like these is what fed into the [`next-cache-components-adoption`](https://github.com/vercel/next.js/tree/canary/skills/next-cache-components-adoption) skill.
+The green lines mean the skill's sequencing works as written. The red one caught a real gotcha. The blanket opt-out the codemod applies clears validation but not synchronous-IO reads, so a `new Date()` in the root layout footer still failed `/_not-found` even after opting out. Watching agents hit edges like this is what fed into the [`next-cache-components-adoption`](https://github.com/vercel/next.js/tree/canary/skills/next-cache-components-adoption) skill.
 
 ### The Docs
 
@@ -308,7 +312,7 @@ Agents would sometimes flag small things they weren't asked to look for, the kin
 | 🔴 First build failed on `/_not-found`: "uncached or runtime data during prerendering" | [#95163](https://github.com/vercel/next.js/pull/95163) clarifies `/_not-found` failures under Cache Components |
 | 🟡 `partialPrefetching` is a separate required flag, not co-located in `cacheComponents.md` | [#94818](https://github.com/vercel/next.js/pull/94818) tightens the Partial Prefetching API references |
 
-When a fix goes up as a PR, the same prompt runs against its preview build to check the friction is actually gone before it merges.
+When a fix felt worth re-checking, I could run the same prompt against its preview build to confirm the friction was gone before it merged.
 
 ## Letting eve Own the Plumbing
 
