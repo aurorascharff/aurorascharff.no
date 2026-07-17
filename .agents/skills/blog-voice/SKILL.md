@@ -81,7 +81,7 @@ Snippets do a lot of the explaining in her posts. Match how she writes them:
 - **Collapse the parts that don't matter** with `// ...` or `// ...fetch logic...` rather than showing them in full.
 - **Use an inline comment to flag the key line**, the way she does: `const loggedIn = getIsAuthenticated(); // no await, no blocking`, `// Read from params instead of cookies()`.
 - **Make snippets look real, not pseudocode.** Include the imports that matter, so the reader sees how it fits together.
-- **Always tag the fence language** (```tsx, ```ts, ```bash, ```text). Use ```text for terminal output, build output, route tables, and file trees.
+- **Always tag the fence language** (```tsx, ```ts, ```bash, ```text). Use ```text for terminal output, build output, route tables, file trees, and lists of example prompts or commands (verbatim input goes in a code block, not inline-code bullet points).
 - **Show expected output when it makes the point** (a build table, a route listing, a printed error), in its own ```text block.
 - **A before/after pair** is a pattern she reaches for when contrasting two approaches.
 - Anything quoted verbatim (a real log, a terminal transcript) is data: keep it exact, and its em dashes and backticks are fine.
@@ -101,7 +101,7 @@ Snippets do a lot of the explaining in her posts. Match how she writes them:
 - **Gratuitous counts**: telling the reader how many when the number carries nothing, like "three calls do everything", "one command", "four routes". Say what it does, not how many. Real load-bearing numbers (a build that failed twice, a run's severity counts) are fine.
 - **Explaining a mechanism before the reader needs it**: introducing a snapshot-refresh scheme before anything has been built, or naming "the logs" before logging exists, lands as noise. Introduce each mechanism at the point it does work in the story, not earlier.
 - **Superlatives and hype**: "the truest test", "unusually honest", "surprisingly good".
-- **Literary flourishes**: "the friction quietly disappears", "the bot finally grew up", "the detours end up on paper". Say it plainly.
+- **Literary flourishes**, especially dressing up abstract things (friction, errors, runs) with figurative verbs: "the friction quietly disappears", "the friction keeps showing up instead of fading out", "agents surface friction", "the bot finally grew up", "the detours end up on paper". Say it plainly with a concrete verb ("the agent hits the same error again", "agents hit friction").
 - **Aphorism closers**: don't end a section or the post on a neat one-liner. Let the last real point be the ending, then the standard sign-off.
 - **Generalizing "every" and "each"**: "every prompt is a task", "each run shows its log", "check every quoted output". She hates these; they read as AI. Rephrase with a plural, with "the", or drop the quantifier ("runs start from identical state", "the log header records"). Natural idioms like "everything went fine" are fine.
 - **Minimizing and filler words**: just, very, simply, basically, obviously, seamless, robust, leverage, utilize, "in order to".

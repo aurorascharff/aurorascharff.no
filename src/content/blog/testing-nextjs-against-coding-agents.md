@@ -28,17 +28,17 @@ It also became a way to test my own changes. Error messages have been neglected 
 
 ## Why Agents Make Good Test Subjects
 
-Testing a feature with someone who has never seen it is one of the most useful things you can do in DX. They hit the confusing parts that the people who built it have learned to ignore. The catch is that you run out of fresh testers fast, because everyone is only new once. An agent starts fresh, and you can run it as often as you want.
+Testing a feature with someone who has never seen it is one of the most useful things you can do in DX. They hit the confusing parts that the people who built it have learned to ignore. The catch is that you run out of fresh testers fast, because everyone is only new once.
 
-That only holds if the agent stays fresh, and a real one doesn't by default. Claude Code keeps memory between sessions, which is great for real work and bad for testing, because a second run tests the framework plus whatever the agent learned last time, and the friction drops out of the results even though a real user still hits it. So I start each run cold, with no history. A cold run is also more honest than a human account, because the agent doesn't know it's being tested and has no reason to smooth over or play up what it hit.
+An agent is a fresh tester you can run as often as you want, as long as it stays that way. Claude Code keeps memory between sessions, which helps in real work but gets in the way here, because a second run tests the framework plus whatever the agent learned last time, not the framework on its own. So I start each run cold, with no history.
 
-A cold agent hits the same rough edge run after run, the one a developer would have worked around and stopped noticing. That repetition would be a problem for a real user, but it's what makes an agent useful for testing, because the friction keeps surfacing instead of fading away.
+A cold agent hits the same rough edge run after run, the one a developer would have worked around and stopped noticing. For a real user that repetition is a problem, but here it's exactly what I want. It's more honest too, since the agent doesn't know it's being tested and has no reason to smooth over or play up what it hit.
 
-It matters most for new features. On an older API the agent can fall back on training data, but that data is months out of date, so for anything new it has nothing to go on except the docs and error messages we wrote.
+This matters most for new features. On an older API an agent can fall back on training data, but that data is months out of date, so for anything new it has nothing to go on except the docs and error messages we wrote.
 
 ## Why Evals Weren't Enough
 
-So agents surface friction. The question is how to capture it. We already measure agents with evals, and the bundled docs work scored great on them. But an eval only checks whether a task passed start to finish, and a task can pass while the agent guessed twice and misread an error on the way.
+So agents hit friction. The question is how to capture it. We already measure agents with evals, and the bundled docs work scored great on them. But an eval only checks whether a task passed start to finish, and a task can pass while the agent guessed twice and misread an error on the way.
 
 The trouble tends to come in the later part of a task, where an agent drifts from the plan it started with, so the green run is often one where it stopped doing what it set out to do. That was my situation, good eval numbers and agents still stumbling through Cache Components.
 
@@ -129,10 +129,19 @@ Runs start from identical state, so two of them are comparable.
 
 A run still needs something to do. The prompts are concrete tasks for the agent, and the friction shows up in the doing. They range from building an app to reproducing or triaging a bug from a GitHub issue, and most of mine center on Cache Components. Real ones from my runs:
 
-- `Build a product catalog with cacheComponents where the list updates immediately after editing a product via a form, with no stale page`
-- `Build a contact form with cacheComponents that validates on the server and shows inline error messages`
-- `Try to reproduce vercel/next.js#95268: document.title dropped on client-side navigation with cacheComponents`
-- `Triage vercel/next.js#95395: constructor as a route name crashes the dev overlay`
+```text
+Build a product catalog with cacheComponents where the list updates
+immediately after editing a product via a form, with no stale page
+
+Build a contact form with cacheComponents that validates on the server
+and shows inline error messages
+
+Try to reproduce vercel/next.js#95268: document.title dropped on
+client-side navigation with cacheComponents
+
+Triage vercel/next.js#95395: constructor as a route name crashes the
+dev overlay
+```
 
 Runs are independent sessions with their own sandboxes, so they parallelize, and we can lean on that in a few ways. We batch the same prompt several times to rule out one-offs, group prompts into suites and run the whole set against a new canary or a PR preview, and compare two runs to see what friction appeared or went away.
 
@@ -188,13 +197,17 @@ dxagent  📋 Triage: getAll() drops duplicate-named cookies (#95265)
 
 ## Turning the Logs into a Next.js Dashboard
 
-By this point the runs lived in Slack threads and got hard to keep track of, so I built a Next.js dashboard around them. In it, a run's log shows the severity dots with the source the agent produced next to it, and a red or yellow entry can become a tracked issue.
+By this point the runs lived in Slack threads and got hard to keep track of, so I built a Next.js dashboard around them. It turned a pile of runs into something I could work with:
 
-Suites group prompts so we can run a whole set at once, and the dashboard charts a suite's friction rate per version. When that rate drops from one canary to the next, the framework got easier to build against for whatever the suite covers. A goal ties a suite to a target, like keeping Cache Components under 20%, and shows whether it's there yet.
+- **Runs**: the full log with its severity dots and the source the agent produced, where a red or yellow entry can become a tracked issue.
+- **Suites**: grouped prompts, run as a set against a new canary or a PR preview.
+- **Friction rate**: charted per version, so a drop from one canary to the next shows the framework getting easier for what the suite covers.
+- **Goals**: a target on a suite, like keeping Cache Components under 20%.
+- **Comparison**: two runs side by side, with the friction that appeared or went away.
 
-A run can also point at a specific branch, so I could test a PR's preview build before it merged.
+All of it I drove by hand, clicking through the runs and reading the charts. Indexing them this way is what later let the agent do it on eve, running suites and answering questions across runs without me in the dashboard at all.
 
-The dashboard is a Next.js 16 app with Cache Components enabled, so it runs on the features it helps me test.
+The dashboard is a Next.js 16 app with Cache Components enabled, so it runs on the features it helps me test. A run can also point at a specific branch, so I could test a PR's preview build before it merged.
 
 ## Testing My 16.3 Work Before It Shipped
 
@@ -296,7 +309,7 @@ Agents would sometimes flag small things they weren't asked to look for, the kin
 | 🟡 No build output confirming `partialPrefetching` is active | [#95593](https://github.com/vercel/next.js/pull/95593) logs "Partial Prefetching enabled" during `next build` |
 | 🔴 First build failed on `/_not-found`: "uncached or runtime data during prerendering" | [#95163](https://github.com/vercel/next.js/pull/95163) clarifies `/_not-found` failures under Cache Components |
 | 🟡 `partialPrefetching` is a separate required flag, not co-located in `cacheComponents.md` | [#94818](https://github.com/vercel/next.js/pull/94818) tightens the Partial Prefetching API references |
-| 🟡 The `[block]` fix said "silence this warning", but it's surfaced as an Error, not a warning | [#95187](https://github.com/vercel/next.js/pull/95187) removes "silence this warning" from the instant validation fix output |
+| 🟡 The `[block]` fix said "silence this warning", but it shows up as an Error, not a warning | [#95187](https://github.com/vercel/next.js/pull/95187) removes "silence this warning" from the instant validation fix output |
 | 🟡 The upgrade codemod hard-aborts without a git repo, with no `--yes`/`--no-git` path for agents or CI | [#95312](https://github.com/vercel/next.js/pull/95312) makes the codemod upgrade non-interactive for agents and CI |
 | 🟡 The `cacheTag` docs don't show `updateTag` next to `revalidateTag` | [#94508](https://github.com/vercel/next.js/pull/94508) adds an `updateTag` example to the `cacheTag` page |
 | 🟡 `export const prefetch = 'allow-runtime'` has no docs page, discoverable only via the reference app | [#94997](https://github.com/vercel/next.js/pull/94997) documents `allow-runtime`, sync-IO, and `instant = false` |
