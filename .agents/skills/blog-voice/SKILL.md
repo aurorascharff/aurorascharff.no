@@ -52,7 +52,11 @@ Keep the background (the why, the mechanism) out of the intro. If it runs past t
 - `## Table of contents` immediately after the intro, exactly that string. The TOC plugin keys on it.
 - One idea per section; each stands on its own.
 - When two kinds of information pair up (a before and an after, a finding and its fix, an option and its trade-off), a table or list is clearer than cramming them into one sentence.
+- When a post builds several parallel examples, keep their structure consistent but vary the prose; don't reuse the same transition sentences between them.
+- Introduce a usage or example section conversationally ("Let's say we wanted to X in a Y, where..."). Keep the progressive teaching sections on generic examples, and save specific use cases for the usage sections.
+- Key takeaways are general principles, not restatements of the example. The conclusion should add something, not repeat earlier sections.
 - Close with the standard sign-off (follow on Bluesky / X, "Happy coding! 🚀").
+- Start from `src/content/blog/new-post-template.md`, or `new-post-template-mdx.mdx` for interactive React demos. Those scaffolds hold the frontmatter, the exact `## Table of contents` string, the image syntax (`![alt](@assets/…)`), and the MDX component-embedding mechanics. This skill is the source of truth for voice, so the templates point here instead of repeating style rules.
 
 ## Prose style
 

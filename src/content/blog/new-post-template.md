@@ -11,24 +11,7 @@ tags:
 description: A concise 1-2 sentence description. Used for SEO and post excerpts.
 ---
 
-<!-- STYLE NOTES FOR AI:
-- Match Aurora's writing style: flowing prose, no short punchy sentences
-- No em dashes, use colons or commas instead
-- No emojis in prose (only in the sign-off 🚀)
-- Don't over-explain, let code speak for itself
-- Simplify code examples: abstract away CSS/styling, use generic HTML when possible
-- Use // ... or /* ... */ to collapse non-essential parts of code
-- Don't repeat links already introduced earlier
-- Don't repeat exact phrases or sentences across sections
-- Avoid saying the same thing twice with different wording in adjacent paragraphs
-- Key takeaways should be general principles, not example-specific
-- Conclusion should add new value, not repeat earlier content
-- Use correct terminology for the topic (check official docs if unsure)
-- Read existing posts for reference style before writing
-- When building multiple parallel examples, keep structure consistent but vary the prose
-  (e.g. don't use identical transition sentences between each example's sections)
-- Progressive sections should use generic examples; specific use cases belong in Usage sections
-- Usage section intros should be conversational: "Let's say we wanted to X in a Y, where..."
+<!-- STYLE & VOICE: follow the blog-voice skill at .agents/skills/blog-voice/SKILL.md. It is the source of truth for Aurora's voice, structure, and anti-AI patterns; don't duplicate style rules here.
 
 IMAGES & GIFS:
 - Place GIFs in src/assets/ (e.g. src/assets/my-demo.gif)
