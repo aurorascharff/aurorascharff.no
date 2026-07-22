@@ -3,7 +3,7 @@ import type { Site, SocialObjects } from "./types";
 export const SITE: Site = {
   website: "https://aurorascharff.no/",
   author: "Aurora Scharff",
-  desc: "DX Engineer on the Next.js team at Vercel. Practical guides on React, Next.js, and modern web development.",
+  desc: "Working on developer experience, docs, and education on the Next.js team at Vercel. Practical guides on React, Next.js, and modern web development.",
   title: "Aurora Scharff",
   ogImage: "dev-girl.png",
   lightAndDarkMode: true,
