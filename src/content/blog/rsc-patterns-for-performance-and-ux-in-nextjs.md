@@ -1,8 +1,8 @@
 ---
 author: Aurora Scharff
 pubDatetime: 2026-07-24T10:00:00Z
-title: "UX Patterns with RSC in Next.js"
-slug: ux-patterns-with-rsc-in-nextjs
+title: "RSC Patterns for Performance and UX in Next.js"
+slug: rsc-patterns-for-performance-and-ux-in-nextjs
 featured: true
 draft: true
 tags:
@@ -12,7 +12,7 @@ tags:
   - Composition
   - Suspense
   - User Experience
-description: "A few Server Component patterns from a small app on the Next.js 16 preview: a load more button that leans on the URL, a search field that keeps focus while results stream, and a message composer that previews your draft on the server."
+description: "A few Server Component patterns from a small app on the Next.js 16.3 preview: a load more button that leans on the URL, a search field that keeps focus while results stream, and a message composer that previews your draft on the server."
 ---
 
 In the Next.js App Router, pages render on the server by default. However, the moment a feature needs interaction, it's tempting to hand it entirely to the client. I've been building [Drop](https://next16-social-media.vercel.app/), a small social app, to test the [Next.js 16.3 Instant Navigations preview](https://nextjs.org/blog/next-16-3-instant-navigations), and I keep finding patterns worth sharing about Server Components, composition, and user experience.
@@ -29,7 +29,7 @@ There are simpler versions of all of these. It's more an exercise in how far the
 
 ## Why Keep the Work on the Server?
 
-Let's say we want a feed of drops. If we fetch it on the client, the browser has to download the component code, render a spinner, and then start fetching the data. The server sits right next to the database, so we can flip it around. An async Server Component fetches the drops and renders them on the server, and only the finished output reaches the browser:
+Let's say we want a feed of drops. If we fetch it on the client, the browser has to download the component code, render a spinner, and then start fetching the data. The server sits right next to the database, so we can flip it around. An async Server Component fetches the drops and renders them on the server, and only the output reaches the browser:
 
 ```tsx
 // features/drop/components/feed.tsx
@@ -54,6 +54,13 @@ The browser receives finished HTML, so there is nothing left to fetch after hydr
 export default function HomePage() {
   return (
     <main>
+      <header>
+        <h1>Home</h1>
+        <RefreshButton label="Refresh feed" />
+      </header>
+      <Suspense fallback={<TabsSkeleton />}>
+        <FeedTabs />
+      </Suspense>
       <DropComposer />
       <Suspense fallback={<DropListSkeleton />}>
         <Feed />
@@ -67,7 +74,7 @@ That's about as fast as a page can start. The reasoning is covered in more depth
 
 ## Load More, Driven by the URL
 
-Let's start with the simplest feature, the Load more button at the bottom of the feed. We want it to do no data fetching of its own and show a pending state while the server loads the next page.
+Let's start with the simplest feature. The home feed from earlier renders the newest drops, and a Load more button at the bottom loads older ones. We want the button to do no data fetching of its own and show a pending state while the server loads the next page.
 
 The obvious version fetches the next page on the client and appends it to a list in state:
 
@@ -79,7 +86,8 @@ function Feed({ initialItems }: { initialItems: FeedItem[] }) {
   const [page, setPage] = useState(1);
 
   async function loadMore() {
-    const next = await getFeed(page + 1);
+    const res = await fetch(`/api/feed?page=${page + 1}`);
+    const next = await res.json();
     setItems([...items, ...next.items]);
     setPage(page + 1);
   }
@@ -97,11 +105,13 @@ function Feed({ initialItems }: { initialItems: FeedItem[] }) {
 }
 ```
 
-That works, but the whole feed now lives in client state. It's gone on a refresh, a shared URL only ever points at page one, and the client is doing both the fetching and the rendering.
+### The Problem: The Feed Lives in Client State
 
-### Driving the Feed from the URL
+That works, but the drops need their own `/api/feed` route (or a Server Function) so the client can reach them, and the whole feed now lives in client state. It's gone on a refresh, a shared URL only ever points at page one, and the client is doing both the fetching and the rendering.
 
-We can put the page number in the URL, like we did for [filtering with search params](https://aurorascharff.no/posts/managing-advanced-search-param-filtering-next-app-router/). The feed reads a `?page=` param and renders pages `1` through `N`, each its own async Server Component inside a `Suspense` boundary:
+### Putting the Page Number in the URL
+
+We can put the page number in the URL instead, so it survives refreshes, can be shared, and is readable on the server. The feed reads a `?page=` param and renders pages `1` through `N`, each its own async Server Component inside a `Suspense` boundary:
 
 ```tsx
 // features/drop/components/feed.tsx
@@ -144,7 +154,7 @@ async function FeedPage({ page, isLast }: { page: number; isLast: boolean }) {
 }
 ```
 
-### The Button Only Navigates
+### Adding the Load More Button
 
 Now the button has nothing to fetch. It pushes the next `?page=` URL inside a transition, so it can show a pending state while the server streams the new page:
 
@@ -175,17 +185,34 @@ export function LoadMore({ href }: { href: Route }) {
 }
 ```
 
-That's the entire button. It holds no list state and does no fetching of its own. All it does is change the URL and let the server render the rest.
+The button holds no list state and does no fetching of its own. All it does is change the URL and let the server render the rest.
 
-This way, the server renders every page and load more survives a refresh, since a cold load of `?page=3` renders three pages. The only thing the client contributes is the transition that keeps the button responsive.
+This way, a cold load of `?page=3` renders three pages on the server, and the only thing the client contributes is the transition that keeps the button responsive.
 
 **Try it:** [open the Drop feed](https://next16-social-media.vercel.app/) and hit Load more. **Code:** [`feed.tsx`](https://github.com/aurorascharff/next16-social-media/blob/main/features/drop/components/feed.tsx).
 
 ## Streaming Search Results
 
-Next, search. We want the results to stream from the server while the input around them stays put. The input should render right away and keep focus while you type, which means it can't remount as the results change.
+Next, search. Drop's search page is an input with the matching people and drops listed below it:
 
-The basic pattern for this is well trodden: put the query in the URL, render a client input that reads it with `useSearchParams` and pushes to the router on change, then wrap the results in `Suspense`.
+```tsx
+// app/search/page.tsx
+export default function SearchPage() {
+  return (
+    <main>
+      <PageHeader back title="Search" />
+      <SearchInput />
+      <Suspense fallback={<DropListSkeleton count={3} />}>
+        <SearchResults />
+      </Suspense>
+    </main>
+  );
+}
+```
+
+We want the results to stream from the server while the input stays put. It should render right away and keep focus while you type, which means it can't remount as the results change.
+
+We want the query in the URL again, for the same reasons as the page number. The standard way to do that is a client input that reads it with `useSearchParams` and pushes to the router on change, the same setup as in [Managing Advanced Search Param Filtering in the Next.js App Router](https://aurorascharff.no/posts/managing-advanced-search-param-filtering-next-app-router/):
 
 ```tsx
 'use client';
@@ -202,49 +229,46 @@ function SearchInput() {
 }
 ```
 
-That works, and it's usually all you need.
+### The Problem: The Input Depends on the Query
 
-### The `cacheComponents` Problem
+That works, and it's usually all you need. However, the input now depends on the query, and the query is only known at request time. That's a dynamic read, whether it happens through a prop, with `useSearchParams`, or by awaiting `searchParams` in the page, so the input can't be part of the prerendered static shell. Drop runs with [`cacheComponents`](https://nextjs.org/docs/app/api-reference/config/next-config-js/cacheComponents) enabled, which makes the dependency explicit: anything that reads `searchParams` has to sit below a `Suspense` boundary, and `useSearchParams` reads as empty until the client takes over.
 
-However, Drop runs with [`cacheComponents`](https://nextjs.org/docs/app/api-reference/config/next-config-js/cacheComponents) enabled, and that changes where the query can be read. Reading `searchParams` is dynamic, so anything that touches it has to sit below a `Suspense` boundary, and `useSearchParams` itself reads as empty until the client takes over. If we want the input to be truly instant, rendered as part of the static shell before any data resolves, it has to live *above* that boundary, where the query isn't available yet.
-
-So the input can't read the query during render at all, whether as a prop, with `useSearchParams`, or by awaiting it in the page. It has to stay in the static shell above the boundary, while the results stream in below it.
+So if we want the input in the instant static shell, it can't depend on the query at all.
 
 ### Keeping the Input Out of the Dynamic Tree
 
-Instead, we can make the input a small client component that takes the results as `children`. It only writes to the URL on change and never reads the query, so it renders once up front and stays mounted while the results swap out underneath:
+Instead, we can rewrite `SearchInput` so it never reads the query. It only writes to the URL on change, so it can render as part of the static shell and stay mounted while the results swap out underneath it:
 
 ```tsx
-// features/search/components/search-shell.tsx
+// features/search/components/search-input.tsx
 'use client';
 
-export function SearchShell({ children }: { children: React.ReactNode }) {
+export function SearchInput() {
   const router = useRouter();
 
   return (
-    <>
-      <input
-        type="search"
-        name="q"
-        placeholder="Search drops…"
-        onChange={event => {
-          const value = event.target.value;
-          router.replace(value ? `/search?q=${encodeURIComponent(value)}` : '/search', { scroll: false });
-        }}
-      />
-      {children}
-    </>
+    <input
+      type="search"
+      name="q"
+      placeholder="Search drops…"
+      onChange={event => {
+        const value = event.target.value;
+        router.replace(value ? `/search?q=${encodeURIComponent(value)}` : '/search', { scroll: false });
+      }}
+    />
   );
 }
 ```
 
-Now the page renders the shell once and passes the results into it as `children`. Notice that the page is **not** `async` and never awaits `searchParams`. It passes the promise down and resolves it with `.then()` *inside* a `Suspense` boundary, so the shell stays in the static, instant part of the page while only `SearchResults` is dynamic:
+The input stays above the `Suspense` boundary in the page, and the query is resolved *inside* it. Notice that the page is **not** `async` and never awaits `searchParams`. It passes the promise down and resolves it with `.then()`, so the header and the input stay in the static, instant part of the page while only `SearchResults` is dynamic:
 
 ```tsx
 // app/search/page.tsx
 export default function SearchPage({ searchParams }: PageProps<'/search'>) {
   return (
-    <SearchShell>
+    <main>
+      <PageHeader back title="Search" />
+      <SearchInput />
       <Suspense fallback={<DropListSkeleton count={3} />}>
         {searchParams.then(sp => {
           const q = typeof sp.q === 'string' ? sp.q : '';
@@ -252,12 +276,12 @@ export default function SearchPage({ searchParams }: PageProps<'/search'>) {
           return <SearchResults query={q} />;
         })}
       </Suspense>
-    </SearchShell>
+    </main>
   );
 }
 ```
 
-Because `SearchResults` is passed as a child, it re-renders on the server when the query changes, but the shell holding the input does not. The input keeps its identity, and therefore its focus and cursor position, while the results underneath it swap out.
+The input never remounts, so it keeps its focus and cursor position while `SearchResults` re-renders on the server with the new query.
 
 The `SearchResults` component itself is a plain async Server Component. It fetches on the server, renders the output, and adds nothing to the client bundle:
 
@@ -281,27 +305,9 @@ export async function SearchResults({ query }: { query: string }) {
 }
 ```
 
-### Dimming the Stale Results
-
-The results still pop in abruptly when they're ready. We can dim them while the next query streams by wrapping the `router.replace` in a transition and fading the `children` with its `isPending` flag:
-
-```tsx
-const [isPending, startTransition] = useTransition();
-
-// in the input's onChange
-startTransition(() => router.replace(next, { scroll: false }));
-
-// wrapping the children
-<div className="transition-opacity data-pending:opacity-60" data-pending={isPending ? '' : undefined}>
-  {children}
-</div>
-```
-
-The stale-while-loading part comes for free from the App Router, which runs every navigation inside a transition, so React keeps the previous results on screen while the new ones load instead of dropping to the skeleton on each keystroke. In plain React you'd reach for `useTransition` yourself to get that behavior. Here we only want the `isPending` flag it gives us, which drives the fade.
-
 ### Seeding the Input Without Awaiting the URL
 
-Putting the input above the boundary has a cost. The shell renders before `searchParams` resolves, so it can't start with the current query filled in. For shared links and refreshes we still want someone opening `/search?q=react` to see `react` in the box. We need to seed the input twice, on cold loads and on soft navigations.
+Putting the input above the boundary has a cost. It renders before `searchParams` resolves, so it can't start with the current query filled in. For shared links and refreshes we still want someone opening `/search?q=react` to see `react` in the box. We need to seed the input twice, on cold loads and on soft navigations.
 
 For cold loads, a tiny inline script runs during HTML parsing, before the browser paints, and sets the value straight from the URL:
 
@@ -340,6 +346,50 @@ export function useSyncInputToSearchParam(ref: RefObject<HTMLInputElement | null
   }, [ref, param]);
 }
 ```
+
+### Dimming the Stale Results
+
+The results still pop in abruptly when they're ready. We can dim them while the next query streams by wrapping the `router.replace` in a transition and fading the results with its `isPending` flag. The flag lives in the input's component, so this is where the results move in as `children`, and the input grows into a shell around them:
+
+```tsx
+// features/search/components/search-shell.tsx
+'use client';
+
+export function SearchShell({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+
+  return (
+    <>
+      <input
+        type="search"
+        name="q"
+        placeholder="Search drops…"
+        onChange={event => {
+          const value = event.target.value;
+          startTransition(() => {
+            router.replace(value ? `/search?q=${encodeURIComponent(value)}` : '/search', { scroll: false });
+          });
+        }}
+      />
+      <div className="transition-opacity data-pending:opacity-60" data-pending={isPending ? '' : undefined}>
+        {children}
+      </div>
+    </>
+  );
+}
+```
+
+In the page, the shell wraps the `Suspense` boundary, so the results render into it as `children`:
+
+```tsx
+// app/search/page.tsx
+<SearchShell>
+  <Suspense fallback={<DropListSkeleton count={3} />}>{/* ... */}</Suspense>
+</SearchShell>
+```
+
+The stale-while-loading part comes for free from the App Router, which runs every navigation inside a transition, so React keeps the previous results on screen while the new ones load instead of dropping to the skeleton on each keystroke. In plain React you'd reach for `useTransition` yourself to get that behavior. Here we only want the `isPending` flag it gives us, which drives the fade.
 
 ### Putting the Search Together
 
@@ -425,7 +475,7 @@ export function QuickDropForm({ avatar }: { avatar: React.ReactNode }) {
 
 The interesting part is the preview.
 
-### Rendering the Draft on the Server
+### The Problem: The Composer Can't Render the Body
 
 In the feed, a drop body is rendered by a Server Component, `DropBody`, which highlights code blocks with [Shiki](https://shiki.style/) on the server:
 
@@ -437,7 +487,13 @@ export function DropBody({ body }: { body: string }) {
 }
 ```
 
-For the preview to match the posted drop, it has to go through that same `DropBody`. But the composer is a client component, so it can't call `DropBody` directly, and we don't want a second client-side renderer that could drift from the real thing. We can solve it with a Server Function, which can return JSX and hand back a `DropBody` that already rendered on the server:
+For the preview to match the posted drop, it has to go through that same `DropBody`. But the composer is a client component, so it can't call `DropBody` directly, and we don't want a second client-side renderer that could drift from the real thing.
+
+Passing the rendered body in as `children` doesn't work either. That composition needs the server content to exist when the page renders, which is how the composer gets its `avatar`, a server-rendered child baked in up front. The draft doesn't exist until you type it, so no server parent could have passed its preview down.
+
+### Rendering the Draft on the Server
+
+The composer needs to ask the server for rendered output on demand, and a Server Function does exactly that. It can return JSX, handing back a `DropBody` that already rendered on the server:
 
 ```tsx
 // features/drop/drop-preview-action.tsx
