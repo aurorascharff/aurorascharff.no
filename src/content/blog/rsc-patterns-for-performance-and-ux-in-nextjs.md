@@ -47,9 +47,7 @@ export async function Feed() {
 }
 ```
 
-The browser receives the rendered output instead of data it still has to render, and that output can be cached.
-
-RSCs can also stream. The static parts of the page are served instantly, while the dynamic parts fill in behind `Suspense`. In Drop, the home page looks something like this, with the feed streaming in under the message composer:
+The browser receives the rendered output, which can also be streamed. The static parts of the page are served instantly, while the dynamic parts fill in behind `Suspense`. In Drop, the home page looks something like this, with the feed streaming in under the message composer:
 
 ```tsx
 // app/page.tsx
@@ -141,7 +139,7 @@ export function LoadMore({ href }: { href: Route }) {
 }
 ```
 
-The moment you press it, the button disables itself and swaps its label, and the `?page=` URL updates.
+That's the only client code the feature needs.
 
 ### Rendering the Pages on the Server
 
@@ -166,7 +164,7 @@ export async function Feed({ page = 1 }: { page?: number }) {
 }
 ```
 
-Because each page has its own boundary, a newly requested page streams in under a skeleton while the earlier pages stay exactly where they are. Each `FeedPage` fetches and renders its slice of posts on the server, and the last page renders the button pointing at the next page:
+Because each page has its own boundary, a newly requested page streams in under a skeleton while the earlier pages stay exactly where they are. Each `FeedPage` can then fetch and render its slice of posts on the server, with the last page rendering the button that points at the next:
 
 ```tsx
 async function FeedPage({ page, isLast }: { page: number; isLast: boolean }) {
@@ -192,7 +190,7 @@ The button writes the URL, and the feed reads it.
 
 ### The Full `Feed`
 
-Here's the feed with the pages and the button wired in:
+Here's the feed with the pages and the button wired in. It stays an async Server Component from top to bottom, owning the data and the rendering, with the button as the only client piece:
 
 ```tsx
 // features/drop/components/feed.tsx
@@ -234,7 +232,7 @@ async function FeedPage({ page, isLast }: { page: number; isLast: boolean }) {
 }
 ```
 
-This way, the feed stays an async Server Component from top to bottom, and the split lets the server and the client each do what they're best at. The server owns the data and the rendering, a cold load of `?page=3` renders three pages, and the page number in the URL survives a refresh and can be shared. The client contributes the instant feedback on the button, and because the button only pushes a URL, it's reusable across feeds. In Drop, the Discover tab points it at its own pages.
+This way, a cold load of `?page=3` renders three pages, the page number survives a refresh and can be shared, and the button responds the moment you press it.
 
 **Try it:** [open the Drop feed](https://next16-social-media.vercel.app/) and hit **Load more**. **Code:** [`feed.tsx`](https://github.com/aurorascharff/next16-social-media/blob/main/features/drop/components/feed.tsx).
 
@@ -263,7 +261,7 @@ We also want the query you typed to survive a refresh and be shareable, like the
 
 ### Reading the Query with `useSearchParams`
 
-The standard way to get that is to put the query in the URL. A client input reads it with `useSearchParams` and pushes to the router on change, like in [search param filtering](https://aurorascharff.no/posts/managing-advanced-search-param-filtering-next-app-router/):
+The standard way to get that is to put the query in the URL. We can use the `useSearchParams` hook to read it and push to the router on change, like in [search param filtering](https://aurorascharff.no/posts/managing-advanced-search-param-filtering-next-app-router/):
 
 ```tsx
 'use client';
@@ -280,9 +278,9 @@ function SearchInput() {
 }
 ```
 
-That works, and it's usually all you need. However, the input now depends on the query, and the query is only known at request time. That's a dynamic read, whether it happens through a prop, with `useSearchParams`, or by awaiting `searchParams` in the page, so the input can no longer be part of the static shell. Anything that reads `searchParams` has to sit below a `Suspense` boundary, and `useSearchParams` reads as empty until the client takes over.
+That works, and it's usually all you need. However, the input now depends on the query, and the query is only known at request time. Whether it comes in through a prop, `useSearchParams`, or awaiting `searchParams` in the page, the input can no longer be part of the static shell, and `useSearchParams` reads as empty until the client takes over.
 
-So if we want the input in the instant static shell, it can't depend on the query at all.
+So if we want the input in the instant static shell, it can't depend on the query at all. Under `cacheComponents`, reading the query would also force a `Suspense` boundary around the input.
 
 ### Keeping the Input Out of the Dynamic Tree
 
@@ -356,8 +354,6 @@ Notice that the page is **not** `async` and never awaits `searchParams`. It pass
 
 Everything below the boundary is replaced as the query changes, swapping between the empty state, the skeleton, and the results, while the input above it never remounts and keeps its focus and cursor position.
 
-The search now works end to end, with the input in the static shell and the results streaming in below it.
-
 ### Seeding the Input Without Awaiting the URL
 
 Putting the input above the boundary has a cost. It renders before `searchParams` resolves, so it can't start with the current query filled in. For shared links and refreshes we still want someone opening `/search?q=react` to see `react` in the box.
@@ -385,7 +381,7 @@ export function SeedFromSearchParam({ targetId, param }: { targetId: string; par
 
 Because the DOM already carries the value, the input needs `suppressHydrationWarning` so React doesn't flag the mismatch when it hydrates. Next.js recommends this kind of inline script for [preventing a flash before hydration](https://nextjs.org/docs/app/guides/preventing-flash-before-hydration), and I used the same trick in [Building an Active NavLink Component](https://aurorascharff.no/posts/building-an-active-navlink-component-in-nextjs/#preventing-flickering-on-first-paint).
 
-That handles the first load. Navigating back to the page is a different case. Next.js keeps recently visited routes mounted with React's [`<Activity>`](https://react.dev/reference/react/Activity) instead of unmounting them, which [preserves their DOM and state](https://nextjs.org/docs/app/guides/preserving-ui-state). That's usually what you want, but the input can come back holding a query that no longer matches the URL. A layout effect re-syncs it to the param before paint:
+That handles the first load, but navigating back to the page is a different case. Next.js keeps recently visited routes mounted with React's [`<Activity>`](https://react.dev/reference/react/Activity) instead of unmounting them, which [preserves their DOM and state](https://nextjs.org/docs/app/guides/preserving-ui-state). That's usually what you want, but the input can come back holding a query that no longer matches the URL. We can re-sync it to the param before paint with a layout effect:
 
 ```tsx
 // hooks/use-sync-input-to-search-param.ts
@@ -404,7 +400,7 @@ With both seeds in place, the input always matches the URL, however you arrive a
 
 ### Dimming the Stale Results
 
-The App Router already runs every navigation inside a transition, so the previous results stay on screen while the next ones load, [avoiding unwanted loading indicators](https://react.dev/reference/react/useTransition#preventing-unwanted-loading-indicators) on each keystroke. If a search takes a while, though, nothing tells the user anything is happening. We can add a slight pending state. Wrapping the `router.replace` in our own transition gives us an `isPending` flag:
+The App Router already runs every navigation inside a transition, so the previous results stay on screen while the next ones load, [avoiding unwanted loading indicators](https://react.dev/reference/react/useTransition#preventing-unwanted-loading-indicators) on each keystroke. If a search takes a while, though, nothing tells the user anything is happening. We can add a slight pending state by wrapping the `router.replace` in our own transition, which gives us an `isPending` flag:
 
 ```tsx
 // features/search/components/search-input.tsx
@@ -430,7 +426,7 @@ export function SearchInput() {
 }
 ```
 
-Now we have the flag. A spinner next to the input would do, but let's fade the whole result list instead, which is a common pattern. The results live in the page, outside `SearchInput`, so we can pass them in as `children`, and the input grows into a shell around them:
+Now we have the flag. A spinner next to the input would do, but let's fade the whole result list instead, which is a common pattern. For the fade to reach the results, the component has to render around them, so the input can take them as `children` and become a `Search` component:
 
 ```tsx
 // features/search/components/search.tsx
@@ -461,7 +457,7 @@ export function Search({ children }: { children: React.ReactNode }) {
 }
 ```
 
-In the page, the shell replaces the standalone input and wraps the `Suspense` boundary, so the results render into it as `children`:
+Then we can wrap the `Suspense` boundary with it in the page:
 
 ```tsx
 // app/search/page.tsx
@@ -537,7 +533,7 @@ This way, the search page starts fully static, with the input ready before any d
 
 ## A Message Composer with a Server-Rendered Preview
 
-Finally, let's tackle the message composer. It sits at the top of the home page from earlier:
+Finally, let's work on the message composer, the one we saw briefly at the top of the home page:
 
 ```tsx
 // app/page.tsx
@@ -637,13 +633,14 @@ export async function renderDropPreview(body: string) {
 }
 ```
 
-Now that the server can render the draft, the composer needs to call `renderDropPreview` when you hit Preview, and show what comes back.
+Now the server can render the draft on demand.
 
 ### Requesting and Showing the Preview
 
-With that in place, we can request the preview from an event handler and keep the promise in state:
+With that in place, we can request the preview from an event handler and keep the promise in state, and `DropPreview` reads it with `use()`, [suspending](https://react.dev/reference/react/Suspense) until the server sends the rendered node back:
 
 ```tsx
+// features/drop/components/quick-drop-form.tsx
 function showPreview() {
   const body = textareaRef.current?.value.trim() ?? '';
   if (!body) {
@@ -653,18 +650,8 @@ function showPreview() {
   }
   setMode('preview');
 }
-```
 
-On the client, `DropPreview` reads the promise with `use()`, which suspends it until the server sends the rendered node back:
-
-```tsx
 // features/drop/components/drop-preview.tsx
-'use client';
-
-import { use, type ReactNode } from 'react';
-
-export type Preview = { body: string; node: Promise<ReactNode> };
-
 export function DropPreview({ preview }: { preview: Preview | null }) {
   if (!preview) {
     return <p>Nothing to preview yet.</p>;
@@ -673,7 +660,7 @@ export function DropPreview({ preview }: { preview: Preview | null }) {
 }
 ```
 
-We render it inside a `Suspense` boundary, and give it the stored `body` as a `key` to reset the boundary when the draft changes:
+We can render it inside a `Suspense` boundary, and give it the stored `body` as a `key` to reset the boundary when the draft changes:
 
 ```tsx
 // features/drop/components/quick-drop-form.tsx
@@ -734,8 +721,18 @@ This way, the composer stays a thin client component, and the preview always mat
 
 **Try it:** [open Drop](https://next16-social-media.vercel.app/), write a post in the composer at the top of the feed (add a code block to see the highlighting), then hit Preview. **Code:** [`quick-drop-form.tsx`](https://github.com/aurorascharff/next16-social-media/blob/main/features/drop/components/quick-drop-form.tsx).
 
+## Key Takeaways
+
+- Use the server for what it's worth, and let it do the fetching and the rendering.
+- Pass server-rendered output to client components as `children`, or request it on demand with a Server Function.
+- Avoid putting code in the client when it doesn't need to be there.
+- Put state like the page number and the query in the URL, where it survives refreshes and is readable on the server.
+- Streaming into separate `Suspense` boundaries can add new content without touching what's already on screen.
+- Maximize the static shell by keeping dynamic reads behind `Suspense` boundaries.
+- Provide instant feedback with transitions and pending states while the server works.
+
 ## Conclusion
 
-The takeaway is to use the server for what it's worth, avoid the client when it isn't needed, and provide instant feedback while the server does the work. Again, none of these patterns are required, and the basic versions will do for most apps. But when the next feature needs interaction, try starting with what the server can render, and see how small the client piece gets. You can play with everything above in [Drop](https://next16-social-media.vercel.app/), and check out the [full repository on GitHub](https://github.com/aurorascharff/next16-social-media).
+These experiments have been an exciting way to challenge what you can build with RSCs. Again, none of these patterns are required, and the basic versions will do for most apps. But when the next feature needs interaction, try starting with what the server can render, and see how small the client piece gets. You can play with everything above in [Drop](https://next16-social-media.vercel.app/), and check out the [full repository on GitHub](https://github.com/aurorascharff/next16-social-media).
 
 I hope this post has been helpful. Please let me know if you have any questions or comments, and follow me on [Bluesky](https://bsky.app/profile/aurorascharff.no) or [X](https://x.com/aurorascharff) for more updates. Happy coding! 🚀
