@@ -1,8 +1,8 @@
 ---
 author: Aurora Scharff
 pubDatetime: 2026-07-24T10:00:00Z
-title: "UX Patterns in Next.js: Load More, Instant Search, and Draft Preview"
-slug: ux-patterns-in-nextjs-load-more-instant-search-and-draft-preview
+title: "UX Patterns with RSC in Next.js: Load More, Instant Search, and Draft Preview"
+slug: ux-patterns-with-rsc-in-nextjs-load-more-instant-search-and-draft-preview
 featured: false
 draft: true
 tags:
@@ -130,6 +130,50 @@ export function LoadMore({ href }: { href: Route }) {
 That's the entire button. It holds no list state and does no fetching of its own, it only changes the URL and lets the server render the rest.
 
 Because the page number lives in the URL, load more survives a refresh and is shareable. A cold load of `?page=3` renders three pages on the server. The only thing the client contributes is the transition that keeps the button responsive while the next page streams in.
+
+### Putting the feed together
+
+Here's the feed with the pages and the Load more button wired in:
+
+```tsx
+// features/drop/components/feed.tsx
+import { Suspense } from 'react';
+import { LoadMore } from '@/components/ui/load-more';
+
+export async function Feed({ page = 1 }: { page?: number }) {
+  return (
+    <ul>
+      {Array.from({ length: page }).map((_, i) => {
+        const p = i + 1;
+        const isLast = p === page;
+        return (
+          <Suspense key={p} fallback={<DropListSkeleton count={3} />}>
+            <FeedPage page={p} isLast={isLast} />
+          </Suspense>
+        );
+      })}
+    </ul>
+  );
+}
+
+async function FeedPage({ page, isLast }: { page: number; isLast: boolean }) {
+  const { items, hasMore } = await getFeed(page);
+  return (
+    <>
+      {items.map(item => (
+        <li key={item.drop.id}>
+          <Drop drop={item.drop} />
+        </li>
+      ))}
+      {isLast && hasMore ? (
+        <li className="flex justify-center p-6">
+          <LoadMore href={`/?page=${page + 1}`} />
+        </li>
+      ) : null}
+    </>
+  );
+}
+```
 
 **Try it:** [open the Drop feed](https://next16-social-media.vercel.app/) and hit Load more. **Code:** [`feed.tsx`](https://github.com/aurorascharff/next16-social-media/blob/main/features/drop/components/feed.tsx).
 
@@ -481,6 +525,48 @@ You might expect `DropPreview` to wrap its own `use()` in `Suspense`, but a comp
 ```
 
 Keying it on `preview.body` means each new draft gets its own fallback, so switching to Preview shows a skeleton first rather than the previous draft's output.
+
+### Putting the composer together
+
+Here's the composer with the preview wired in, the `showPreview` handler that starts the render and the boundary that shows it:
+
+```tsx
+// features/drop/components/quick-drop-form.tsx
+'use client';
+
+export function QuickDropForm({ avatar }: { avatar: React.ReactNode }) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [mode, setMode] = useState<'write' | 'preview'>('write');
+  const [preview, setPreview] = useState<Preview | null>(null);
+
+  function showPreview() {
+    const body = textareaRef.current?.value.trim() ?? '';
+    if (!body) {
+      setPreview(null);
+    } else if (preview?.body !== body) {
+      setPreview({ body, node: renderDropPreview(body) });
+    }
+    setMode('preview');
+  }
+
+  return (
+    <form action={submitAction}>
+      {avatar}
+      {mode === 'write' ? (
+        <textarea ref={textareaRef} name="body" placeholder="What did you build today?" />
+      ) : (
+        <Suspense key={preview?.body} fallback={<PreviewSkeleton />}>
+          <DropPreview preview={preview} />
+        </Suspense>
+      )}
+      <ToolbarButton label="Preview" onClick={showPreview}>
+        <Eye className="h-4 w-4" />
+      </ToolbarButton>
+      <Button type="submit">Drop it</Button>
+    </form>
+  );
+}
+```
 
 **Try it:** [open Drop](https://next16-social-media.vercel.app/), write a drop in the composer at the top of the feed (drop in a code block to see the highlighting), then hit Preview. **Code:** [`quick-drop-form.tsx`](https://github.com/aurorascharff/next16-social-media/blob/main/features/drop/components/quick-drop-form.tsx).
 
