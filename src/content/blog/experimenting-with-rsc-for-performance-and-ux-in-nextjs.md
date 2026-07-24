@@ -1,8 +1,8 @@
 ---
 author: Aurora Scharff
 pubDatetime: 2026-07-24T10:00:00Z
-title: "RSC Patterns for Performance and UX in Next.js"
-slug: rsc-patterns-for-performance-and-ux-in-nextjs
+title: "Experimenting with RSCs for Performance and UX in Next.js"
+slug: experimenting-with-rsc-for-performance-and-ux-in-nextjs
 featured: true
 draft: false
 tags:
