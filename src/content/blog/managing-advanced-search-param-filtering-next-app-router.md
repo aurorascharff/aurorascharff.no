@@ -3,7 +3,7 @@ author: Aurora Scharff
 pubDatetime: 2024-10-24T10:30:00Z
 title: Managing Advanced Search Param Filtering in the Next.js App Router
 slug: managing-advanced-search-param-filtering-next-app-router
-featured: true
+featured: false
 draft: false
 tags:
   - React Server Components
