@@ -350,7 +350,7 @@ export default function SearchPage({ searchParams }: PageProps<'/search'>) {
 }
 ```
 
-Notice that the page is **not** `async` and never awaits `searchParams`. It passes the promise down and resolves it with `.then()` inside the `Suspense` boundary, so the header and the input stay in the static, instant part of the page while only `SearchResults` is dynamic.
+Notice that the page is **not** `async` and never awaits `searchParams`. It passes the promise down and resolves it with `.then()` inside the `Suspense` boundary, so the header and the input stay in the static, instant part of the page while only `SearchResults` is dynamic. An async child component that awaits the promise works the same way.
 
 Everything below the boundary is replaced as the query changes, swapping between the empty state, the skeleton, and the results, while the input above it never remounts and keeps its focus and cursor position.
 
@@ -457,7 +457,7 @@ export function Search({ children }: { children: React.ReactNode }) {
 }
 ```
 
-Then we can wrap the `Suspense` boundary with it in the page:
+The fade uses Tailwind v4's `data-pending:` variant. Then we can wrap the `Suspense` boundary with `Search` in the page:
 
 ```tsx
 // app/search/page.tsx
