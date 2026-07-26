@@ -573,7 +573,7 @@ export default function HomePage() {
 }
 ```
 
-The `DropComposer` renders a `QuickDropForm`, a client component with a textarea, formatting options, and a toggle between writing and previewing your draft:
+The `DropComposer` renders a `QuickDropForm`, a client component with a textarea, a toolbar for bold and italic text, code blocks, and tags, and a toggle between writing and previewing your draft:
 
 ```tsx
 // features/drop/components/quick-drop-form.tsx
