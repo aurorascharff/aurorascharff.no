@@ -591,6 +591,7 @@ export function QuickDropForm({ avatar }: { avatar: React.ReactNode }) {
       ) : (
         <div>{/* TODO: render the draft as a preview */}</div>
       )}
+      {/* ...toolbar buttons for bold, italic, code blocks, and tags... */}
       <ToolbarButton label="Preview" onClick={() => setMode('preview')}>
         <Eye className="h-4 w-4" />
       </ToolbarButton>
@@ -752,9 +753,16 @@ export function QuickDropForm({ avatar }: { avatar: React.ReactNode }) {
           <DropPreview preview={preview} />
         </Suspense>
       )}
-      <ToolbarButton label="Preview" onClick={showPreview}>
-        <Eye className="h-4 w-4" />
-      </ToolbarButton>
+      {/* ...toolbar buttons for bold, italic, code blocks, and tags... */}
+      {mode === 'write' ? (
+        <ToolbarButton label="Preview" onClick={showPreview}>
+          <Eye className="h-4 w-4" />
+        </ToolbarButton>
+      ) : (
+        <ToolbarButton label="Edit" onClick={() => setMode('write')}>
+          <PenLine className="h-4 w-4" />
+        </ToolbarButton>
+      )}
       <Button type="submit">Drop it</Button>
     </form>
   );
