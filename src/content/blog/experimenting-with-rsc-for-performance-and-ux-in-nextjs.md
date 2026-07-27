@@ -676,6 +676,8 @@ export async function renderDropPreview(body: string) {
 }
 ```
 
+One gotcha: since we import the Server Function directly into a Client Component, Client Components inside the returned JSX, like the copy button inside `CodeBlock`, only resolve when the page already includes their code, per [this issue](https://github.com/vercel/next.js/issues/83186). In Drop, the feed on the same page already renders them.
+
 Now the server can render the draft on demand.
 
 ### Requesting and Showing the Preview
