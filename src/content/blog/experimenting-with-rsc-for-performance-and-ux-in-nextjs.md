@@ -236,6 +236,8 @@ This way, the button responds the moment you press it, and the older posts strea
 
 **Try it:** [open the Drop feed](https://next16-social-media.vercel.app/) and hit **Load more**. **Code:** [`feed.tsx`](https://github.com/aurorascharff/next16-social-media/blob/main/features/drop/components/feed.tsx).
 
+This approach has a tradeoff, though. A cold `?page=100` renders every page in one request, and the per-page `Suspense` boundaries make the feed jump as they resolve. React has an experimental [`SuspenseList`](https://17.reactjs.org/docs/concurrent-mode-reference.html#suspenselist) component to coordinate the reveal order, mentioned at React Conf 2025, but it hasn't shipped yet. An alternative is going back to keeping the pages in client state, appending each one with a Server Function, but that brings back the issues we started with. For now, Drop keeps the URL and caps how far you can page.
+
 ## Streaming Search Results
 
 Let's move on to the search page. It has an input where you can search for people or posts. We want the input ready the moment the page opens, and to keep focus while the results update below as you type.
@@ -676,7 +678,7 @@ export async function renderDropPreview(body: string) {
 }
 ```
 
-One gotcha: since we import the Server Function directly into a Client Component, Client Components inside the returned JSX, like the copy button inside `CodeBlock`, only resolve when the page already includes their code, per [this issue](https://github.com/vercel/next.js/issues/83186). In Drop, the feed on the same page already renders them.
+There is a gotcha here, though. When the Server Function is imported directly into a Client Component, Client Components inside the returned JSX, like the copy button inside `CodeBlock`, will only work if the page already includes their code. This is a [known issue](https://github.com/vercel/next.js/issues/83186), and in Drop, the feed on the same page already renders them.
 
 Now the server can render the draft on demand.
 
