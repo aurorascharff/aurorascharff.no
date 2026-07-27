@@ -236,7 +236,7 @@ This way, the button responds the moment you press it, and the older posts strea
 
 **Try it:** [open the Drop feed](https://next16-social-media.vercel.app/) and hit **Load more**. **Code:** [`feed.tsx`](https://github.com/aurorascharff/next16-social-media/blob/main/features/drop/components/feed.tsx).
 
-This approach has a tradeoff, though. Without a limit, a cold `?page=100` would render every page in one request, with the per-page `Suspense` boundaries making the feed jump as they resolve, so Drop caps how far you can page. React has an experimental [`SuspenseList`](https://17.reactjs.org/docs/concurrent-mode-reference.html#suspenselist) component to coordinate the reveal order, mentioned at React Conf 2025, but it hasn't shipped yet. An alternative is going back to keeping the pages in client state, appending each one with a Server Function, but that brings back the issues we started with.
+This approach has a tradeoff, though. A cold `?page=100` would render every page in one request, with the per-page `Suspense` boundaries making the feed jump as they resolve. React has an experimental [`SuspenseList`](https://17.reactjs.org/docs/concurrent-mode-reference.html#suspenselist) to coordinate the reveal order, mentioned at React Conf 2025, but it hasn't shipped yet. An alternative is going back to pages in client state, appended with a Server Function, but that brings back the issues we started with. For now, Drop caps how far you can page, and there may be better ways to do this in the future.
 
 ## Streaming Search Results
 
