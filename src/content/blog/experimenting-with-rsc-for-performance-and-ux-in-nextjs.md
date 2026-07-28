@@ -249,7 +249,18 @@ This way, the button responds the moment you press it, and the older posts strea
 
 **Try it:** [open the Drop feed](https://next16-social-media.vercel.app/) and hit **Load more**. **Code:** [`feed.tsx`](https://github.com/aurorascharff/next16-social-media/blob/main/features/drop/components/feed.tsx).
 
-This approach has a tradeoff, though. A cold `?page=100` would render every page in one request, with the per-page `Suspense` boundaries making the feed jump as they resolve. React has an experimental [`SuspenseList`](https://17.reactjs.org/docs/concurrent-mode-reference.html#suspenselist) to coordinate the reveal order, mentioned at React Conf 2025, but it hasn't shipped yet. For now, Drop caps how far you can page, and there may be better ways to do this in the future.
+This approach has a tradeoff, though. When you press **Load more**, the server re-renders pages `1` through `N`, not only the new one. In Drop, the feed pages are cached with [`'use cache'`](https://nextjs.org/docs/app/api-reference/directives/use-cache), so rendering them again doesn't hit the database, and they are tagged with `cacheTag()` so a mutation can expire them:
+
+```tsx
+// features/drop/drop-queries.ts
+async function getFeedForHandle(handle: string, page: number, slow: boolean) {
+  'use cache';
+  cacheTag('feed', `feed:${handle}`);
+  // ...fetch and slice this page of the feed
+}
+```
+
+However, the response still re-sends the posts already on screen, and when many pages load at once, the per-page `Suspense` boundaries make the feed jump as they resolve. React has an experimental [`SuspenseList`](https://17.reactjs.org/docs/concurrent-mode-reference.html#suspenselist) to coordinate the reveal order, mentioned at React Conf 2025, but it hasn't shipped yet. For now, Drop caps how far you can page, and there may be better ways to do this in the future.
 
 ## Streaming Search Results
 
