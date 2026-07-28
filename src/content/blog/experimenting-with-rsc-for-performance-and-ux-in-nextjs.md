@@ -106,20 +106,15 @@ function Feed({ initialItems }: { initialItems: FeedItem[] }) {
 }
 ```
 
-That works, but it has some issues. The posts need their own `/api/feed` route (or a Server Function), the feed lives in client state that disappears on a reload, and a shared URL only ever points at page one. Client state also falls outside the Next.js revalidation system, so a [`router.refresh()`](https://nextjs.org/docs/app/api-reference/functions/use-router#routerrefresh) or an [`updateTag()`](https://nextjs.org/docs/app/api-reference/functions/updateTag) after a mutation won't update the loaded posts.
+That works, and it's the approach libraries like React Query and SWR are built around, pages of data held in client state. But it has some issues:
 
-We could improve the fetching by appending JSX rendered by a Server Function. The pages would then be rendered output rather than data, and the client wouldn't need its own rendering code for posts:
+- The posts need their own `/api/feed` route (or a Server Function) to reach the data
+- In Drop, the posts can't render on the client at all, since `Drop` renders code blocks with server-only [Shiki](https://shiki.style) highlighting, which we'll see later
+- The feed lives in client state, so it disappears on a reload
+- A shared URL only ever points at page one
+- The loaded posts sit outside the [Next.js cache system](https://nextjs.org/docs/app/getting-started/caching), so a mutation won't update them
 
-```tsx
-'use server';
-
-// FeedPage is a Server Component rendering one page of posts
-export async function renderFeedPage(page: number) {
-  return <FeedPage page={page} />;
-}
-```
-
-We'll come back to this kind of JSX in the last example. However, the pages would still live in client state, with the issues that brings.
+We could also have a Server Function render the page and return the JSX, and we'll come back to that at the end of the article. First, let's try fixing these issues by keeping the feed on the server.
 
 ### Pushing the Page Number to the URL
 
@@ -260,7 +255,7 @@ async function getFeedForHandle(handle: string, page: number, slow: boolean) {
 }
 ```
 
-However, the response still re-sends the posts already on screen, and when many pages load at once, the per-page `Suspense` boundaries make the feed jump as they resolve. React has an experimental [`SuspenseList`](https://17.reactjs.org/docs/concurrent-mode-reference.html#suspenselist) to coordinate the reveal order, mentioned at React Conf 2025, but it hasn't shipped yet. For now, Drop caps how far you can page, and there may be better ways to do this in the future.
+However, the response still re-sends the posts already on screen, and when many pages load at once, the per-page `Suspense` boundaries make the feed jump as they resolve. React has an experimental [`SuspenseList`](https://17.reactjs.org/docs/concurrent-mode-reference.html#suspenselist) to coordinate the reveal order, mentioned at React Conf 2025, but it hasn't shipped yet. For now, Drop caps how far you can page.
 
 ## Streaming Search Results
 
@@ -702,7 +697,7 @@ export async function renderDropPreview(body: string) {
 }
 ```
 
-There is a gotcha here, though. When the Server Function is imported directly into a Client Component, Client Components inside the returned JSX, like the copy button inside `CodeBlock`, will only work if the page already includes their code. This is a [known issue](https://github.com/vercel/next.js/issues/83186), and in Drop, the feed on the same page already renders them.
+There is a gotcha here, though. Client Components inside the returned JSX, like the copy button inside `CodeBlock`, are missing from the bundle when they're only referenced through a Server Function, due to a [Turbopack bug](https://github.com/vercel/next.js/issues/83186). The workaround is importing them from a page or layout, and in Drop, the feed on the same page already renders them.
 
 Now the server can render the draft on demand.
 
@@ -800,6 +795,82 @@ export function QuickDropForm({ avatar }: { avatar: React.ReactNode }) {
 This way, the composer stays a thin client component, and the preview always matches the published post, with the expensive rendering work staying on the server.
 
 **Try it:** [open Drop](https://next16-social-media.vercel.app/), write a post in the composer at the top of the feed (add a code block to see the highlighting), then hit Preview. **Code:** [`quick-drop-form.tsx`](https://github.com/aurorascharff/next16-social-media/blob/main/features/drop/components/quick-drop-form.tsx).
+
+## Load More, Driven by Client State
+
+Before wrapping up, let's return to the load more feed. Now that we've seen a Server Function render JSX on demand, we can go back to the idea from [A Feed in Client State](#a-feed-in-client-state). This time, the pages will be rendered output rather than data.
+
+We can create a `Paginator` client component that keeps the pages in state and appends the next one when you press **Load more**:
+
+```tsx
+// components/ui/paginator.tsx
+'use client';
+
+export type Page = { node: ReactNode; hasMore: boolean };
+
+export function Paginator({ initialPage, renderPage, skeleton }: {
+  initialPage: Promise<Page>;
+  renderPage: (index: number) => Promise<Page>;
+  skeleton?: ReactNode;
+}) {
+  const [pages, setPages] = useState([initialPage]);
+  const [seed, setSeed] = useState(initialPage);
+  const [isPending, startTransition] = useTransition();
+
+  // A refresh or a mutation sends a new initialPage, reset to it
+  if (seed !== initialPage) {
+    setSeed(initialPage);
+    setPages([initialPage]);
+  }
+
+  function loadMore() {
+    const next = renderPage(pages.length + 1);
+    startTransition(() => {
+      setPages(prev => [...prev, next]);
+    });
+  }
+
+  return (
+    <>
+      {pages.map((page, i) => (
+        <Suspense key={i} fallback={skeleton}>
+          <PageContent page={page} isLast={i === pages.length - 1} isPending={isPending} onLoadMore={loadMore} />
+        </Suspense>
+      ))}
+    </>
+  );
+}
+
+function PageContent({ page, isLast, isPending, onLoadMore }: {
+  page: Promise<Page>;
+  isLast: boolean;
+  isPending: boolean;
+  onLoadMore: () => void;
+}) {
+  const { node, hasMore } = use(page);
+  return (
+    <>
+      {node}
+      {isLast && hasMore ? (
+        <button type="button" disabled={isPending} onClick={onLoadMore}>
+          {isPending ? 'Loading…' : 'Load more'}
+        </button>
+      ) : null}
+    </>
+  );
+}
+```
+
+Notice that `renderPage` is a Server Function like `renderDropPreview`, returning the rendered node together with a `hasMore` flag, and `PageContent` reads it with `use()` like `DropPreview` did. In Drop, the discover feed wires this up in [`DiscoverFeed`](https://github.com/aurorascharff/next16-social-media/blob/main/features/drop/components/feed.tsx).
+
+This way, pressing **Load more** requests one new page, and nothing on screen is re-sent. However, compared to the URL version:
+
+- There is no `?page=` URL to share or reload
+- The pages never update in place, so the `Paginator` needs the [state reset](https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes), starting over from page one on a refresh or a mutation
+
+The pattern suits the temporary draft preview better than a feed, so Drop keeps the URL version for the following feed and ships the `Paginator` on the discover feed for comparison. In the future, Next.js may provide built-ins for this sort of task.
+
+**Try it:** [open the discover feed](https://next16-social-media.vercel.app/?tab=discover) and hit **Load more**. **Code:** [`paginator.tsx`](https://github.com/aurorascharff/next16-social-media/blob/main/components/ui/paginator.tsx).
 
 ## Key Takeaways
 
