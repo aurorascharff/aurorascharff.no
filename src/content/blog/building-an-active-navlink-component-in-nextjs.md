@@ -14,9 +14,6 @@ tags:
 description: "Build active navigation that stays in the static shell by combining useRelativeHref with route-segment matching."
 ---
 
-> This is an exploratory rewrite of the original post. It assumes the proposed
-> `unstable_useRelativeHref` API exists in Next.js.
-
 Active link styling is something almost every Next.js app needs in some form.
 The App Router gives us
 [`usePathname()`](https://nextjs.org/docs/app/api-reference/functions/use-pathname)
@@ -129,17 +126,9 @@ nested settings pages. It also avoids parsing URL strings in application code.
 There is one important constraint: `useSelectedLayoutSegment()` is relative to
 the layout where the component renders, while `useRelativeHref(target)` is
 position-independent. The two agree here because the navigation lives in the
-layout that owns these child routes.
-
-A reusable navigation rendered somewhere else would benefit from the proposed
-target-aware form:
-
-```tsx
-const segment = useSelectedLayoutSegment("/[teamId]");
-```
-
-That would ask for the active segment below a specific route regardless of
-where the component renders.
+layout that owns these child routes. That is also the right place for the
+sidebar: layouts persist across navigation, so its state is preserved while the
+page below it changes.
 
 ## Building NavLink
 
@@ -367,45 +356,12 @@ function NavLinkContent({
 Prefix matching comes from the first selected segment. The optional `exact`
 prop checks that there are no additional selected segments below it.
 
-## Can We Check for ./ Instead?
-
-There is an appealing shortcut: use the relative href itself as the active
-signal.
-
-```tsx
-const relativeHref = useRelativeHref(href);
-const isActive = relativeHref === "./";
-```
-
-This can express that a particular segment is the immediate ancestor of the
-current page. For example:
-
-```text
-Current page                 Target       Result
-/chat/123/settings           /chat/[id]   ./
-```
-
-It is a useful relationship, and unlike `NavLink`, it is not tied to an anchor
-element. A design-system component can use the same href and active signal.
-
-However, `./` is not currently a complete replacement for exact and prefix
-matching. Under the default trailing-slash behavior, the current route has to
-spell its final segment back out, while a deeper descendant traverses farther:
-
-```text
-Current page                          Target       Result
-/chat/123                             /chat/[id]   ./123/
-/chat/123/settings                    /chat/[id]   ./
-/chat/123/settings/security           /chat/[id]   ../
-```
-
-So a strict `relativeHref === "./"` check identifies one route relationship,
-not "the target is the current page or any ancestor of it." A framework-level
-shortcut could expose that relationship directly without forcing application
-code to reverse-engineer it from the href string.
-
-For now, `useSelectedLayoutSegments()` gives the component explicit exact and
-nested matching semantics, while `useRelativeHref()` constructs the link.
+The relative href itself also describes how the target relates to the current
+page through `./` and `../` traversal. That is useful for lower-level components
+that want their own path-based matching rules. For this `NavLink`, the selected
+segments already express the exact and nested behavior we want, so we use each
+primitive for one job: `useRelativeHref()` constructs the destination and
+`useSelectedLayoutSegments()` determines the active state.
 
 ## Cache Components
 
@@ -453,8 +409,6 @@ pending state, `aria-current`, exact matching, and integration with
 composable. It can power a link, a tab, a menu item, or any design-system
 component that accepts an href.
 
-The remaining API question is whether applications should infer active route
-relationships from strings such as `./`, or whether Next.js should expose that
-relationship directly. `useRelativeHref()` makes the static link possible;
-the active-match shortcut would make the final component as small as it looks
-like it should be.
+The result is one component that works for a persistent layout navigation,
+keeps dynamic parent values out of its hrefs, stays active across nested pages,
+and preserves the behavior of `next/link`.
