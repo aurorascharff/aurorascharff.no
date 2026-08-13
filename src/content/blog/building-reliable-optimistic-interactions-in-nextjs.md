@@ -1,7 +1,7 @@
 ---
 author: Aurora Scharff
 pubDatetime: 2026-08-13T10:00:00Z
-title: Building Reliable Optimistic Interactions in Next.js
+title: Coordinating Optimistic Updates in Next.js
 slug: building-reliable-optimistic-interactions-in-nextjs
 featured: false
 draft: true
@@ -17,7 +17,7 @@ description: Learn how I combine useActionState, useOptimistic, and a shared red
 
 I've recently been sharing [how to build SPA-like experiences with Next.js](https://x.com/aurorascharff/status/2087171648247988705), keeping reads and writes on the server while client interactions stay responsive.
 
-Async interactions can finish in a different order than they started. This is a common problem in interactive apps, and frameworks handle it differently. [Remix](https://v2.remix.run/docs/discussion/concurrency) cancels superseded requests, while [Solid Router](https://docs.solidjs.com/solid-router/concepts/actions) tracks pending submissions. With React, we can keep dependent changes responsive and ordered with `useActionState` and `useOptimistic`.
+Async interactions can finish in a different order than they started, a common problem that frameworks approach differently. [Remix](https://v2.remix.run/docs/discussion/concurrency) cancels superseded requests, while [Solid Router](https://docs.solidjs.com/solid-router/concepts/actions) tracks pending submissions. In React, `useActionState` and `useOptimistic` keep dependent changes responsive while applying them in order.
 
 I use the same pattern in [Huddle](https://next16-team-chat.vercel.app/) and [Flow](https://next16-calendar.vercel.app/). In Huddle, someone might move a channel again before the previous move reaches the database. In Flow, they might create an event and immediately move or resize it.
 
@@ -216,6 +216,7 @@ The [`CalendarEventsProvider`](https://github.com/aurorascharff/next16-calendar/
 // providers/calendar-events-provider.tsx
 "use client";
 
+import { toast } from "sonner";
 import {
   addPendingChange,
   applyEventChanges,
@@ -224,13 +225,22 @@ import {
 } from "@/features/calendar/utils/event-optimistic-reducer";
 
 // ...React imports, the context types, and the CalendarEvent type...
-
 const CalendarEventsStateContext =
   createContext<CalendarEventsStateContextValue | null>(null);
 const CalendarEventsDispatchContext =
   createContext<CalendarEventsDispatchContextValue | null>(null);
 
-// ...saveChange calls the right Server Function and shows a toast...
+// ...save calls the right Server Function for each change...
+async function saveChange(
+  _pending: EventChange[],
+  change: EventChange
+): Promise<EventChange[]> {
+  const result = await save(change);
+  if (result.error) toast.error(result.error);
+
+  return noPendingChanges;
+}
+
 export function CalendarEventsProvider({ children }: { children: ReactNode }) {
   const [changes, dispatch, isPending] = useActionState(
     saveChange,
@@ -282,7 +292,9 @@ export function useCalendarEvents() {
 // ...useCalendarEventsDispatch reads the dispatch context the same way...
 ```
 
-The optimistic reducer appends each change to the list. The queued function saves one change and returns an empty list, letting the optimistic overlay clear as revalidated events arrive from the server.
+The optimistic reducer appends each change to the list. While `saveChange` is pending, that list is applied over the events from the server. When it finishes, returning `noPendingChanges` clears the optimistic overlay.
+
+We do not need to describe a reverse change to roll back a failed save. If the save succeeds, the revalidated server events include the change. If it fails, they stay as they were. Once the optimistic overlay clears, the event jumps back into place and the error branch only needs to show a toast. You can see this by trying to move or resize one of the demo events in Flow.
 
 Calendar views call `useCalendarEvents()` and apply whatever is still pending to the events they received from the server. Mutation controls call `useCalendarEventsDispatch()` to start a change. I keep those in separate contexts so a control that only dispatches does not re-render for every optimistic update.
 
