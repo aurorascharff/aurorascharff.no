@@ -4,7 +4,7 @@ pubDatetime: 2026-08-13T10:00:00Z
 title: Building Reliable Optimistic Interactions in Next.js
 slug: building-reliable-optimistic-interactions-in-nextjs
 featured: false
-draft: false
+draft: true
 tags:
   - Next.js 16
   - React 19
