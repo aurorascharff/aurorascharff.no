@@ -15,17 +15,15 @@ tags:
 description: Learn how to combine transitions, useActionState, useOptimistic, reducers, and context to keep optimistic interactions ordered and reliable in Next.js Client Components.
 ---
 
-Client Components can call Server Functions directly, but coordinating repeated mutations takes more than an async event handler. A transition keeps the interface responsive while work runs. If several updates depend on one another, we also need to preserve their order and show the result before the server responds.
+Async interactions can finish in a different order from the one they started. This is a common problem in interactive web apps, whether a mutation uses `fetch`, a framework Action, or a Server Function. If someone moves an item twice before the first save finishes, the interface should respond to both moves and the final saved state should reflect the order in which they were made.
 
-I used the same pattern for two different interfaces: the reorganizable channel groups in [Huddle](https://next16-team-chat.vercel.app/) and event mutations in [Flow](https://next16-calendar.vercel.app/). In this post, I'll start with how React documents the pattern and the to-do version I wrote for the Next.js SPA guide, apply it to Huddle, and then scale it across the calendar component tree with a provider.
+Frameworks solve this in different ways. [Remix follows browser behavior](https://v2.remix.run/docs/discussion/concurrency) by cancelling superseded requests and discarding stale revalidations. [Solid Router tracks submissions](https://docs.solidjs.com/solid-router/concepts/actions), including their pending inputs, so they can be reflected optimistically before queries revalidate. React's Action APIs let us queue dependent changes with `useActionState` and layer their pending result over confirmed state with `useOptimistic`. I use that pattern for the reorganizable channel groups in [Huddle](https://next16-team-chat.vercel.app/) and event mutations in [Flow](https://next16-calendar.vercel.app/). In this post, I'll build it up from the to-do example in the [Next.js SPA guide](https://nextjs.org/docs/app/guides/single-page-applications#mutating-data-with-server-actions), apply it to Huddle, and then move it into a provider for Flow.
 
 ## Table of contents
 
 ## Building the Pattern Step by Step
 
-The React docs show [how to combine `useActionState` with `useOptimistic`](https://react.dev/reference/react/useActionState#using-with-useoptimistic). Their example updates a quantity optimistically and dispatches the async reducer Action in the same transition.
-
-I used the same combination in the [mutating data section of the Next.js SPA guide](https://nextjs.org/docs/app/guides/single-page-applications#mutating-data-with-server-actions). The guide adapts it to a to-do list where a shared reducer calculates the optimistic UI and the value saved by a Server Action. We can build that version one piece at a time.
+The React docs show [how to combine `useActionState` with `useOptimistic`](https://react.dev/reference/react/useActionState#using-with-useoptimistic). The [Next.js SPA guide](https://nextjs.org/docs/app/guides/single-page-applications#mutating-data-with-server-actions) applies the same combination to a to-do list. Let's build that version from the first mutation and add the next piece when the interaction needs it.
 
 ### Keeping a Mutation Responsive with a Transition
 
@@ -52,23 +50,23 @@ export function DeletePost({ id }: { id: string }) {
 }
 ```
 
-This works when the mutation stands on its own. The component stays responsive, and `isPending` stays true until the async Action finishes.
+For this button, the transition keeps the page responsive and gives us a pending state for the request. If Actions started through the same `startTransition` overlap, `isPending` stays true until the work finishes, so a shared saving indicator does not flicker as requests settle.
 
-The problem appears when the next change depends on the result of the first one. A transition marks work as non-blocking and tracks whether it is pending, but the transition primitive does not define how the results of custom async Actions should be ordered. When those Actions make requests directly, an earlier request can resolve after a later request and update the interface with an older result. The React docs show this under [out-of-order transition updates](https://react.dev/reference/react/useTransition#my-state-updates-in-transitions-are-out-of-order).
+The problem appears when the next change depends on the result of the first one. A transition does not define how the results of custom async Actions should be ordered. When those Actions make requests directly, an earlier request can resolve after a later request and update the interface with an older result. The React docs show this under [out-of-order transition updates](https://react.dev/reference/react/useTransition#my-state-updates-in-transitions-are-out-of-order).
 
 We could disable the whole interaction until the request finishes, but that makes a sortable list or quantity stepper frustrating to use. For updates that build on the previous result, we can make that order part of the state model.
 
 ### Queueing Dependent Mutations with useActionState
 
-The [`useActionState`](https://react.dev/reference/react/useActionState) hook stores the value returned by an Action and passes it to the next dispatched call. Its reducer Action receives the previous state and a payload, performs side effects, and returns the next state:
+Now let's say the list can change again before the first request finishes. The [`useActionState`](https://react.dev/reference/react/useActionState) hook gives the next reducer Action the state returned by the previous one:
 
 ```tsx
 // app/todo-list.tsx
 "use client";
 
 import { startTransition, useActionState } from "react";
-import { todosReducer } from "./actions";
-import type { Todo, TodoAction } from "./reducer";
+
+// The reducer Action and types are omitted.
 
 export function TodoList({ initialTodos }: { initialTodos: Todo[] }) {
   const [todos, dispatch, isPending] = useActionState(
@@ -84,16 +82,13 @@ export function TodoList({ initialTodos }: { initialTodos: Todo[] }) {
 }
 ```
 
-Calling `dispatch` several times does not start several reducer Actions in parallel. React queues the calls and executes them sequentially. The next call receives the state returned by the previous one, so a toggle followed by a delete is calculated in that order.
-
-The reducer Action can be a Server Function. The to-do example in the Next.js SPA guide calculates the next list, saves it, and returns it:
+React runs reducer Actions dispatched through this hook one at a time. If someone toggles a to-do and then deletes it, the delete receives the list returned by the toggle. The reducer Action can be a Server Function that calculates the next list, saves it, and returns it:
 
 ```ts
 // app/actions.ts
 "use server";
 
-import { db } from "./db";
-import { applyAction, type Todo, type TodoAction } from "./reducer";
+// The database client, pure reducer, and types are omitted.
 
 export async function todosReducer(
   todos: Todo[],
@@ -105,9 +100,7 @@ export async function todosReducer(
 }
 ```
 
-Next.js also [queues Server Actions](https://nextjs.org/docs/app/guides/backend-for-frontend#server-actions) on the client. The additional guarantee from `useActionState` is that React waits for one reducer Action to return and passes its result to the next call. That makes the dependency between the writes explicit in our state model.
-
-The queue belongs to this `useActionState` instance. Writes from other browser sessions still need the usual concurrency rules in the data layer. If the reducer Action throws, React skips the remaining queued calls and sends the error to the nearest Error Boundary. Expected errors should be returned as state instead, which we will do in the Flow example.
+The queue belongs to this `useActionState` instance. Writes from other browser sessions still need concurrency rules in the data layer.
 
 The mutations are ordered now, but the rendered `todos` value only changes when an Action finishes. Rapid interactions sit in the queue, so the interface still feels behind the person using it.
 
@@ -119,9 +112,7 @@ The [`useOptimistic`](https://react.dev/reference/react/useOptimistic) hook lets
 // app/todo-list.tsx
 "use client";
 
-import { startTransition, useActionState, useOptimistic } from "react";
-import { todosReducer } from "./actions";
-import { applyAction, type Todo, type TodoAction } from "./reducer";
+// Imports, the reducer Action, pure reducer, and types are omitted.
 
 export function TodoList({ initialTodos }: { initialTodos: Todo[] }) {
   const [todos, dispatch, isPending] = useActionState(
@@ -141,15 +132,15 @@ export function TodoList({ initialTodos }: { initialTodos: Todo[] }) {
 }
 ```
 
-The optimistic setter and the queued dispatch run in the same transition. The list updates immediately while the Server Action waits for its turn.
+The optimistic setter and queued dispatch run in the same transition, so the list changes while the Server Action waits for its turn.
 
 Event handlers need the explicit `startTransition` wrapper above. A function passed to an Action prop such as `<form action={...}>` already runs inside a transition.
 
-This version calculates the replacement list from `optimisticTodos` captured by the current render. That works while the base list stays the same. If new server data arrives while the Action is pending, the replacement can be based on an older list. We need a way to describe the change without calculating the next list in the event handler.
+This version passes a complete replacement list calculated from `optimisticTodos` in the current render. Two quick interactions can start from the same list, which lets the second replacement hide the first. An updater function can build on the pending state, but it still sees the base value from when the Transition started. For a list that can receive new server data while changes are pending, we want React to run the pending changes again on top of that data.
 
 ### Rebasing Optimistic Updates with a Reducer
 
-A reducer lets us pass the action itself to `useOptimistic`. React can then calculate the result from the current optimistic state:
+A reducer lets us pass the action itself to `useOptimistic` instead of calculating the list in the event handler. React receives both the latest base state and the pending actions, so it can run the update again when either changes:
 
 ```tsx
 // app/todo-list.tsx
@@ -163,7 +154,7 @@ function runAction(action: TodoAction) {
 }
 ```
 
-The to-do list supports several changes, so we can describe them with an action union and keep the update logic in a pure reducer:
+The event handler can pass a `TodoAction`, while a pure reducer owns the rules for adding, toggling, editing, and deleting:
 
 ```ts
 // app/reducer.ts
@@ -197,21 +188,21 @@ export function applyAction(todos: Todo[], action: TodoAction): Todo[] {
 }
 ```
 
-The first argument to `applyAction` is the current optimistic state, similar to the updater form of `useState`. If we dispatch a toggle and then a delete while both Server Actions are pending, React applies the second action to the optimistic result of the first.
+The reducer receives the current optimistic list, so a delete can build on a pending toggle. If `todos` changes during the Transition, React starts with the new list and runs the pending actions again. This is why the React docs recommend the [reducer form of `useOptimistic`](https://react.dev/reference/react/useOptimistic#choosing-between-updaters-and-reducers) when the base state can change.
 
-The reducer also handles a base state update during the transition. When `todos` changes while optimistic actions are still pending, React runs the reducer again with the new `todos` value. The pending changes are layered on top of the latest server state rather than a list captured before the requests started. This rebasing behavior is why the React docs recommend the [reducer form of `useOptimistic`](https://react.dev/reference/react/useOptimistic#choosing-between-updaters-and-reducers) for lists and other state with several action types.
+The Server Function can call the same pure reducer to calculate what it saves. The optimistic list and confirmed list now follow the same update rules.
 
-The same pure function runs in two places. The optimistic reducer uses it to predict the UI, and the Server Function uses it to calculate the value to persist. That gives both paths the same rules for add, toggle, edit, and delete.
+Open the SPA example and add, toggle, or delete several to-dos without waiting for the previous change to finish. The list updates as you interact with it while the Actions run in order.
 
-**Try it:** [Next.js SPA mutations example](https://next-spa-patterns.labs.vercel.dev/mutations). **Code:** [app/mutations](https://github.com/vercel-labs/next-spa-patterns/tree/main/app/mutations).
+**Try it:** [**Next.js SPA example**](https://next-spa-patterns.labs.vercel.dev/mutations). **Code:** [**app/mutations**](https://github.com/vercel-labs/next-spa-patterns/tree/main/app/mutations).
 
 The SPA example gives us the complete pattern in one Client Component. Now we can apply it to an interface where several changes affect the same ordered layout.
 
 ## Using the Pattern for Group Reordering
 
-In Huddle, people can add, rename, delete, and reorder custom channel groups. They can also drag channels within a group or into another group. Several of those changes can happen before the first database write finishes.
+In [Huddle](https://next16-team-chat.vercel.app/), people can add, rename, delete, and reorder custom channel groups. They can also drag channels within a group or into another group. Several of those changes can happen before the first database write finishes.
 
-**Try it:** Open [Huddle](https://next16-team-chat.vercel.app/) and move a channel between groups. Move it again, then reorder a group. The sidebar applies the changes immediately while it saves the layouts in order.
+Open Huddle and move a channel between groups. Move it again, then reorder a group. The sidebar applies the changes immediately while it saves the layouts in order.
 
 ### Modeling Group Changes as Actions
 
@@ -297,13 +288,7 @@ The [`ChannelNav`](https://github.com/aurorascharff/next16-team-chat/blob/main/f
 // features/channel/components/channel-nav.tsx
 "use client";
 
-import { startTransition, useActionState, useOptimistic } from "react";
-import { channelLayoutReducer } from "@/features/channel/channel-actions";
-import {
-  applyLayoutAction,
-  type LayoutAction,
-  type LayoutGroup,
-} from "@/features/channel/utils/channel-layout-reducer";
+// Imports, the reducer Action, pure reducer, and types are omitted.
 
 type Props = {
   groups: LayoutGroup[];
@@ -331,68 +316,107 @@ export function ChannelNav({ groups: initialGroups }: Props) {
 }
 ```
 
-A drag updates `optimisticGroups` as soon as the channel is dropped. If another change follows, the reducer applies it to that optimistic layout. The queued reducer Actions run in order and return the confirmed layout after each write.
+The `runAction` function sends the same `LayoutAction` to both hooks. The optimistic reducer applies it to the layout on screen, while the async reducer applies it to the last confirmed layout and returns the saved result to the next queued Action. A second drag can render immediately without changing the order in which the layouts are saved.
 
-The two hooks use the same action in different ways. The optimistic reducer applies it to the layout currently on screen. The async reducer receives the last confirmed layout, saves the next one, and returns it for the following queued Action.
-
-This way, the Huddle sidebar remains interactive while its custom groups are saved, and the optimistic and persisted paths share the same layout rules.
-
-**Code:** [channel-nav.tsx](https://github.com/aurorascharff/next16-team-chat/blob/main/features/channel/components/channel-nav.tsx).
+**Try it:** [**Huddle**](https://next16-team-chat.vercel.app/). **Code:** [**channel-nav.tsx**](https://github.com/aurorascharff/next16-team-chat/blob/main/features/channel/components/channel-nav.tsx).
 
 ## Scaling the Pattern Across the Calendar
 
-The Huddle sidebar keeps the queue and the rendered layout in one Client Component. In Flow, Server Components fetch the events, calendar views render them, and controls elsewhere in the tree can change them. I moved the same queue into context so those components can share it.
+The Huddle sidebar keeps the queue and the rendered layout in one Client Component. In [Flow](https://next16-calendar.vercel.app/), Server Components fetch the events, calendar views render them, and controls elsewhere in the tree can change them. I moved the same queue into context so those components can share it.
 
-This follows the composition in React's [scaling a reducer with context](https://react.dev/learn/scaling-up-with-reducer-and-context) guide. I used the same idea in my earlier post about [using `useOptimistic` across the component tree](/posts/utilizing-useoptimistic-across-the-component-tree-in-nextjs). The difference here is that the provider also owns the `useActionState` queue.
+This follows the composition in React's [scaling a reducer with context](https://react.dev/learn/scaling-up-with-reducer-and-context) guide. The guide keeps the reducer in a provider and uses two contexts, one for the current state and one for dispatch. I used the same idea in my earlier post about [using `useOptimistic` across the component tree](/posts/utilizing-useoptimistic-across-the-component-tree-in-nextjs). The difference here is that the provider also owns the `useActionState` queue.
 
 The [`CalendarEventsProvider`](https://github.com/aurorascharff/next16-calendar/blob/main/providers/calendar-events-provider.tsx) contains the same hook combination as `ChannelNav`. The relevant part is small:
 
 ```tsx
 // providers/calendar-events-provider.tsx
-const [state, dispatch] = useActionState(
-  reduceCalendarEvents,
-  initialEventMutationState
-);
-const [optimisticState, applyOptimisticAction] = useOptimistic(
-  state,
-  applyOptimisticEventAction
-);
+"use client";
 
-function mutate(action: EventAction) {
-  startTransition(() => {
-    applyOptimisticAction(action);
-    dispatch(action);
-  });
+// Imports, the context type, reducer helpers, and Server Action are omitted.
+
+const CalendarEventsStateContext =
+  createContext<CalendarEventsStateContextValue | null>(null);
+const CalendarEventsDispatchContext =
+  createContext<CalendarEventsDispatchContextValue | null>(null);
+
+// reduceCalendarEvents calls the Server Function and handles notifications.
+export function CalendarEventsProvider({ children }: { children: ReactNode }) {
+  const [state, dispatch, isPending] = useActionState(
+    reduceCalendarEvents,
+    initialEventMutationState
+  );
+  const [optimisticState, applyOptimisticAction] = useOptimistic(
+    state,
+    applyOptimisticEventAction
+  );
+
+  const mutate = useCallback(
+    (action: EventAction) => {
+      startTransition(() => {
+        applyOptimisticAction(action);
+        dispatch(action);
+      });
+    },
+    [applyOptimisticAction, dispatch]
+  );
+  const getEvents = useCallback(
+    (events: CalendarEvent[], days: string[]) =>
+      applyEventActions(events, optimisticState.actions, days),
+    [optimisticState.actions]
+  );
+  const contextValue = useMemo(
+    () => ({ getEvents, isPending }),
+    [getEvents, isPending]
+  );
+
+  return (
+    <CalendarEventsStateContext.Provider value={contextValue}>
+      <CalendarEventsDispatchContext.Provider value={mutate}>
+        {children}
+      </CalendarEventsDispatchContext.Provider>
+    </CalendarEventsStateContext.Provider>
+  );
 }
 
-const getEvents = (events: CalendarEvent[], days: string[]) =>
-  applyEventActions(events, optimisticState.actions, days);
+export function useCalendarEvents() {
+  const context = useContext(CalendarEventsStateContext);
+  if (!context) {
+    throw new Error(
+      "useCalendarEvents must be used within CalendarEventsProvider"
+    );
+  }
+  return context;
+}
+
+export function useCalendarEventsDispatch() {
+  const context = useContext(CalendarEventsDispatchContext);
+  if (!context) {
+    throw new Error(
+      "useCalendarEventsDispatch must be used within CalendarEventsProvider"
+    );
+  }
+  return context;
+}
 ```
 
-Mutation controls call `mutate(action)`. Calendar views call `getEvents` with the events they received from the server. That function applies the pending optimistic actions to the server data before the view renders it.
+Calendar views call `useCalendarEvents()` to apply pending actions to the events they received from the server. Mutation controls call `useCalendarEventsDispatch()` to start an action. Keeping the values in separate contexts means a control that only dispatches does not subscribe to optimistic state changes. The server still owns the event data, while the provider shares the queue across the calendar.
 
-That is the whole extension of the Huddle pattern. The server still owns the event data, while context gives the controls and views access to the same optimistic queue.
+Create an event in Flow, then move or resize it again before the first save finishes. The calendar follows the interaction while the provider keeps the writes in the same queue.
 
-**Try it:** [Flow](https://next16-calendar.vercel.app/). **Code:** [calendar-events-provider.tsx](https://github.com/aurorascharff/next16-calendar/blob/main/providers/calendar-events-provider.tsx).
+**Try it:** [**Flow**](https://next16-calendar.vercel.app/). **Code:** [**calendar-events-provider.tsx**](https://github.com/aurorascharff/next16-calendar/blob/main/providers/calendar-events-provider.tsx).
 
-## Choosing the Smallest Pattern
+## Choosing Between Context and a Server-State Library
 
-The hooks solve separate parts of an interaction. We can add them as the use case grows:
+Flow has one shared optimistic concern. The calendar controls and views need access to the same event mutation queue, while the event list still comes from Server Components. A provider is enough because the event queue does not need to become a general browser cache.
 
-| Need                                                          | API or pattern                      |
-| ------------------------------------------------------------- | ----------------------------------- |
-| Keep the UI responsive and track pending async work           | `useTransition`                     |
-| Run dependent reducer Actions in dispatch order               | `useActionState`                    |
-| Render a temporary value before the Action completes          | `useOptimistic`                     |
-| Reapply pending changes when the base state changes           | The reducer form of `useOptimistic` |
-| Share optimistic state and mutation controls across a subtree | Context                             |
+The tradeoff changes when Client Components coordinate several kinds of server state. Recreating shared cache identities, request deduplication, revalidation, and optimistic mutations through custom providers means maintaining a server-state layer inside the app. Libraries such as TanStack Query and SWR already own those concerns.
 
-A standalone delete button might only need a transition. A counter whose next write depends on the previous result can use `useActionState`. A reorderable list benefits from queued Actions plus a `useOptimistic` reducer. Context becomes useful when the components that start mutations and the components that render their result are spread across the tree.
+Huddle coordinates more client-side server state. I use TanStack Query on the main branch to coordinate messages, unread state, activity, and their mutations. I also keep an SWR branch of the same app. The [Next.js client-side data fetching guide](https://nextjs.org/docs/app/guides/client-side-data-fetching) covers both libraries, including how they can receive initial data from Server Components and continue managing it in the browser.
+
+I reach for context when one state model needs to be shared within a subtree. When the browser has to coordinate several resources with separate revalidation and mutation behavior, I use a client data-fetching library.
 
 ## Conclusion
 
-The important part of this pattern is keeping three concerns separate. `useActionState` orders the reducer Actions dispatched through one hook, `useOptimistic` renders pending changes, and a pure reducer defines how an action transforms client state. When that state needs to reach several components, a provider can expose the optimistic view and dispatcher without moving the server-fetched data into a client store.
-
-The to-do list in the Next.js SPA guide is a compact version of the pattern. Huddle uses it for a reorderable sidebar, and Flow carries the same approach across a calendar where several components can create or change events.
+You do not need this full setup for most mutations. I would use it when someone can change the same state again before the first write finishes. Describe those changes as actions in a pure reducer, pass them to both `useOptimistic` and `useActionState`, and keep the hooks in the component that owns the interaction. Move them into a provider when other parts of the tree need to render or dispatch against the same optimistic state.
 
 I hope this post has been helpful. Please let me know if you have any questions or comments, and follow me on [Bluesky](https://bsky.app/profile/aurorascharff.no) or [X](https://x.com/aurorascharff) for more updates. Happy coding! 🚀
