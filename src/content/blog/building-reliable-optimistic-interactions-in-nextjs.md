@@ -15,17 +15,19 @@ tags:
 description: Learn how I combine useActionState, useOptimistic, and a shared reducer to keep rapid mutations responsive and ordered in Huddle and Flow.
 ---
 
-I've recently been sharing [Building SPA-like experiences with Next.js](https://x.com/aurorascharff/status/2087171648247988705), a series about keeping reads and writes on the server while client interactions stay responsive.
+I've recently been sharing [how to build SPA-like experiences with Next.js](https://x.com/aurorascharff/status/2087171648247988705), keeping reads and writes on the server while client interactions stay responsive.
 
-This post expands on a mutation pattern I use in [Huddle](https://next16-team-chat.vercel.app/) and [Flow](https://next16-calendar.vercel.app/). It handles interactions where someone changes the same state again before the previous write finishes. In Huddle, that might mean moving a channel again before the previous move reaches the database. In Flow, it might mean creating an event and immediately moving or resizing it.
+Async interactions can finish in a different order than they started. This is a common problem in interactive apps, and frameworks handle it differently. [Remix](https://v2.remix.run/docs/discussion/concurrency) cancels superseded requests, while [Solid Router](https://docs.solidjs.com/solid-router/concepts/actions) tracks pending submissions. With React, we can keep dependent changes responsive and ordered with `useActionState` and `useOptimistic`.
 
-The interface needs to follow every change right away, while the server still saves them in order. I combine `useActionState`, `useOptimistic`, and a shared reducer to do both. The [Next.js SPA guide](https://nextjs.org/docs/app/guides/single-page-applications#mutating-data-with-server-actions) shows the pattern with a small to-do list. Rather than repeat that example here, let's see how it works in these two apps.
+I use the same pattern in [Huddle](https://next16-team-chat.vercel.app/) and [Flow](https://next16-calendar.vercel.app/). In Huddle, someone might move a channel again before the previous move reaches the database. In Flow, they might create an event and immediately move or resize it.
 
 ## Table of contents
 
 ## Building the Pattern
 
 Let's use the channel layout in Huddle as an example. People can move channels, create groups, rename them, delete them, and change their order. Any of those interactions can happen again while the previous layout is still saving.
+
+The [Next.js SPA guide](https://nextjs.org/docs/app/guides/single-page-applications#mutating-data-with-server-actions) has a smaller version of this example using a to-do list.
 
 ### Starting with a Transition
 
@@ -47,9 +49,35 @@ This works until someone changes the layout again before the first save finishes
 
 We could disable the controls while `isPending` is true, but that would make dragging and editing the sidebar feel slow. Instead, we need each save to start from the result of the previous one.
 
-### Queueing Changes with useActionState
+### Queueing Saves with useActionState
 
-`useActionState` can queue the saves for us. Rather than dispatching a complete layout, we can dispatch a description of what changed:
+We can first use `useActionState` without changing the shape of the save. The action still receives the complete next layout:
+
+```tsx
+const [groups, saveGroups, isPending] = useActionState(
+  async (_previousGroups: LayoutGroup[], nextGroups: LayoutGroup[]) => {
+    await saveChannelLayout(nextGroups);
+    return nextGroups;
+  },
+  initialGroups
+);
+
+function saveChange(nextGroups: LayoutGroup[]) {
+  startTransition(() => {
+    saveGroups(nextGroups);
+  });
+}
+```
+
+The callback receives the current action state first and the value passed to `saveGroups` second. Whatever it returns becomes `groups` and the first argument for the next call. `initialGroups` is the state before anything has been saved, and `isPending` tells us when the queue is still running.
+
+Calls to the action run in order, so an older save can no longer finish after a newer one. Since we call it from an event handler, we still wrap `saveGroups` in `startTransition`. A function passed to an Action prop, such as `<form action={...}>`, already runs in a Transition.
+
+This fixes the race, but `groups` only updates after `saveChannelLayout` returns. The interface now waits for each save in the queue.
+
+### Turning the Save into an Async Reducer
+
+The first argument to our action is still unused. We can use it by sending a description of the interaction instead of calculating and sending the entire layout:
 
 ```ts
 export type LayoutChange =
@@ -69,7 +97,24 @@ export type LayoutChange =
     };
 ```
 
-We can update `saveChannelLayout` to receive the previous layout as its first argument, apply the change, and return the saved result. Then we pass it to `useActionState`:
+Now [`saveChannelLayout`](https://github.com/aurorascharff/next16-team-chat/blob/main/features/channel/channel-actions.ts) works like an asynchronous reducer. It receives the last saved layout and a change, calculates the next layout, saves it, and returns it:
+
+```ts
+export async function saveChannelLayout(
+  groups: LayoutGroup[],
+  change: LayoutChange
+): Promise<LayoutGroup[]> {
+  const user = await verifyAuth();
+  const next = reduceLayout(groups, change);
+
+  await reorderChannels(user.id, toLayoutPayload(next));
+  updateTag(channelTags.user(user.id));
+
+  return next;
+}
+```
+
+We can pass the Server Function directly to `useActionState` and dispatch each interaction:
 
 ```tsx
 const [groups, dispatch, isPending] = useActionState(
@@ -84,25 +129,21 @@ function runChange(change: LayoutChange) {
 }
 ```
 
-`useActionState` passes the state returned by each call into the next one. If another change is dispatched while a save is pending, it waits and then receives the latest confirmed layout. The saves no longer race each other.
+Each change now starts from the layout returned by the previous save. The queue is correct, but the interface still waits for `groups` to update.
 
-Since these changes start in event handlers, we need to wrap `dispatch` in `startTransition`. A function passed to an Action prop, such as `<form action={...}>`, already runs in a transition.
+### Updating Immediately with useOptimistic
 
-We have fixed the order of the saves, but the rendered `groups` only update when the Server Function returns. Rapid changes now wait in the queue, so the interface still falls behind the interaction.
-
-### Applying Changes with useOptimistic
-
-`useOptimistic` can show each queued change immediately, but it needs a synchronous function that can apply a `LayoutChange` to the current groups. The Server Function already contains that update logic, so we can move it into a pure [`applyLayoutChange`](https://github.com/aurorascharff/next16-team-chat/blob/main/features/channel/utils/channel-layout-reducer.ts) reducer with the shape `(groups: LayoutGroup[], change: LayoutChange) => LayoutGroup[]`.
-
-The individual cases are specific to Huddle. The reducer itself only needs the current state and a change, so the client and server can both call it.
-
-Now we can pass `groups` and `applyLayoutChange` to `useOptimistic`, then apply the optimistic change before dispatching the save:
+We can add `useOptimistic` and start by applying a move in the client:
 
 ```tsx
-const [groups, dispatch] = useActionState(saveChannelLayout, initialGroups);
 const [optimisticGroups, addOptimistic] = useOptimistic(
   groups,
-  applyLayoutChange
+  (currentGroups, change: LayoutChange) => {
+    if (change.type === "move") {
+      return moveChannel(currentGroups, change);
+    }
+    return currentGroups;
+  }
 );
 
 function runChange(change: LayoutChange) {
@@ -113,14 +154,34 @@ function runChange(change: LayoutChange) {
 }
 ```
 
-The sidebar renders `optimisticGroups`, so each change appears immediately while `dispatch` adds it to the save queue. When a save finishes, `groups` advances to the confirmed state and React reapplies any pending changes on top of it.
+Rendering `optimisticGroups` makes channel moves appear immediately while `dispatch` queues the save. But the behavior is already inconsistent: moves update immediately, while adding, renaming, deleting, and reordering groups still wait for the server. Copying those cases into the client would give us two versions of the layout logic that can fall out of sync.
 
-Finally, the [`saveChannelLayout`](https://github.com/aurorascharff/next16-team-chat/blob/main/features/channel/channel-actions.ts) Server Function can use the same reducer before writing the result:
+### Sharing One Reducer
+
+Instead, we can move the layout logic into a pure [`applyLayoutChange`](https://github.com/aurorascharff/next16-team-chat/blob/main/features/channel/utils/channel-layout-reducer.ts) function. It takes the current layout and a change, then returns the next layout:
 
 ```ts
-// features/channel/channel-actions.ts
-"use server";
+export function applyLayoutChange(
+  groups: LayoutGroup[],
+  change: LayoutChange
+): LayoutGroup[] {
+  // Handle move, add, rename, delete, and reorder changes.
+}
+```
 
+The client passes that reducer to `useOptimistic`:
+
+```tsx
+const [groups, dispatch] = useActionState(saveChannelLayout, initialGroups);
+const [optimisticGroups, addOptimistic] = useOptimistic(
+  groups,
+  applyLayoutChange
+);
+```
+
+The Server Function uses the same reducer before saving:
+
+```ts
 export async function saveChannelLayout(
   groups: LayoutGroup[],
   change: LayoutChange
@@ -135,7 +196,9 @@ export async function saveChannelLayout(
 }
 ```
 
-Although this example uses a channel layout, none of the hook setup depends on channels or groups. `groups` is the confirmed state, `LayoutChange` describes an update, and `applyLayoutChange` calculates the next state. The same reducer runs optimistically on the client and against the confirmed state on the server.
+Now every change is applied the same way on both sides. The client shows it immediately, the Server Function applies it to the latest confirmed layout, and `useActionState` saves each result in order.
+
+Although this example uses a channel layout, the pattern does not depend on channels or groups. The action describes what happened, the reducer calculates the next state, and the same reducer runs optimistically on the client and against the confirmed state on the server.
 
 The queue belongs to this instance of `ChannelNav`. It orders changes made in this interaction, but writes from another tab, device, or session still need concurrency rules in the data layer.
 
@@ -225,20 +288,14 @@ Calendar views call `useCalendarEvents()` and apply whatever is still pending to
 
 **Try it:** [create an event in Flow](https://next16-calendar.vercel.app/), then move or resize it before the first save finishes. **Code:** [`calendar-events-provider.tsx`](https://github.com/aurorascharff/next16-calendar/blob/main/providers/calendar-events-provider.tsx).
 
-## Choosing Between Context and a Server-State Library
+## When I Use a Client Data Library
 
-In Flow, the provider shares the event mutation queue. Controls dispatch into it, calendar views render against it, and the event list still comes from Server Components. That is narrow enough that I do not need to turn the provider into a browser cache.
+The provider works well in Flow because it only coordinates changes to calendar events. Huddle has more moving parts: messages, unread state, activity, and their mutations. There, I use a client data library instead of building providers for all of that. The app has equivalent TanStack Query and SWR implementations.
 
-The trade-off changes when Client Components coordinate several kinds of server state. Once a custom provider needs cache identities, request deduplication, and revalidation, it is becoming a server-state library. TanStack Query and SWR already own those concerns.
-
-Huddle has more client-side server state. On its main branch I use TanStack Query for the messages, unread state, activity, and their mutations, and I keep an SWR branch of the same app. The [Next.js client-side data fetching guide](https://nextjs.org/docs/app/guides/client-side-data-fetching) covers both, including how they can take initial data from Server Components and keep managing it in the browser.
-
-My dividing line is ownership. I reach for context when one interaction model needs to be shared within a subtree. When the browser owns several resources with separate revalidation and mutation behavior, I use a client data-fetching library.
+You might choose a client data library earlier, depending on your app. The [Next.js client-side data fetching guide](https://nextjs.org/docs/app/guides/client-side-data-fetching) shows how to use both TanStack Query and SWR with initial data from Server Components.
 
 ## Conclusion
 
-Most mutations do not need all of this. I reach for the pattern when someone can change the same state again before the first write finishes, and when those changes depend on one another.
-
-What I like about it is that the interface and the server do not need separate stories. A pure reducer describes each change once. `useOptimistic` applies it to what the person sees, and `useActionState` applies it to the confirmed result in order. The hooks can stay in one component, as they do in Huddle, or move into a provider when the interaction stretches across the tree, as it does in Flow.
+I wanted to share this pattern because it gives you another option for coordinating repeated mutations. It can start in one component and move into context when more of the tree needs it. For more moving parts, a client data library might fit better.
 
 I hope this post has been helpful. Please let me know if you have any questions or comments, and follow me on [Bluesky](https://bsky.app/profile/aurorascharff.no) or [X](https://x.com/aurorascharff) for more updates. Happy coding! 🚀
