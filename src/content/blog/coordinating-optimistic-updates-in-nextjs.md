@@ -541,7 +541,7 @@ export function CalendarBoard({
 
 Rapid moves and resizes now build on what is already on screen. For the week view alone, `CalendarBoard` can own this state.
 
-However, the month view renders its own `CalendarMonthBoard`, and the header renders a `NewEventButton`. The month board needs to read the same optimistic state, and the button needs to add to it.
+However, the month view renders its own `CalendarMonthBoard`, and the header renders a `NewEventButton`. The month board needs to read the same optimistic state, and the create dialog behind the button needs to add to it.
 
 ### Sharing Event Changes with Context
 
@@ -582,18 +582,13 @@ function getEvents(events: CalendarEvent[]) {
 }
 ```
 
-The reduction starts with the `events` prop. The move returns an updated event list, then the resize runs against that list.
+The reduction starts with the `events` prop. The move returns an updated event list, then the resize runs against that list. Flow's own `getEvents` also takes the visible `days`, because a recurring create or move can affect several occurrences in the range.
 
-That is enough for one-off events. Flow also supports recurring events, where a create or move can affect several occurrences in the visible range. The provider passes the visible `days` to `applyEventChanges` so it can handle those cases before using `eventChangeReducer` for the remaining changes:
+React's guide to [scaling up with reducer and context](https://react.dev/learn/scaling-up-with-reducer-and-context) separates state and dispatch, and the provider follows that split. The state hook `useCalendarEvents` returns `getEvents` and `isPending`, and the dispatch hook `useCalendarEventsDispatch` returns `mutate`. The three values have separate consumers:
 
-```tsx
-// providers/calendar-events-provider.tsx
-function getEvents(events: CalendarEvent[], days: string[]) {
-  return applyEventChanges(events, pendingChanges, days);
-}
-```
-
-React's guide to [scaling up with reducer and context](https://react.dev/learn/scaling-up-with-reducer-and-context) separates state and dispatch. We can expose `getEvents` and `isPending` through `useCalendarEvents`, and `mutate` through `useCalendarEventsDispatch`.
+- `getEvents` renders the confirmed events with the pending changes replayed over them, in `CalendarBoard` and `CalendarMonthBoard`.
+- `mutate` sends a change, from `useCalendarBoard` for moves and resizes, `EventPopover` for updates and deletes, and the create dialog behind `NewEventButton`.
+- `isPending` shows that a save is running, in the header's saving indicator and in the popover.
 
 #### Applying Pending Changes in Calendar Boards
 
@@ -617,33 +612,13 @@ export function CalendarBoard({
 }) {
   const { getEvents } = useCalendarEvents();
   const eventDays = [...days, shiftDay(days.at(-1)!, 1)];
-  const {
-    interactions,
-    selectedEvent,
-    setSelectedEvent,
-    visibleEvents,
-    // ...board state...
-  } = useCalendarBoard({
+  const { interactions, visibleEvents } = useCalendarBoard({
     calendars,
     days,
     events: getEvents(events, eventDays),
   });
 
-  return (
-    <>
-      {/* ...render visibleEvents with interactions in the calendar grid... */}
-      {selectedEvent ? (
-        <EventPopover
-          anchorRect={selectedEvent.anchorRect}
-          calendar={calendars.find(
-            calendar => calendar.id === selectedEvent.event.calendarId
-          )}
-          event={selectedEvent.event}
-          onClose={() => setSelectedEvent(null)}
-        />
-      ) : null}
-    </>
-  );
+  // ...render visibleEvents with interactions in the calendar grid...
 }
 ```
 
@@ -651,7 +626,7 @@ The `getEvents` call starts with the events from `CalendarWeek` and replays the 
 
 #### Updating and Deleting Events from the Popover
 
-In the snippet above, `CalendarBoard` renders `EventPopover` when an event is selected, which puts the popover under `CalendarEventsProvider` too. Instead of passing `mutate` through the board, we can read it from the dispatch context:
+The board also renders `EventPopover` for the selected event, which puts the popover under the provider too. Instead of passing `mutate` down through the board, the popover can read the dispatch context directly:
 
 ```tsx
 // features/calendar/components/event-popover.tsx
