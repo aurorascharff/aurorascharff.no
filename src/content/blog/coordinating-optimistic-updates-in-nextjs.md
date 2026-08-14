@@ -17,7 +17,7 @@ description: Learn how I combine useActionState and useOptimistic to keep rapid 
 
 I've recently been sharing [how to build SPA-like experiences with Next.js](https://x.com/aurorascharff/status/2087171648247988705), using [Next Beats](https://next-beats.dev/), [Drop](https://next16-social-media.vercel.app/), [Flow](https://next16-calendar.vercel.app/), and [Huddle](https://next16-team-chat.vercel.app/) as examples throughout the series. One pattern I have used in Huddle and Flow, but have not covered yet, is coordinating optimistic writes when another interaction starts before the first one finishes. This is a common problem on the web, and frameworks solve it in different ways. [Remix](https://v2.remix.run/docs/discussion/concurrency) cancels superseded requests, while [Solid Router](https://docs.solidjs.com/solid-router/concepts/actions) tracks pending submissions. In React, we can combine `useActionState` and `useOptimistic`.
 
-In this post, we'll start with the optimistic update approach from the [Next.js SPA guide](https://nextjs.org/docs/app/guides/single-page-applications#mutating-data-with-server-actions) and apply it to Huddle's channel sidebar as an async reducer. Then we'll adapt the pattern for Flow, where Server Components continue to own the confirmed events, and move the optimistic event state into context. The goal is for overlapping changes to appear immediately, save in order, and roll back automatically when a write fails.
+In this post, we'll start with the optimistic update approach from the [Next.js SPA guide](https://nextjs.org/docs/app/guides/single-page-applications#mutating-data-with-server-actions) and apply it to Huddle's channel sidebar. Then we'll adapt the pattern for Flow, where Server Components continue to own the confirmed events, and move the optimistic event state into context. The goal is for overlapping changes to appear immediately, save in order, and roll back automatically when a write fails.
 
 ## Table of contents
 
@@ -156,7 +156,7 @@ export function channelLayoutReducer(
 }
 ```
 
-The `move` case removes the channel from its current group, inserts it into the target group, and returns the new layout. It creates new group and channel arrays before calling `splice`, so the input groups stay unchanged.
+The reducer gives us one pure function for calculating the next layout from the current one. The `move` case shows how a channel can move between groups without changing the input layout.
 
 We can use the reducer inside `saveChannelLayout`:
 
@@ -189,7 +189,7 @@ export async function saveChannelLayout(
 }
 ```
 
-The `groups` argument contains `initialGroups` for the first call and the result of the previous call after that. The Server Function applies the change to those groups, saves the resulting layout, and returns it for the next Action. A later change now builds on the last saved layout instead of the original props.
+The Server Function can now build from the last saved layout rather than the original props. It returns the new layout after saving it, which becomes the starting point for the next Action.
 
 We can now pass the Server Function to `useActionState` in `ChannelNav`:
 
@@ -222,7 +222,7 @@ export function ChannelNav({
 }
 ```
 
-The `dispatch(change)` call runs inside `startTransition` because it comes from an event handler. React already provides that Transition when an Action is passed to a prop such as `<form action={...}>`. A save now calculates its layout from the result before it, so a later change no longer overwrites an earlier one with a stale snapshot.
+Changes from an event handler must be dispatched inside a Transition. React provides that Transition automatically when an Action is passed to a prop such as `<form action={...}>`. Huddle now processes later layout changes against the result of earlier saves.
 
 However, the sidebar still renders `groups`, which only updates after the Server Function finishes. Moving a channel would wait for the database write before appearing in the interface. Let's show the change immediately while the queue runs.
 
@@ -245,13 +245,10 @@ Now we can add `useOptimistic` to `ChannelNav`:
 
 ```tsx
 // features/channel/components/channel-nav.tsx
+"use client";
+
 import { startTransition, useActionState, useOptimistic } from "react";
-import { saveChannelLayout } from "@/features/channel/channel-actions";
-import {
-  channelLayoutReducer,
-  type LayoutChange,
-  type LayoutGroup,
-} from "@/features/channel/utils/channel-layout-reducer";
+// ...app imports...
 
 export function ChannelNav({
   groups: initialGroups,
@@ -278,9 +275,7 @@ export function ChannelNav({
 }
 ```
 
-The `groups` value remains the confirmed state. Since `channelLayoutReducer` accepts the current groups and a `LayoutChange`, we can pass it directly to `useOptimistic`. Rendering `optimisticGroups` makes the sidebar change immediately. The `addOptimistic(change)` call runs the reducer against the current optimistic groups, while `dispatch(change)` adds the same change to the Action queue. After earlier saves finish, React calls `saveChannelLayout` with the groups returned by the previous save and this change.
-
-While the Transition is running, `optimisticGroups` contains the temporary layout. When it finishes, `useOptimistic` returns the confirmed `groups`. If the save succeeds, those groups contain the same change, so the sidebar stays where it is. React commits the optimistic and confirmed layouts together without a separate render to clear the temporary state.
+The sidebar now renders the layout as soon as the user changes it. The same `LayoutChange` is applied to the temporary sidebar first and to the last saved layout when its Action runs. Both paths use `channelLayoutReducer`, so a successful save replaces the temporary layout with the same confirmed result and nothing jumps.
 
 ### Rolling Back Failed Layout Changes
 
@@ -316,7 +311,7 @@ export function ChannelNav({
 }
 ```
 
-The `catch` block shows the toast and returns the previous groups. When the Transition finishes, `useOptimistic` renders those groups again, so the sidebar moves back to the last successfully saved layout. We do not need to calculate and dispatch a reverse `LayoutChange`.
+A failed write leaves the confirmed layout at the last successful save. When the Transition finishes, the sidebar returns to that layout automatically. We do not need to calculate and dispatch a reverse `LayoutChange`.
 
 **Try it:** [move a channel between groups in Huddle](https://next16-team-chat.vercel.app/), then move it again before the first save finishes. **Code:** [`channel-nav.tsx`](https://github.com/aurorascharff/next16-team-chat/blob/main/features/channel/components/channel-nav.tsx).
 
@@ -336,14 +331,39 @@ The `catch` block shows the toast and returns the previous groups. When the Tran
 </main>
 ```
 
-The week and month components fetch their events in Server Components. We want creates, moves, resizes, updates, and deletes to appear immediately and save in order. Let's start by keeping that state inside `CalendarBoard`, where the server events are already available as props.
+The page chooses between the week and month Server Components. Let's follow the week view first. `CalendarWeek` fetches its events and renders `CalendarBoard` with the result:
+
+```tsx
+// features/calendar/components/calendar-week.tsx
+export async function CalendarWeek({ date }: { date: string }) {
+  const [week, calendars] = await Promise.all([
+    getCalendarWeek(date),
+    getCalendars(),
+  ]);
+
+  return (
+    <CalendarBoard
+      calendars={calendars}
+      days={week.days}
+      events={week.events}
+    />
+  );
+}
+```
+
+The interactive `CalendarBoard` Client Component sits inside `CalendarWeek` and receives the server events as props. The month view has a separate `CalendarMonthBoard`, which we will bring in when the state moves into context.
 
 ### Adding an Action Queue to CalendarBoard
 
-Let's add the save queue to `CalendarBoard`:
+The first version dispatches `EventChange` values through `useActionState` inside a Transition:
 
 ```tsx
 // features/calendar/components/calendar-board.tsx
+"use client";
+
+import { startTransition, useActionState } from "react";
+// ...app imports...
+
 export function CalendarBoard({
   days,
   events,
@@ -368,25 +388,18 @@ export function CalendarBoard({
 }
 ```
 
-The `mutate` function dispatches an `EventChange` that describes what happened. The reducer Action passes it to `saveEventChange`, which routes the change to the matching database write. React queues calls to the reducer Action and waits for one to finish before starting the next. Since the reducer Action returns nothing, its Action state remains `undefined`, and `isPending` covers the queue.
+The board now sends event changes through one Action queue. This queue coordinates the writes while the confirmed event data stays in Server Components. The callback has no state to store, so it returns `void`, and `isPending` covers the queued work.
 
 Next.js already dispatches and awaits Server Actions one at a time, so Flow does not need `useActionState` only to prevent its Server Functions from racing. Here, the hook gives `CalendarBoard` a React-level Action queue and one `isPending` value. The ordering is explicit in the component and does not depend on Next.js's current scheduling behavior.
 
-Flow uses a variation of Huddle's pattern. The channel sidebar keeps its confirmed layout in `useActionState` because the next layout depends on the previous returned layout. Flow receives its confirmed events from the week and month Server Components instead. Its reducer Action orders the saves without owning the event data, while `useOptimistic` keeps track of the pending event changes.
+This differs from Huddle, where `useActionState` keeps the confirmed layout because the next change depends on it. Flow only uses the hook to coordinate the saves. Its confirmed events still come from the week and month Server Components.
 
 ### Applying Event Changes with useOptimistic
 
-Flow needs to remember the changes that are still waiting to be saved, then apply them to the confirmed events from the Server Component. The functions for both parts live in `pending-changes-reducer.ts`:
+The `events` prop can be the confirmed value passed to `useOptimistic`. We need a pure function that applies an `EventChange` to those events. Flow also supports recurring events, so the helper accepts the visible days when it calculates the result:
 
 ```tsx
 // features/calendar/utils/pending-changes-reducer.ts
-export function pendingChangesReducer(
-  changes: EventChange[],
-  change: EventChange
-): EventChange[] {
-  return [...changes, change];
-}
-
 export function applyEventChange(events: CalendarEvent[], change: EventChange) {
   switch (change.type) {
     case "create":
@@ -440,12 +453,17 @@ export function applyEventChanges(
 }
 ```
 
-The `pendingChangesReducer` only appends a new `EventChange`, so the list preserves the order of the interactions. The event logic lives in `applyEventChange`. The `applyEventChanges` function reduces the pending list over the confirmed events and handles the extra expansion needed for recurring events. If we move an event and resize it before the first save finishes, the move runs first and the resize applies to that result.
+The helper returns the next event list for one or more changes. Recurring creates and moves expand across the days shown by the board.
 
-We can now put both hooks together in `CalendarBoard`:
+We can pass the server events directly to `useOptimistic` while the state stays inside `CalendarBoard`:
 
 ```tsx
 // features/calendar/components/calendar-board.tsx
+"use client";
+
+import { startTransition, useActionState, useOptimistic } from "react";
+// ...app imports...
+
 export function CalendarBoard({
   days,
   events,
@@ -459,12 +477,11 @@ export function CalendarBoard({
     },
     undefined
   );
-  const [optimisticChanges, addOptimisticChange] = useOptimistic(
-    [],
-    pendingChangesReducer
+  const [optimisticEvents, addOptimisticChange] = useOptimistic(
+    events,
+    (currentEvents, change: EventChange) =>
+      applyEventChanges(currentEvents, [change], days)
   );
-
-  const optimisticEvents = applyEventChanges(events, optimisticChanges, days);
 
   function mutate(change: EventChange) {
     startTransition(() => {
@@ -477,13 +494,15 @@ export function CalendarBoard({
 }
 ```
 
-The board renders `optimisticEvents` instead of the `events` prop. The `mutate` function adds the same `EventChange` to the temporary list and the save queue inside a Transition. Another move or resize can then start from the optimistic event already on screen. This works while `CalendarBoard` owns the interactions.
+The board now renders a temporary event list while the save runs. Another move or resize starts from the event already on screen, so the interface stays responsive while an earlier write is running. This works while `CalendarBoard` owns the events and interactions.
 
 However, Flow also has `CalendarMonthBoard`, and the `NewEventButton` lives in the header. Those components need to read or change the same optimistic state.
 
-### Moving the Event Queue into Context
+### Sharing Event Changes with Context
 
-We can move the hooks and `mutate` into context instead of passing them through the calendar tree. First, we can wrap the calendar header and event board with a `CalendarEventsProvider` Client Component:
+The header and boards are separated by Server Components, which means we cannot pass `mutate` between them. Lifting the state to a common parent would require making that part of the calendar a Client Component.
+
+We can keep the Server Components and wrap them with a `CalendarEventsProvider`. The nested Client Components can then read the context directly:
 
 ```tsx
 // app/(workspace)/calendar/[date]/page.tsx
@@ -497,10 +516,32 @@ We can move the hooks and `mutate` into context instead of passing them through 
 </CalendarEventsProvider>
 ```
 
+The provider is a Client Component, but `CalendarHeader`, `CalendarWeek`, and `CalendarMonth` remain Server Components because the page passes them as children.
+
+We can move the Action queue into the provider unchanged, but `useOptimistic` needs a different base. The provider sits above `CalendarWeek` and `CalendarMonth`, so it does not receive their events or visible days.
+
+Instead of moving the server data into client context, we can keep the pending `EventChange` values as temporary optimistic state:
+
+```tsx
+// features/calendar/utils/pending-changes-reducer.ts
+export function pendingChangesReducer(
+  changes: EventChange[],
+  change: EventChange
+): EventChange[] {
+  return [...changes, change];
+}
+```
+
+The provider has no event list of its own, so it keeps the changes while they are saving. If we move an event and then resize it, the array contains the move followed by the resize. The week or month board applies both changes to the server events it received. When the saves finish, the temporary array disappears and the board renders the server events again.
+
 The calendar views need `getEvents` and `isPending`, while controls only need `mutate`. Following React's guide to [scaling up with reducer and context](https://react.dev/learn/scaling-up-with-reducer-and-context), we can expose state and dispatch separately while moving the hooks into the provider:
 
 ```tsx
 // providers/calendar-events-provider.tsx
+"use client";
+
+// ...imports...
+
 const CalendarEventsStateContext =
   createContext<CalendarEventsStateContextValue | null>(null);
 const CalendarEventsDispatchContext =
@@ -555,9 +596,21 @@ export function CalendarEventsProvider({
 
 The provider now owns the Action queue and the pending change list. We can update the consumers one at a time.
 
-#### Dispatching Changes from Event Controls
+#### Updating and Deleting Events from the Popover
 
-The event popover only needs `mutate`, so it can read from the dispatch context instead of receiving the function through props:
+Both `CalendarBoard` and `CalendarMonthBoard` render `EventPopover` when the user selects an event:
+
+```tsx
+// features/calendar/components/calendar-board.tsx
+{selectedEvent ? (
+  <EventPopover
+    event={selectedEvent.event}
+    onClose={() => setSelectedEvent(null)}
+  />
+) : null}
+```
+
+The popover lets the user edit or delete that event. Since it sits below `CalendarEventsProvider`, it can read `mutate` from the dispatch context:
 
 ```tsx
 // features/calendar/components/event-popover.tsx
@@ -568,7 +621,7 @@ function remove() {
 }
 ```
 
-The event controls can now dispatch changes through the shared context. The boards need the state value.
+Edits and deletes now use the same optimistic state as moves and resizes. Next, the boards need to read that state.
 
 #### Applying Pending Changes in Calendar Boards
 
@@ -582,11 +635,11 @@ const visibleEvents = getEvents(events, days).filter(
 );
 ```
 
-The `getEvents` function applies the pending changes to the server events before the month board filters calendars that the user has hidden.
+The month board still starts with events fetched by its Server Component, then layers pending changes on top before hiding calendars.
 
 ### Rolling Back Failed Event Changes
 
-At this point, a failed save has no visible explanation. We can inspect the result inside the reducer Action and show a toast:
+At this point, a failed save has no visible explanation. We can inspect the result inside the callback passed to `useActionState` and show a toast:
 
 ```tsx
 // providers/calendar-events-provider.tsx
@@ -596,7 +649,7 @@ const [, dispatch] = useActionState(async (_: void, change: EventChange) => {
 }, undefined);
 ```
 
-If the write returns an error, the server data has not changed. The optimistic change stays visible while the queued Actions are pending. When the Transition completes, `useOptimistic` returns its base value, the empty change list, in the same commit. The `getEvents` function then applies nothing to the server events, so the event returns to its previous position.
+If the write fails, the server events remain unchanged. The temporary position stays visible until the Transition finishes, then the board returns to those events and the event moves back. We do not need to calculate a reverse change.
 
 **Try it:** [move a demo calendar event in Flow and notice the error toast and how it jumps back](https://next16-calendar.vercel.app/). **Code:** [`calendar-events-provider.tsx`](https://github.com/aurorascharff/next16-calendar/blob/main/providers/calendar-events-provider.tsx).
 
