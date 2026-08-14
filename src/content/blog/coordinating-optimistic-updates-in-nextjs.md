@@ -17,7 +17,7 @@ description: Learn how I combine useActionState and useOptimistic to keep rapid 
 
 I've recently been sharing [how to build SPA-like experiences with Next.js](https://x.com/aurorascharff/status/2087171648247988705) through [Next Beats](https://next-beats.dev/), [Drop](https://next16-social-media.vercel.app/), [Flow](https://next16-calendar.vercel.app/), and [Huddle](https://next16-team-chat.vercel.app/). One pattern I use in Huddle and Flow, but have not covered yet, is coordinating optimistic writes when interactions overlap. Frameworks solve this differently. [React Router](https://reactrouter.com/explanation/race-conditions) cancels interrupted requests and stale revalidations, while [Solid Router](https://docs.solidjs.com/solid-router/concepts/actions) tracks pending submissions. In React, we can combine `useActionState` and `useOptimistic`.
 
-In this post, we'll start with Huddle's channel sidebar and save its layout from a Transition, following the [Next.js SPA guide](https://nextjs.org/docs/app/guides/single-page-applications#mutating-data-with-server-actions). We'll add `useActionState` so later changes build on previous saves, then add `useOptimistic` so the sidebar moves immediately. After that, we'll use the same hooks in Flow without moving its server-fetched events into client state.
+In this post, we'll look at how these hooks work together in Huddle, then scale the pattern across the component tree in Flow.
 
 ## Table of contents
 
@@ -59,6 +59,8 @@ export function ChannelNav({ groups }: { groups: LayoutGroup[] }) {
   );
 }
 ```
+
+The [Next.js SPA guide](https://nextjs.org/docs/app/guides/single-page-applications#mutating-data-with-server-actions) documents how `useActionState` and `useOptimistic` work together with a Server Function using a to-do list. We can build the same pattern around Huddle's channel layout, starting with the Server Function that saves it.
 
 ### Saving the Channel Layout in a Transition
 
