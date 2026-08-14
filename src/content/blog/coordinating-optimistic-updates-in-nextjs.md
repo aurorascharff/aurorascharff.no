@@ -96,7 +96,7 @@ export async function saveChannelLayout(groups: LayoutGroup[]) {
 With the Server Function in place, we can call `saveChannelLayout` inside a Transition in `ChannelNav`. Wrapping the call in [`useTransition`](https://react.dev/reference/react/useTransition) sets `isPending` while the save runs, and the sidebar keeps accepting changes:
 
 ```tsx
-// channel-nav.tsx
+// features/channel/components/channel-nav.tsx
 export function ChannelNav({ groups }: { groups: LayoutGroup[] }) {
   const [isPending, startTransition] = useTransition();
 
@@ -110,7 +110,7 @@ export function ChannelNav({ groups }: { groups: LayoutGroup[] }) {
 }
 ```
 
-Next.js currently [dispatches and awaits Server Actions one at a time](https://nextjs.org/docs/app/getting-started/mutating-data#invoking-server-functions), so these writes do not race in Huddle. Outside that Next.js queue, async work started directly inside a Transition can still finish out of order. The React docs describe this as [out-of-order Transition updates](https://react.dev/reference/react/useTransition#my-state-updates-in-transitions-are-out-of-order) and point to `useActionState` for common cases.
+Next.js currently [dispatches and awaits Server Actions one at a time](https://nextjs.org/docs/app/getting-started/mutating-data#invoking-server-functions), so these writes do not race in Huddle. Outside that queue, async work started directly inside a Transition can still finish out of order. The React docs describe this as [out-of-order Transition updates](https://react.dev/reference/react/useTransition#my-state-updates-in-transitions-are-out-of-order) and point to `useActionState` for common cases.
 
 However, `ChannelNav` calculates `nextGroups` before the save enters the queue. If someone makes another change before the first save finishes, the second `nextGroups` is built from the layout as it was before either change. Next.js still writes the requests in order, so the later one lands last and drops the earlier change from the saved layout.
 
@@ -135,7 +135,7 @@ If we dispatch several changes, React waits for one callback to finish before us
 To build a change on top of the previous save, `saveChannelLayout` needs the previous groups and a `LayoutChange` describing what happened. We can [extract the layout update into a reducer](https://react.dev/learn/extracting-state-logic-into-a-reducer):
 
 ```ts
-// channel-layout-reducer.ts
+// features/channel/utils/channel-layout-reducer.ts
 export function channelLayoutReducer(
   groups: LayoutGroup[],
   change: LayoutChange
@@ -236,7 +236,7 @@ export function ChannelNav({
 
 React starts a Transition automatically for Action props such as `<form action>`. Huddle dispatches changes from drag and menu handlers, so we call [`startTransition`](https://react.dev/reference/react/useTransition#starttransition) explicitly inside `runChange`. When someone makes another change, React waits for the previous save and passes its returned layout into `saveChannelLayout`. The `channelLayoutReducer` applies the new `LayoutChange` to that layout.
 
-This works, but there is still a problem. The sidebar renders `groups`, which only updates after the Server Function finishes. Moving a channel would wait for the database write before appearing in the sidebar.
+The saves are ordered now, but the sidebar renders `groups`, which only updates after the Server Function finishes. Moving a channel would wait for the database write before appearing in the sidebar.
 
 ### Showing Layout Changes with useOptimistic
 
@@ -547,7 +547,7 @@ However, the month view renders its own `CalendarMonthBoard`, and the header ren
 
 Server Components sit between the header and boards, so passing `mutate` through props would require converting them to Client Components.
 
-Rather than lifting the calendar into one large Client Component, we can place `CalendarEventsProvider` around the header and selected view, the same approach I wrote about in [Utilizing useOptimistic() Across the Component Tree in Next.js](/posts/utilizing-useoptimistic-across-the-component-tree-in-nextjs). Client Components below the provider can read the context even with Server Components between them:
+Rather than lifting the calendar into one large Client Component, we can place `CalendarEventsProvider` around the header and selected view. I wrote about [this provider approach](/posts/utilizing-useoptimistic-across-the-component-tree-in-nextjs) back when React 19 was still in canary, while I was working out how to get the across-the-app optimistic updates I was used to from React Query. Client Components below the provider can read the context even with Server Components between them:
 
 ```tsx
 // app/(workspace)/calendar/[date]/page.tsx
@@ -593,7 +593,7 @@ function getEvents(events: CalendarEvent[], days: string[]) {
 }
 ```
 
-React's guide to [scaling up with reducer and context](https://react.dev/learn/scaling-up-with-reducer-and-context) separates state and dispatch. We can expose `getEvents` and `isPending` through `useCalendarEvents`, then expose `mutate` through `useCalendarEventsDispatch`.
+React's guide to [scaling up with reducer and context](https://react.dev/learn/scaling-up-with-reducer-and-context) separates state and dispatch. We can expose `getEvents` and `isPending` through `useCalendarEvents`, and `mutate` through `useCalendarEventsDispatch`.
 
 #### Applying Pending Changes in Calendar Boards
 
@@ -651,7 +651,7 @@ The `getEvents` call starts with the events from `CalendarWeek` and replays the 
 
 #### Updating and Deleting Events from the Popover
 
-As shown above, `CalendarBoard` renders `EventPopover` when an event is selected. That puts the popover under `CalendarEventsProvider` too. Instead of passing `mutate` through the board, we can read it from the dispatch context:
+In the snippet above, `CalendarBoard` renders `EventPopover` when an event is selected, which puts the popover under `CalendarEventsProvider` too. Instead of passing `mutate` through the board, we can read it from the dispatch context:
 
 ```tsx
 // features/calendar/components/event-popover.tsx
@@ -666,7 +666,7 @@ Calling `remove` hides the event while `saveEventChange` runs. The edit form sen
 
 ### Rolling Back Failed Event Changes
 
-An event is already in its optimistic position when the server can reject the write. Flow's demo events return an error when someone tries to change them. We want to show that error and return the event to its saved position.
+By the time the server rejects a write, the event has already moved to its optimistic position. Flow's demo events return an error when someone tries to change them. We want to show that error and return the event to its saved position.
 
 Let's check the result from `saveEventChange` inside the `useActionState` callback and show the error in a toast:
 
@@ -767,7 +767,7 @@ export function useCalendarEventsDispatch() {
 }
 ```
 
-The provider keeps the temporary changes and save queue in one place. The boards still receive their confirmed events from Server Components, and a failed write returns to those events after showing the toast.
+This way, the provider keeps the temporary changes and the save queue in one place. The boards still receive their confirmed events from Server Components, and a failed write returns to those events after showing the toast.
 
 **Try it:** [move a demo calendar event in Flow](https://next16-calendar.vercel.app/) and watch it return to its saved position after the error toast. **Code:** [`calendar-events-provider.tsx`](https://github.com/aurorascharff/next16-calendar/blob/main/providers/calendar-events-provider.tsx).
 
@@ -812,13 +812,13 @@ export function useSuspenseMessages(channelId: string) {
 }
 ```
 
-SWR starts with the result from `MessageThread`, then takes over the polling and revalidation in the browser. This gives the message components a shared cache, but we now have two caches to coordinate. The Server Function invalidates the Next.js cache, while the mutation code updates the relevant SWR keys.
+SWR starts with the result from `MessageThread`, then takes over the polling and revalidation in the browser. This gives the message components a shared cache, but we now have two caches to coordinate. A mutation invalidates the Next.js cache in the Server Function and updates the relevant SWR keys on the client.
 
 For messages, that trade-off is useful. To read more about the handoff, see the [Next.js guide to client-side data fetching with SWR](https://nextjs.org/docs/app/guides/client-side-data-fetching/swr#provide-initial-data-from-a-server-component).
 
 You might choose a client data library earlier, depending on your app. Next.js has a [guide for the same setup with TanStack Query](https://nextjs.org/docs/app/guides/client-side-data-fetching/tanstack-query).
 
-The hook-based pattern avoids a long-lived browser cache, but we have to connect the Action state, optimistic state, and context ourselves. More built-in support could make that coordination more direct over time.
+The hook-based pattern avoids a long-lived browser cache, but we have to connect the Action state, optimistic state, and context ourselves.
 
 ## Conclusion
 
