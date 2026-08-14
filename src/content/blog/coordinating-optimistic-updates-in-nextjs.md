@@ -382,7 +382,7 @@ export function ChannelNav({
 }
 ```
 
-This way, the sidebar moves the moment someone drops a channel or renames a group, the saves land in the order the changes were made, and a failed write returns the layout to the last one that saved.
+This way, the sidebar moves the moment someone drops a channel, and the saves still run in the order the changes were made. If one of them fails, the sidebar goes back to the last layout the server confirmed.
 
 **Try it:** [move a channel between groups in Huddle](https://next16-team-chat.vercel.app/), then move it again before the first save finishes. **Code:** [`channel-nav.tsx`](https://github.com/aurorascharff/next16-team-chat/blob/main/features/channel/components/channel-nav.tsx).
 
@@ -582,7 +582,7 @@ function getEvents(events: CalendarEvent[]) {
 }
 ```
 
-The reduction starts with the `events` prop. The move returns an updated event list, then the resize runs against that list. Flow's own `getEvents` also takes the visible `days`, because a recurring create or move can affect several occurrences in the range.
+The reduction starts with the `events` prop. The move returns an updated event list, then the resize runs against that list. Flow's `getEvents` also takes the visible `days`, because a recurring create or move can affect several occurrences in the range.
 
 React's guide to [scaling up with reducer and context](https://react.dev/learn/scaling-up-with-reducer-and-context) separates state and dispatch, and the provider follows that split. The state hook `useCalendarEvents` returns `getEvents` and `isPending`, and the dispatch hook `useCalendarEventsDispatch` returns `mutate`. The three values have separate consumers:
 
@@ -668,13 +668,11 @@ export function CalendarEventsProvider({ children }: { children: ReactNode }) {
 }
 ```
 
-Unlike Huddle's `saveChannelLayout`, `saveEventChange` returns an error result instead of throwing, so the callback reads `result.error` rather than wrapping the call in `try/catch`.
-
 If the write fails, the server events remain unchanged. The temporary position stays visible until the Transition finishes, then the board returns to those events and the event moves back. We do not need to calculate a reverse change.
 
 ### The Full `CalendarEventsProvider`
 
-Here is the provider with the Action queue, pending changes, context, and error handling wired in. We can leave the recurrence helpers inside `applyEventChanges` collapsed here:
+Here is the provider with the Action queue, pending changes, context, and error handling wired in. The recurrence handling lives in `applyEventChanges`, next to the reducer in the calendar utils, so this file only holds the queue, the pending changes, and the context:
 
 ```tsx
 // providers/calendar-events-provider.tsx
@@ -689,6 +687,7 @@ import {
   type ReactNode,
 } from "react";
 import { toast } from "sonner";
+import { applyEventChanges } from "@/features/calendar/utils/apply-event-changes";
 // ...app imports...
 
 type CalendarEventsStateContextValue = {
@@ -806,11 +805,11 @@ export function useSuspenseMessages(channelId: string) {
 }
 ```
 
-From there, SWR owns the polling and revalidation, and the message components read one shared cache. That leaves two caches to keep in step, so a mutation invalidates the Next.js cache in the Server Function and updates the relevant SWR keys in the browser.
+From there, SWR owns the polling and revalidation, and the message components read one shared cache. That leaves us with two caches to coordinate, so a mutation invalidates the Next.js cache in the Server Function and updates the relevant SWR keys in the browser.
 
-For messages, that trade-off is worth it. Polling and a cache shared across components are what a client data library is good at, and Next.js documents the handoff for both [SWR](https://nextjs.org/docs/app/guides/client-side-data-fetching/swr#provide-initial-data-from-a-server-component) and [TanStack Query](https://nextjs.org/docs/app/guides/client-side-data-fetching/tanstack-query).
+For messages, that trade-off is worth it, and Next.js documents this handoff for both [SWR](https://nextjs.org/docs/app/guides/client-side-data-fetching/swr#provide-initial-data-from-a-server-component) and [TanStack Query](https://nextjs.org/docs/app/guides/client-side-data-fetching/tanstack-query).
 
-The hooks in the rest of this post leave the confirmed data in Server Components, so there is no second cache to invalidate, but sharing them across the component tree takes the wiring between Action state, optimistic state, and context that we built in Flow. You might draw that line earlier, depending on your app.
+The hooks in the rest of this post leave the confirmed data in Server Components, so there is no second cache to invalidate, but sharing them across the component tree takes the wiring between Action state, optimistic state, and context that we built in Flow. You might reach for a client data library earlier, depending on your app.
 
 ## Conclusion
 
