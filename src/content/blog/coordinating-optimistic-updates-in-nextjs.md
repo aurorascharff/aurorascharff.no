@@ -578,60 +578,7 @@ function getEvents(events: CalendarEvent[]) {
 
 The reduction starts with the `events` prop. The move returns an updated event list, then the resize runs against that list. Flow's `getEvents` also takes the visible `days`, because a recurring create or move can affect several occurrences in the range.
 
-React's guide to [scaling up with reducer and context](https://react.dev/learn/scaling-up-with-reducer-and-context) separates state and dispatch, and the provider follows that split. The state hook `useCalendarEvents` returns `getEvents` and `isPending`, and the dispatch hook `useCalendarEventsDispatch` returns `mutate`. Those three values are used in different places:
-
-- `getEvents` renders the confirmed events with the pending changes replayed over them, in `CalendarBoard` and `CalendarMonthBoard`.
-- `mutate` sends a change, from `useCalendarBoard` for moves and resizes, `EventPopover` for updates and deletes, and the create dialog behind `NewEventButton`.
-- `isPending` shows that a save is running, in the header's saving indicator and in the popover.
-
-#### Applying Pending Changes in Calendar Boards
-
-Now that `getEvents` can replay the pending changes, let's call it before passing the events from `CalendarWeek` into `useCalendarBoard`, the hook that owns the grid's drag, resize, and selection state:
-
-```tsx
-// features/calendar/components/calendar-board.tsx
-"use client";
-
-import { useCalendarEvents } from "@/providers/calendar-events-provider";
-// ...app imports...
-
-export function CalendarBoard({
-  calendars,
-  days,
-  events,
-}: {
-  calendars: Calendar[];
-  days: string[];
-  events: CalendarEvent[];
-}) {
-  const { getEvents } = useCalendarEvents();
-  const eventDays = [...days, shiftDay(days.at(-1)!, 1)];
-  const { interactions, visibleEvents } = useCalendarBoard({
-    calendars,
-    days,
-    events: getEvents(events, eventDays),
-  });
-
-  // ...render visibleEvents with interactions in the calendar grid...
-}
-```
-
-The `getEvents` call starts with the events from `CalendarWeek` and replays the pending changes over them. Because the week grid runs from 06:00 to 06:00, `eventDays` includes the following calendar day too. The month view's `CalendarMonthBoard` follows the same pattern before grouping events into days.
-
-#### Updating and Deleting Events from the Popover
-
-The board also renders `EventPopover` for the selected event, which puts the popover under the provider too. Instead of passing `mutate` down through the board, the popover can read the dispatch context directly:
-
-```tsx
-// features/calendar/components/event-popover.tsx
-const mutate = useCalendarEventsDispatch();
-
-function remove() {
-  mutate({ sourceId: event.sourceId, type: "delete" });
-}
-```
-
-Calling `remove` hides the event while `saveEventChange` runs. The edit form sends an `update` change through the same `mutate` function.
+React's guide to [scaling up with reducer and context](https://react.dev/learn/scaling-up-with-reducer-and-context) separates state and dispatch, and the provider follows that split. The state hook `useCalendarEvents` returns `getEvents` and `isPending`, and the dispatch hook `useCalendarEventsDispatch` returns `mutate`.
 
 ### Rolling Back Failed Event Changes
 
@@ -754,6 +701,61 @@ export function useCalendarEventsDispatch() {
 }
 ```
 
+Now that the provider is in place, its three values are read in different parts of the calendar:
+
+- `getEvents` renders the confirmed events with the pending changes replayed over them, in `CalendarBoard` and `CalendarMonthBoard`.
+- `mutate` sends a change, from `useCalendarBoard` for moves and resizes, `EventPopover` for updates and deletes, and the create dialog behind `NewEventButton`.
+- `isPending` shows that a save is running, in the header's saving indicator and in the popover.
+
+### Applying Pending Changes in the Calendar Boards
+
+Let's call `getEvents` before passing the events from `CalendarWeek` into `useCalendarBoard`, the hook that owns the grid's drag, resize, and selection state:
+
+```tsx
+// features/calendar/components/calendar-board.tsx
+"use client";
+
+import { useCalendarEvents } from "@/providers/calendar-events-provider";
+// ...app imports...
+
+export function CalendarBoard({
+  calendars,
+  days,
+  events,
+}: {
+  calendars: Calendar[];
+  days: string[];
+  events: CalendarEvent[];
+}) {
+  const { getEvents } = useCalendarEvents();
+  const eventDays = [...days, shiftDay(days.at(-1)!, 1)];
+  const { interactions, visibleEvents } = useCalendarBoard({
+    calendars,
+    days,
+    events: getEvents(events, eventDays),
+  });
+
+  // ...render visibleEvents with interactions in the calendar grid...
+}
+```
+
+The `getEvents` call starts with the events from `CalendarWeek` and replays the pending changes over them. Because the week grid runs from 06:00 to 06:00, `eventDays` includes the following calendar day too. The month view's `CalendarMonthBoard` follows the same pattern before grouping events into days.
+
+### Updating and Deleting Events from the Popover
+
+The board also renders `EventPopover` for the selected event, which puts the popover under the provider too. Instead of passing `mutate` down through the board, the popover can read the dispatch context directly:
+
+```tsx
+// features/calendar/components/event-popover.tsx
+const mutate = useCalendarEventsDispatch();
+
+function remove() {
+  mutate({ sourceId: event.sourceId, type: "delete" });
+}
+```
+
+Calling `remove` hides the event while `saveEventChange` runs. The edit form sends an `update` change through the same `mutate` function.
+
 This way, the provider keeps the temporary changes and the save queue in one place. The boards still receive their confirmed events from Server Components, and a failed write returns to those events after showing the toast.
 
 **Try it:** [move a demo calendar event in Flow](https://next16-calendar.vercel.app/) and watch it return to its saved position after the error toast. **Code:** [`calendar-events-provider.tsx`](https://github.com/aurorascharff/next16-calendar/blob/main/providers/calendar-events-provider.tsx).
@@ -764,7 +766,7 @@ For Huddle's channel layout and Flow's calendar events, the confirmed data stays
 
 Huddle's messages need polling and optimistic updates across several components, so I use a client data library there. The app has equivalent [TanStack Query](https://github.com/aurorascharff/next16-team-chat/tree/main) and [SWR](https://github.com/aurorascharff/next16-team-chat/tree/swr) implementations.
 
-In the SWR version, `MessageThread` still loads the current messages on the server, then seeds the SWR cache with them so the browser can take over from there:
+In the SWR version, `MessageThread` still loads the current messages on the server, then seeds the SWR cache with them so the browser can take over:
 
 ```tsx
 // features/message/components/message-thread.tsx
@@ -799,14 +801,16 @@ export function useSuspenseMessages(channelId: string) {
 }
 ```
 
-From there, SWR owns the polling and revalidation, and the message components read one shared cache. That leaves us with two caches to coordinate, so a mutation invalidates the Next.js cache in the Server Function and updates the relevant SWR keys in the browser.
+SWR then owns the polling and revalidation, and the message components read one shared cache. That leaves us with two caches to coordinate, so a mutation invalidates the Next.js cache in the Server Function and updates the relevant SWR keys in the browser.
 
 For messages, that trade-off is worth it, and Next.js documents this handoff for both [SWR](https://nextjs.org/docs/app/guides/client-side-data-fetching/swr#provide-initial-data-from-a-server-component) and [TanStack Query](https://nextjs.org/docs/app/guides/client-side-data-fetching/tanstack-query).
 
-The hooks in the rest of this post leave the confirmed data in Server Components, so there is no second cache to invalidate, but sharing them across the component tree takes the wiring between Action state, optimistic state, and context that we built in Flow. You might reach for a client data library earlier, depending on your app.
+Without a client data library, sharing the optimistic state across the component tree takes the wiring we did in Flow. You might reach for one earlier, depending on your app.
 
 ## Conclusion
 
 What I like about this pattern is that Server Components continue to own the data. We only add enough client state to coordinate the interaction, then let the server result take over when the Action finishes.
+
+Coordinating this by hand is still a fair amount of wiring, and it looks the same in Huddle and Flow. Maybe we'll see these patterns built into React or Next.js in the future.
 
 I hope this post has been helpful. Please let me know if you have any questions or comments, and follow me on [Bluesky](https://bsky.app/profile/aurorascharff.no) or [X](https://x.com/aurorascharff) for more updates. Happy coding! 🚀
