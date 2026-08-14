@@ -701,11 +701,7 @@ export function useCalendarEventsDispatch() {
 }
 ```
 
-Now that the provider is in place, its three values are read in different parts of the calendar:
-
-- `getEvents` renders the confirmed events with the pending changes replayed over them, in `CalendarBoard` and `CalendarMonthBoard`.
-- `mutate` sends a change, from `useCalendarBoard` for moves and resizes, `EventPopover` for updates and deletes, and the create dialog behind `NewEventButton`.
-- `isPending` shows that a save is running, in the header's saving indicator and in the popover.
+Now that the provider is in place, the Client Components under it read `getEvents` to render their events, call `mutate` to change one, and read `isPending` while a save is running.
 
 ### Applying Pending Changes in the Calendar Boards
 
