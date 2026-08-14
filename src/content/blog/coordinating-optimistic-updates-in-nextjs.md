@@ -542,11 +542,7 @@ const CalendarEventsStateContext =
 const CalendarEventsDispatchContext =
   createContext<CalendarEventsDispatchContextValue | null>(null);
 
-export function CalendarEventsProvider({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export function CalendarEventsProvider({ children }: { children: ReactNode }) {
   const [, dispatch, isPending] = useActionState(
     async (_: void, change: EventChange) => {
       await saveEventChange(change);
@@ -558,26 +554,18 @@ export function CalendarEventsProvider({
     pendingChangesReducer
   );
 
-  const mutate = useCallback(
-    (change: EventChange) => {
-      startTransition(() => {
-        addOptimisticChange(change);
-        dispatch(change);
-      });
-    },
-    [addOptimisticChange, dispatch]
-  );
+  function mutate(change: EventChange) {
+    startTransition(() => {
+      addOptimisticChange(change);
+      dispatch(change);
+    });
+  }
 
-  const getEvents = useCallback(
-    (events: CalendarEvent[], days: string[]) =>
-      applyEventChanges(events, optimisticChanges, days),
-    [optimisticChanges]
-  );
+  function getEvents(events: CalendarEvent[], days: string[]) {
+    return applyEventChanges(events, optimisticChanges, days);
+  }
 
-  const contextValue = useMemo(
-    () => ({ getEvents, isPending }),
-    [getEvents, isPending]
-  );
+  const contextValue = { getEvents, isPending };
 
   return (
     <CalendarEventsStateContext.Provider value={contextValue}>
@@ -591,7 +579,9 @@ export function CalendarEventsProvider({
 export function useCalendarEvents() {
   const context = useContext(CalendarEventsStateContext);
   if (!context) {
-    throw new Error("useCalendarEvents must be used within CalendarEventsProvider");
+    throw new Error(
+      "useCalendarEvents must be used within CalendarEventsProvider"
+    );
   }
   return context;
 }
