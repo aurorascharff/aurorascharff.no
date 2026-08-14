@@ -672,11 +672,28 @@ Let's check the result from `saveEventChange` inside the `useActionState` callba
 
 ```tsx
 // providers/calendar-events-provider.tsx
-const [, dispatch] = useActionState(async (_: void, change: EventChange) => {
-  const result = await saveEventChange(change);
-  if (result.error) toast.error(result.error);
-}, undefined);
+"use client";
+
+import { useActionState, type ReactNode } from "react";
+import { toast } from "sonner";
+// ...app imports...
+
+export function CalendarEventsProvider({ children }: { children: ReactNode }) {
+  const [, dispatch, isPending] = useActionState(
+    async (_: void, change: EventChange) => {
+      const result = await saveEventChange(change);
+      if (result.error) {
+        toast.error(result.error);
+      }
+    },
+    undefined
+  );
+
+  // ...pending changes, mutate, getEvents, and the context providers...
+}
 ```
+
+Unlike Huddle's `saveChannelLayout`, `saveEventChange` returns an error result instead of throwing, so the callback reads `result.error` rather than wrapping the call in `try/catch`.
 
 If the write fails, the server events remain unchanged. The temporary position stays visible until the Transition finishes, then the board returns to those events and the event moves back. We do not need to calculate a reverse change.
 
@@ -715,7 +732,9 @@ export function CalendarEventsProvider({ children }: { children: ReactNode }) {
   const [, dispatch, isPending] = useActionState(
     async (_: void, change: EventChange) => {
       const result = await saveEventChange(change);
-      if (result.error) toast.error(result.error);
+      if (result.error) {
+        toast.error(result.error);
+      }
     },
     undefined
   );
@@ -777,7 +796,7 @@ For Huddle's channel layout and Flow's calendar events, the confirmed data stays
 
 Huddle's messages need polling and optimistic updates across several components, so I use a client data library there. The app has equivalent [TanStack Query](https://github.com/aurorascharff/next16-team-chat/tree/main) and [SWR](https://github.com/aurorascharff/next16-team-chat/tree/swr) implementations.
 
-In the SWR version, `MessageThread` loads the current messages on the server and seeds the client cache:
+In the SWR version, `MessageThread` still loads the current messages on the server, then seeds the SWR cache with them so the browser can take over from there:
 
 ```tsx
 // features/message/components/message-thread.tsx
@@ -799,7 +818,7 @@ export async function MessageThread({ channelId }: { channelId: string }) {
 }
 ```
 
-After hydration, `useSuspenseMessages` reads the same channel key:
+After hydration, `useSuspenseMessages` reads that same channel key, so the first client render uses the seeded messages instead of fetching them again:
 
 ```tsx
 // features/message/hooks/use-messages.ts
@@ -812,13 +831,11 @@ export function useSuspenseMessages(channelId: string) {
 }
 ```
 
-SWR starts with the result from `MessageThread`, then takes over the polling and revalidation in the browser. This gives the message components a shared cache, but we now have two caches to coordinate. A mutation invalidates the Next.js cache in the Server Function and updates the relevant SWR keys on the client.
+From there, SWR owns the polling and revalidation, and the message components read one shared cache. That leaves two caches to keep in step, so a mutation invalidates the Next.js cache in the Server Function and updates the relevant SWR keys in the browser.
 
-For messages, that trade-off is useful. To read more about the handoff, see the [Next.js guide to client-side data fetching with SWR](https://nextjs.org/docs/app/guides/client-side-data-fetching/swr#provide-initial-data-from-a-server-component).
+For messages, that trade-off is worth it. Polling and a cache shared across components are what a client data library is good at, and Next.js documents the handoff for both [SWR](https://nextjs.org/docs/app/guides/client-side-data-fetching/swr#provide-initial-data-from-a-server-component) and [TanStack Query](https://nextjs.org/docs/app/guides/client-side-data-fetching/tanstack-query).
 
-You might choose a client data library earlier, depending on your app. Next.js has a [guide for the same setup with TanStack Query](https://nextjs.org/docs/app/guides/client-side-data-fetching/tanstack-query).
-
-The hook-based pattern avoids a long-lived browser cache, but we have to connect the Action state, optimistic state, and context ourselves.
+The hooks in the rest of this post leave the confirmed data in Server Components, so there is no second cache to invalidate, but sharing them across the component tree takes the wiring between Action state, optimistic state, and context that we built in Flow. You might draw that line earlier, depending on your app.
 
 ## Conclusion
 
