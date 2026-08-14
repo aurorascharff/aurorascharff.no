@@ -71,7 +71,7 @@ export function ChannelNav({ groups }: { groups: LayoutGroup[] }) {
 }
 ```
 
-We want the channel sidebar to update immediately when someone moves a channel or edits a group, while the layout changes save in order. Combining `useActionState` and `useOptimistic` for that is already covered in a few places:
+We want the channel sidebar to update immediately when someone moves a channel or edits a group, while the layout changes save in order. A few posts and docs already cover combining `useActionState` and `useOptimistic` for that:
 
 - [The True Nature of useActionState](https://www.nikhilsnayak.dev/blog/the-true-nature-of-use-action-state) is an early exploration of using the hook as an async reducer and pairing it with `useOptimistic`.
 - The [React `useActionState` docs](https://react.dev/reference/react/useActionState) now cover queued Actions and using both hooks together.
@@ -420,7 +420,7 @@ From there, the `CalendarBoard` Client Component renders the week grid. We want 
 
 ### Adding an Action Queue to CalendarBoard
 
-Someone can move an event, then resize it before the first save finishes. To order both writes, let's represent the interactions as `EventChange` values. Unlike Huddle, we do not need the result of the previous save to handle the next change, so the Action state can be `void`. We still read one `isPending` value from `useActionState` while the saves run:
+Someone can move an event, then resize it before the first save finishes. To order both writes, let's represent the interactions as `EventChange` values. Unlike Huddle, we do not need the result of the previous save to handle the next change, so the Action state can be `void`. One `isPending` value stays true until all the queued saves finish, and Flow shows it as a spinner in the header:
 
 ```tsx
 // features/calendar/components/calendar-board.tsx
@@ -557,17 +557,40 @@ Rather than lifting the calendar into one large Client Component, we can place `
 
 The Action queue can move into the provider unchanged because `saveEventChange` only needs an `EventChange`. The optimistic state needs a different shape. In `CalendarBoard`, `useOptimistic` starts from the `events` prop. The provider sits above `CalendarWeek` and `CalendarMonth`, so it has no `CalendarEvent[]` of its own.
 
-Instead, let's collect the `EventChange` values while their saves are pending:
+Instead, let's collect the `EventChange` values while their saves are pending, and hand the boards a `getEvents` function that applies them:
 
 ```tsx
 // providers/calendar-events-provider.tsx
-const [pendingChanges, addOptimisticChange] = useOptimistic<
-  EventChange[],
-  EventChange
->([], (changes, change) => [...changes, change]);
+"use client";
+
+export function CalendarEventsProvider({ children }: { children: ReactNode }) {
+  const [, dispatch, isPending] = useActionState(
+    async (_: void, change: EventChange) => {
+      await saveEventChange(change);
+    },
+    undefined
+  );
+  const [pendingChanges, addOptimisticChange] = useOptimistic<
+    EventChange[],
+    EventChange
+  >([], (changes, change) => [...changes, change]);
+
+  function mutate(change: EventChange) {
+    startTransition(() => {
+      addOptimisticChange(change);
+      dispatch(change);
+    });
+  }
+
+  function getEvents(events: CalendarEvent[], days: string[]) {
+    return applyEventChanges(events, pendingChanges, days);
+  }
+
+  // ...provide getEvents, isPending, and mutate through context...
+}
 ```
 
-The list describes how to update the confirmed events. If someone moves an event and then resizes it, `pendingChanges` contains the move followed by the resize. A board can replay both changes over the events it received from the server:
+The queue and `mutate` are the same as in `CalendarBoard`. The difference is `pendingChanges`, which describes how to update the confirmed events instead of holding them. If someone moves an event and then resizes it, the list contains the move followed by the resize, and a board can replay both over the events it received from the server:
 
 ```tsx
 // Simplified without recurring events
@@ -576,7 +599,7 @@ function getEvents(events: CalendarEvent[]) {
 }
 ```
 
-The reduction starts with the `events` prop. The move returns an updated event list, then the resize runs against that list. Flow's `getEvents` also takes the visible `days`, because a recurring create or move can affect several occurrences in the range.
+The reduction starts with the `events` prop. The move returns an updated event list, then the resize runs against that list. Flow's `getEvents` takes the visible `days` as well, because a recurring create or move can affect several occurrences in the range, so `applyEventChanges` expands those first.
 
 React's guide to [scaling up with reducer and context](https://react.dev/learn/scaling-up-with-reducer-and-context) separates state and dispatch, and the provider follows that split. The state hook `useCalendarEvents` returns `getEvents` and `isPending`, and the dispatch hook `useCalendarEventsDispatch` returns `mutate`.
 
@@ -584,36 +607,26 @@ React's guide to [scaling up with reducer and context](https://react.dev/learn/s
 
 By the time the server rejects a write, the event has already moved to its optimistic position. Flow's demo events return an error when someone tries to change them. We want to show that error and return the event to its saved position.
 
-Let's check the result from `saveEventChange` inside the `useActionState` callback and show the error in a toast:
+Let's check the result from `saveEventChange` inside the queue callback and show the error in a toast:
 
 ```tsx
 // providers/calendar-events-provider.tsx
-"use client";
-
-import { useActionState, type ReactNode } from "react";
-import { toast } from "sonner";
-// ...app imports...
-
-export function CalendarEventsProvider({ children }: { children: ReactNode }) {
-  const [, dispatch, isPending] = useActionState(
-    async (_: void, change: EventChange) => {
-      const result = await saveEventChange(change);
-      if (result.error) {
-        toast.error(result.error);
-      }
-    },
-    undefined
-  );
-
-  // ...pending changes, mutate, getEvents, and the context providers...
-}
+const [, dispatch, isPending] = useActionState(
+  async (_: void, change: EventChange) => {
+    const result = await saveEventChange(change);
+    if (result.error) {
+      toast.error(result.error);
+    }
+  },
+  undefined
+);
 ```
 
 If the write fails, the server events remain unchanged. The temporary position stays visible until the Transition finishes, then the board returns to those events and the event moves back. We do not need to calculate a reverse change.
 
 ### The Full `CalendarEventsProvider`
 
-Here is the provider with the Action queue, pending changes, context, and error handling wired in. The recurrence handling lives in `applyEventChanges`, next to the reducer in the calendar utils, so this file only holds the queue, the pending changes, and the context:
+Here is the provider with the contexts and the hooks that read them. The recurrence handling lives in `applyEventChanges`, next to the reducer in the calendar utils, so the provider only holds the queue, the pending changes, and the context:
 
 ```tsx
 // providers/calendar-events-provider.tsx
@@ -701,7 +714,7 @@ export function useCalendarEventsDispatch() {
 }
 ```
 
-Now that the provider is in place, the Client Components under it read `getEvents` to render their events, call `mutate` to change one, and read `isPending` while a save is running.
+Now that the provider is in place, the Client Components under it can read `getEvents` to render and call `mutate` to change an event.
 
 ### Applying Pending Changes in the Calendar Boards
 
