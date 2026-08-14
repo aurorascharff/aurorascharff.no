@@ -15,7 +15,7 @@ tags:
 description: Learn how I combine useActionState and useOptimistic to keep rapid mutations responsive and ordered in Huddle and Flow.
 ---
 
-I've recently been sharing [how to build SPA-like experiences with Next.js](https://x.com/aurorascharff/status/2087171648247988705) through [Next Beats](https://next-beats.dev/), [Drop](https://next16-social-media.vercel.app/), [Flow](https://next16-calendar.vercel.app/), and [Huddle](https://next16-team-chat.vercel.app/). One pattern I use in Huddle and Flow, but have not covered yet, is coordinating optimistic writes when interactions overlap. [React Router](https://reactrouter.com/explanation/race-conditions) handles this by cancelling interrupted requests and stale revalidations, and [Solid Router](https://docs.solidjs.com/solid-router/concepts/actions) by tracking pending submissions. In React, we can combine `useActionState` and `useOptimistic`.
+I've recently been sharing [how to build SPA-like experiences with Next.js](https://x.com/aurorascharff/status/2087171648247988705) through [Next Beats](https://next-beats.dev/), [Drop](https://next16-social-media.vercel.app/), [Flow](https://next16-calendar.vercel.app/), and [Huddle](https://next16-team-chat.vercel.app/). One pattern I use in Huddle and Flow, but have not covered yet, is coordinating optimistic writes when interactions overlap. Other frameworks handle some of this for us, like [React Router](https://reactrouter.com/explanation/race-conditions) cancelling interrupted requests and stale revalidations, or [Solid Router](https://docs.solidjs.com/solid-router/concepts/actions) tracking pending submissions. In React, we can combine `useActionState` and `useOptimistic`.
 
 In this post, we'll look at how these hooks work together in Huddle, then scale the pattern across the component tree in Flow.
 
@@ -71,7 +71,7 @@ export function ChannelNav({ groups }: { groups: LayoutGroup[] }) {
 }
 ```
 
-We want the channel sidebar to update immediately when someone moves a channel or edits a group, while the layout changes save in order. Combining `useActionState` and `useOptimistic` for that is a documented pattern:
+We want the channel sidebar to update immediately when someone moves a channel or edits a group, while the layout changes save in order. Combining `useActionState` and `useOptimistic` for that is already covered in a few places:
 
 - [The True Nature of useActionState](https://www.nikhilsnayak.dev/blog/the-true-nature-of-use-action-state) is an early exploration of using the hook as an async reducer and pairing it with `useOptimistic`.
 - The [React `useActionState` docs](https://react.dev/reference/react/useActionState) now cover queued Actions and using both hooks together.
@@ -84,7 +84,7 @@ Let's apply it to Huddle.
 To save the complete layout, we can add a [Server Function](https://react.dev/reference/rsc/server-functions):
 
 ```ts
-// channel-actions.ts
+// features/channel/channel-actions.ts
 "use server";
 
 export async function saveChannelLayout(groups: LayoutGroup[]) {
@@ -183,7 +183,7 @@ export function channelLayoutReducer(
 Inside the reducer, the `move` case removes a channel from its current group and inserts it into the target without changing the input. The other cases handle changes to the groups themselves. Now we can use `channelLayoutReducer` inside `saveChannelLayout` to calculate the layout we write:
 
 ```ts
-// channel-actions.ts
+// features/channel/channel-actions.ts
 "use server";
 
 import {
@@ -219,10 +219,7 @@ export function ChannelNav({
 }: {
   groups: LayoutGroup[];
 }) {
-  const [groups, dispatch, isPending] = useActionState(
-    saveChannelLayout,
-    initialGroups
-  );
+  const [groups, dispatch] = useActionState(saveChannelLayout, initialGroups);
 
   function runChange(change: LayoutChange) {
     startTransition(() => {
@@ -267,10 +264,7 @@ export function ChannelNav({
 }: {
   groups: LayoutGroup[];
 }) {
-  const [groups, dispatch, isPending] = useActionState(
-    saveChannelLayout,
-    initialGroups
-  );
+  const [groups, dispatch] = useActionState(saveChannelLayout, initialGroups);
   const [optimisticGroups, addOptimistic] = useOptimistic(
     groups,
     channelLayoutReducer
@@ -327,7 +321,7 @@ While the Action is pending, `useOptimistic` keeps the changed layout on screen.
 
 ### The Full `ChannelNav`
 
-Here is the sidebar with the queue, the optimistic layout, and the rollback wired in. The drag and menu handlers all go through `runChange`, and the render reads `optimisticGroups`:
+Here is the sidebar with the queue, the optimistic layout, and the rollback wired in. The drag and menu handlers go through `runChange`, and the render reads `optimisticGroups`:
 
 ```tsx
 // features/channel/components/channel-nav.tsx
@@ -547,7 +541,7 @@ However, the month view renders its own `CalendarMonthBoard`, and the header ren
 
 Server Components sit between the header and boards, so passing `mutate` through props would require converting them to Client Components.
 
-Rather than lifting the calendar into one large Client Component, we can place `CalendarEventsProvider` around the header and selected view. I wrote about [this provider approach](/posts/utilizing-useoptimistic-across-the-component-tree-in-nextjs) back when React 19 was still in canary, while I was working out how to get the across-the-app optimistic updates I was used to from React Query. Client Components below the provider can read the context even with Server Components between them:
+Rather than lifting the calendar into one large Client Component, we can place `CalendarEventsProvider` around the header and selected view. I wrote about [this provider approach](/posts/utilizing-useoptimistic-across-the-component-tree-in-nextjs) back when React 19 was still in canary, while I was working out how to get the optimistic updates across the app that I was used to from React Query. Client Components below the provider can read the context even with Server Components between them:
 
 ```tsx
 // app/(workspace)/calendar/[date]/page.tsx
@@ -584,7 +578,7 @@ function getEvents(events: CalendarEvent[]) {
 
 The reduction starts with the `events` prop. The move returns an updated event list, then the resize runs against that list. Flow's `getEvents` also takes the visible `days`, because a recurring create or move can affect several occurrences in the range.
 
-React's guide to [scaling up with reducer and context](https://react.dev/learn/scaling-up-with-reducer-and-context) separates state and dispatch, and the provider follows that split. The state hook `useCalendarEvents` returns `getEvents` and `isPending`, and the dispatch hook `useCalendarEventsDispatch` returns `mutate`. The three values have separate consumers:
+React's guide to [scaling up with reducer and context](https://react.dev/learn/scaling-up-with-reducer-and-context) separates state and dispatch, and the provider follows that split. The state hook `useCalendarEvents` returns `getEvents` and `isPending`, and the dispatch hook `useCalendarEventsDispatch` returns `mutate`. Those three values are used in different places:
 
 - `getEvents` renders the confirmed events with the pending changes replayed over them, in `CalendarBoard` and `CalendarMonthBoard`.
 - `mutate` sends a change, from `useCalendarBoard` for moves and resizes, `EventPopover` for updates and deletes, and the create dialog behind `NewEventButton`.
