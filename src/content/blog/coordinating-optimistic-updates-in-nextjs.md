@@ -4,7 +4,7 @@ pubDatetime: 2026-08-13T10:00:00Z
 title: Coordinating Optimistic Updates in Next.js
 slug: coordinating-optimistic-updates-in-nextjs
 featured: false
-draft: true
+draft: false
 tags:
   - Next.js 16
   - React 19
@@ -81,15 +81,24 @@ Let's apply it to Huddle.
 
 ### Saving the Channel Layout in a Transition
 
-To save the complete layout, we can add a [Server Function](https://react.dev/reference/rsc/server-functions):
+To save the complete layout, we can add a [Server Function](https://react.dev/reference/rsc/server-functions). It writes the group positions and the channel positions inside them, simplified here from Huddle's transaction:
 
 ```ts
 // features/channel/channel-actions.ts
 "use server";
 
 export async function saveChannelLayout(groups: LayoutGroup[]) {
-  await verifyAuth();
-  // ...save groups and invalidate the cache...
+  const user = await verifyAuth();
+
+  for (const [position, group] of groups.entries()) {
+    await prisma.channelGroup.upsert({
+      create: { name: group.name, position, userId: user.id },
+      update: { position },
+      where: { userId_name: { name: group.name, userId: user.id } },
+    });
+    // ...write the group and position for the channels inside it...
+  }
+  // ...invalidate the cache...
 }
 ```
 
@@ -199,7 +208,7 @@ export async function saveChannelLayout(
 ): Promise<LayoutGroup[]> {
   await verifyAuth();
   const next = channelLayoutReducer(groups, change);
-  // ...save next and invalidate the cache...
+  // ...write next with the same upserts as above...
 
   return next;
 }
@@ -420,7 +429,44 @@ From there, the `CalendarBoard` Client Component renders the week grid. We want 
 
 ### Adding an Action Queue to CalendarBoard
 
-Someone can move an event, then resize it before the first save finishes. To order both writes, let's represent the interactions as `EventChange` values. Unlike Huddle, we do not need the result of the previous save to handle the next change, so the Action state can be `void`:
+Someone can move an event, then resize it before the first save finishes. To order both writes, let's represent the interactions as `EventChange` values, and let one Server Function run the matching write:
+
+```ts
+// features/calendar/calendar-actions.ts
+"use server";
+
+export async function saveEventChange(change: EventChange) {
+  switch (change.type) {
+    case "move":
+      return moveEvent({
+        day: change.day,
+        sourceId: change.sourceId,
+        start: change.start,
+      });
+    // ...create, update, resize, and delete...
+  }
+}
+
+async function moveEvent({ day, sourceId, start }: MoveEventInput) {
+  const user = await verifyAuth();
+  const event = await prisma.calendarEvent.findUnique({
+    where: { id: sourceId },
+  });
+  if (event?.userId !== user.id) {
+    return { error: "This event is not available." };
+  }
+
+  const updated = await prisma.calendarEvent.update({
+    data: { day: new Date(`${day}T00:00:00.000Z`), start },
+    where: { id: sourceId },
+  });
+  // ...invalidate the cache...
+
+  return { data: updated };
+}
+```
+
+The cases return either an error or the updated row, and the rollback later checks for that error. Unlike Huddle, we do not need the result of the previous save to handle the next change, so the Action state can be `void`:
 
 ```tsx
 // features/calendar/components/calendar-board.tsx
@@ -457,7 +503,7 @@ However, `CalendarBoard` still renders the `events` it received from `CalendarWe
 
 ### Applying Event Changes with useOptimistic
 
-To show a change before the save finishes, let's add a reducer that takes the events from the server and one `EventChange`, and returns the next event list:
+To show a change before the save finishes, `useOptimistic` needs an update function that calculates the next events. Huddle could pass `channelLayoutReducer` straight in, because the server write already needed it, but Flow's Server Function writes to the database directly. Let's write the reducer for the client instead, taking the events from the server and one `EventChange` and returning the next event list:
 
 ```tsx
 // features/calendar/utils/event-change-reducer.ts
@@ -555,9 +601,9 @@ Rather than lifting the calendar into one large Client Component, we can place `
 </CalendarEventsProvider>
 ```
 
-The Action queue can move into the provider unchanged because `saveEventChange` only needs an `EventChange`. The optimistic state is harder. An update function always runs against a base state, and `eventChangeReducer` moves, resizes, and deletes events that are already in the list, so its base has to be the events themselves. Those arrive below the provider, in `CalendarWeek` and `CalendarMonth`, and each view fetches its own range.
+The Action queue can move into the provider unchanged because `saveEventChange` only needs an `EventChange`. The optimistic state is harder. An update function always runs against a base state, and `eventChangeReducer` moves, resizes, and deletes events that are already in the list, so its base has to be the events themselves. Those arrive below the provider, in `CalendarWeek` and `CalendarMonth`, and the two views fetch different ranges.
 
-The pending changes are a different kind of state. They start from an empty list and only get appended to, so the provider can hold them without any server data, and each board can apply them to the events it received:
+So let's keep the changes instead of the events. A list of changes starts empty and only gets appended to, so the provider can hold it with no server data, and the boards can apply the list to whatever events they received:
 
 ```tsx
 // providers/calendar-events-provider.tsx
@@ -582,26 +628,28 @@ export function CalendarEventsProvider({ children }: { children: ReactNode }) {
     });
   }
 
-  function getEvents(events: CalendarEvent[], days: string[]) {
-    return applyEventChanges(events, pendingChanges, days);
-  }
-
-  // ...provide getEvents, isPending, and mutate through context...
+  // ...provide pendingChanges, isPending, and mutate through context...
 }
 ```
 
-The queue and `mutate` are the same as in `CalendarBoard`. If someone moves an event and then resizes it, `pendingChanges` contains the move followed by the resize, and a board can replay both over the events it received from the server:
+The queue and `mutate` are the same as in `CalendarBoard`. If someone moves an event and then resizes it, `pendingChanges` contains the move followed by the resize, and a hook can replay both over the events a board received from the server:
 
 ```tsx
+// features/calendar/hooks/use-optimistic-events.ts
+"use client";
+
+import { useCalendarEvents } from "@/providers/calendar-events-provider";
+import { eventChangeReducer } from "../utils/event-change-reducer";
+
 // Simplified without recurring events
-function getEvents(events: CalendarEvent[]) {
+export function useOptimisticEvents(events: CalendarEvent[]) {
+  const { pendingChanges } = useCalendarEvents();
+
   return pendingChanges.reduce(eventChangeReducer, events);
 }
 ```
 
-Flow's `getEvents` also passes the visible `days` to `applyEventChanges`, which expands recurring events before the reduce.
-
-React's guide to [scaling up with reducer and context](https://react.dev/learn/scaling-up-with-reducer-and-context) separates state and dispatch, and the provider follows that split. The state hook `useCalendarEvents` returns `getEvents` and `isPending`, and the dispatch hook `useCalendarEventsDispatch` returns `mutate`.
+Flow's version also takes the visible `days`, so it can expand recurring events before the reduce.
 
 ### Rolling Back Failed Event Changes
 
@@ -611,22 +659,28 @@ Let's check the result from `saveEventChange` inside the queue callback and show
 
 ```tsx
 // providers/calendar-events-provider.tsx
-const [, dispatch, isPending] = useActionState(
-  async (_: void, change: EventChange) => {
-    const result = await saveEventChange(change);
-    if (result.error) {
-      toast.error(result.error);
-    }
-  },
-  undefined
-);
+export function CalendarEventsProvider({ children }: { children: ReactNode }) {
+  const [, dispatch, isPending] = useActionState(
+    async (_: void, change: EventChange) => {
+      const result = await saveEventChange(change);
+      if (result.error) {
+        toast.error(result.error);
+      }
+    },
+    undefined
+  );
+
+  // ...pending changes, mutate, and the contexts...
+}
 ```
 
 If the write fails, the server events remain unchanged. The temporary position stays visible until the Transition finishes, then the board returns to those events and the event moves back. We do not need to calculate a reverse change.
 
 ### The Full `CalendarEventsProvider`
 
-Here is the provider with the contexts and the hooks that read them:
+For the context itself, let's follow React's guide to [scaling up with reducer and context](https://react.dev/learn/scaling-up-with-reducer-and-context) and separate state from dispatch, so a component that only sends changes does not re-render when the pending changes do.
+
+Here is the provider with both contexts and the hooks that read them:
 
 ```tsx
 // providers/calendar-events-provider.tsx
@@ -641,12 +695,11 @@ import {
   type ReactNode,
 } from "react";
 import { toast } from "sonner";
-import { applyEventChanges } from "@/features/calendar/utils/apply-event-changes";
 // ...app imports...
 
 type CalendarEventsStateContextValue = {
-  getEvents: (events: CalendarEvent[], days: string[]) => CalendarEvent[];
   isPending: boolean;
+  pendingChanges: EventChange[];
 };
 
 type CalendarEventsDispatchContextValue = (change: EventChange) => void;
@@ -678,11 +731,7 @@ export function CalendarEventsProvider({ children }: { children: ReactNode }) {
     });
   }
 
-  function getEvents(events: CalendarEvent[], days: string[]) {
-    return applyEventChanges(events, pendingChanges, days);
-  }
-
-  const contextValue = { getEvents, isPending };
+  const contextValue = { isPending, pendingChanges };
 
   return (
     <CalendarEventsStateContext.Provider value={contextValue}>
@@ -714,17 +763,17 @@ export function useCalendarEventsDispatch() {
 }
 ```
 
-Now that the provider is in place, the Client Components under it can read `getEvents` to render and call `mutate` to change an event.
+Both contexts are in place now, so the Client Components under the provider can call `useOptimisticEvents` to render and `mutate` to change an event.
 
 ### Applying Pending Changes in the Calendar Boards
 
-Let's call `getEvents` before passing the events from `CalendarWeek` into `useCalendarBoard`, the hook that owns the grid's drag, resize, and selection state:
+Let's call `useOptimisticEvents` before passing the events from `CalendarWeek` into `useCalendarBoard`, the hook that owns the grid's drag, resize, and selection state:
 
 ```tsx
 // features/calendar/components/calendar-board.tsx
 "use client";
 
-import { useCalendarEvents } from "@/providers/calendar-events-provider";
+import { useOptimisticEvents } from "../hooks/use-optimistic-events";
 // ...app imports...
 
 export function CalendarBoard({
@@ -736,19 +785,19 @@ export function CalendarBoard({
   days: string[];
   events: CalendarEvent[];
 }) {
-  const { getEvents } = useCalendarEvents();
   const eventDays = [...days, shiftDay(days.at(-1)!, 1)];
+  const optimisticEvents = useOptimisticEvents(events, eventDays);
   const { interactions, visibleEvents } = useCalendarBoard({
     calendars,
     days,
-    events: getEvents(events, eventDays),
+    events: optimisticEvents,
   });
 
   // ...render visibleEvents with interactions in the calendar grid...
 }
 ```
 
-The `getEvents` call starts with the events from `CalendarWeek` and replays the pending changes over them. Because the week grid runs from 06:00 to 06:00, `eventDays` includes the following calendar day too. The month view's `CalendarMonthBoard` follows the same pattern before grouping events into days.
+The board never touches `pendingChanges` itself. It asks for the events with the changes already applied. Because the week grid runs from 06:00 to 06:00, `eventDays` includes the following calendar day too. The month view's `CalendarMonthBoard` calls the same hook before grouping events into days.
 
 ### Updating and Deleting Events from the Popover
 
@@ -756,10 +805,19 @@ The board also renders `EventPopover` for the selected event, which puts the pop
 
 ```tsx
 // features/calendar/components/event-popover.tsx
-const mutate = useCalendarEventsDispatch();
+"use client";
 
-function remove() {
-  mutate({ sourceId: event.sourceId, type: "delete" });
+import { useCalendarEventsDispatch } from "@/providers/calendar-events-provider";
+// ...app imports...
+
+export function EventPopover({ event, onClose }: EventPopoverProps) {
+  const mutate = useCalendarEventsDispatch();
+
+  function remove() {
+    mutate({ sourceId: event.sourceId, type: "delete" });
+  }
+
+  // ...render the details, the edit form, and a delete button...
 }
 ```
 
