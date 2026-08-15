@@ -448,13 +448,12 @@ export async function saveEventChange(change: EventChange) {
 }
 
 async function moveEvent({ day, sourceId, start }: MoveEventInput) {
-  const user = await verifyAuth();
-  const event = await prisma.calendarEvent.findUnique({
-    where: { id: sourceId },
-  });
-  if (event?.userId !== user.id) {
-    return { error: "This event is not available." };
+  await verifyAuth();
+  const event = await findEvent(sourceId);
+  if (event?.demo) {
+    return { error: "Create your own calendar to make changes." };
   }
+  // ...check that the event exists and belongs to the user...
 
   const updated = await prisma.calendarEvent.update({
     data: { day: new Date(`${day}T00:00:00.000Z`), start },
@@ -541,28 +540,12 @@ export function eventChangeReducer(
 }
 ```
 
-With the reducer ready, we can pass it to `useOptimistic` in `CalendarBoard`:
+With the reducer ready, we can pass it to `useOptimistic` in `CalendarBoard` and add the change alongside the dispatch:
 
 ```tsx
 // features/calendar/components/calendar-board.tsx
-"use client";
-
-import { startTransition, useActionState, useOptimistic } from "react";
-// ...app imports...
-
-export function CalendarBoard({
-  days,
-  events,
-}: {
-  days: string[];
-  events: CalendarEvent[];
-}) {
-  const [, dispatch, isPending] = useActionState(
-    async (_: void, change: EventChange) => {
-      await saveEventChange(change);
-    },
-    undefined
-  );
+export function CalendarBoard({ days, events }: CalendarBoardProps) {
+  // ...the Action queue from above...
   const [optimisticEvents, addOptimisticChange] = useOptimistic(
     events,
     eventChangeReducer
@@ -833,29 +816,25 @@ For Huddle's channel layout and Flow's calendar events, the confirmed data stays
 
 Huddle's messages need polling and optimistic updates across several components, so I use a client data library there. The app has equivalent [TanStack Query](https://github.com/aurorascharff/next16-team-chat/tree/main) and [SWR](https://github.com/aurorascharff/next16-team-chat/tree/swr) implementations.
 
-In the SWR version, `MessageThread` still loads the current messages on the server, then seeds the SWR cache with them so the browser can take over:
+In the SWR version, `MessageThread` still loads the messages on the server and seeds the SWR cache with them:
 
 ```tsx
 // features/message/components/message-thread.tsx
 export async function MessageThread({ channelId }: { channelId: string }) {
-  // ...load the current user and last read time...
+  // ...load the current user...
   const messageData = preload(messageKeys.channel(channelId), () =>
     getMessagesForUser(channelId, user.id)
   );
 
   return (
     <SWRConfig value={{ cacheData: { ...messageData } }}>
-      <MessageList
-        channelId={channelId}
-        currentUserId={user.id}
-        lastReadAt={lastReadAt}
-      />
+      <MessageList channelId={channelId} currentUserId={user.id} />
     </SWRConfig>
   );
 }
 ```
 
-After hydration, `useSuspenseMessages` reads that same channel key, so the first client render uses the seeded messages instead of fetching them again:
+The client hook reads that same key, so it starts from the server data and takes over the polling:
 
 ```tsx
 // features/message/hooks/use-messages.ts
@@ -868,7 +847,7 @@ export function useSuspenseMessages(channelId: string) {
 }
 ```
 
-SWR then owns the polling and revalidation, and the message components read one shared cache. That leaves us with two caches to coordinate, so a mutation invalidates the Next.js cache in the Server Function and updates the relevant SWR keys in the browser.
+That leaves us with two caches to coordinate, so a mutation invalidates the Next.js cache in the Server Function and updates the relevant SWR keys in the browser.
 
 For messages, that trade-off is worth it, and Next.js documents this handoff for both [SWR](https://nextjs.org/docs/app/guides/client-side-data-fetching/swr#provide-initial-data-from-a-server-component) and [TanStack Query](https://nextjs.org/docs/app/guides/client-side-data-fetching/tanstack-query).
 
