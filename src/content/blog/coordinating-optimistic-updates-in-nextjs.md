@@ -4,7 +4,7 @@ pubDatetime: 2026-08-13T10:00:00Z
 title: Coordinating Optimistic Updates in Next.js
 slug: coordinating-optimistic-updates-in-nextjs
 featured: false
-draft: false
+draft: true
 tags:
   - Next.js 16
   - React 19
@@ -420,7 +420,7 @@ From there, the `CalendarBoard` Client Component renders the week grid. We want 
 
 ### Adding an Action Queue to CalendarBoard
 
-Someone can move an event, then resize it before the first save finishes. To order both writes, let's represent the interactions as `EventChange` values. Unlike Huddle, we do not need the result of the previous save to handle the next change, so the Action state can be `void`. One `isPending` value stays true until all the queued saves finish, and Flow shows it as a spinner in the header:
+Someone can move an event, then resize it before the first save finishes. To order both writes, let's represent the interactions as `EventChange` values. Unlike Huddle, we do not need the result of the previous save to handle the next change, so the Action state can be `void`:
 
 ```tsx
 // features/calendar/components/calendar-board.tsx
@@ -457,7 +457,7 @@ However, `CalendarBoard` still renders the `events` it received from `CalendarWe
 
 ### Applying Event Changes with useOptimistic
 
-To show a change before the save finishes, let's add a reducer that applies one `EventChange` to the events from the server:
+To show a change before the save finishes, let's add a reducer that takes the events from the server and one `EventChange`, and returns the next event list:
 
 ```tsx
 // features/calendar/utils/event-change-reducer.ts
@@ -555,9 +555,9 @@ Rather than lifting the calendar into one large Client Component, we can place `
 </CalendarEventsProvider>
 ```
 
-The Action queue can move into the provider unchanged because `saveEventChange` only needs an `EventChange`. The optimistic state needs a different shape. In `CalendarBoard`, `useOptimistic` starts from the `events` prop. The provider sits above `CalendarWeek` and `CalendarMonth`, so it has no `CalendarEvent[]` of its own.
+The Action queue can move into the provider unchanged because `saveEventChange` only needs an `EventChange`. The optimistic state is harder. An update function always runs against a base state, and `eventChangeReducer` moves, resizes, and deletes events that are already in the list, so its base has to be the events themselves. Those arrive below the provider, in `CalendarWeek` and `CalendarMonth`, and each view fetches its own range.
 
-Instead, let's collect the `EventChange` values while their saves are pending, and hand the boards a `getEvents` function that applies them:
+The pending changes are a different kind of state. They start from an empty list and only get appended to, so the provider can hold them without any server data, and each board can apply them to the events it received:
 
 ```tsx
 // providers/calendar-events-provider.tsx
@@ -590,7 +590,7 @@ export function CalendarEventsProvider({ children }: { children: ReactNode }) {
 }
 ```
 
-The queue and `mutate` are the same as in `CalendarBoard`. The difference is `pendingChanges`, which describes how to update the confirmed events instead of holding them. If someone moves an event and then resizes it, the list contains the move followed by the resize, and a board can replay both over the events it received from the server:
+The queue and `mutate` are the same as in `CalendarBoard`. If someone moves an event and then resizes it, `pendingChanges` contains the move followed by the resize, and a board can replay both over the events it received from the server:
 
 ```tsx
 // Simplified without recurring events
@@ -599,7 +599,7 @@ function getEvents(events: CalendarEvent[]) {
 }
 ```
 
-The reduction starts with the `events` prop. The move returns an updated event list, then the resize runs against that list. Flow's `getEvents` takes the visible `days` as well, because a recurring create or move can affect several occurrences in the range, so `applyEventChanges` expands those first.
+Flow's `getEvents` also passes the visible `days` to `applyEventChanges`, which expands recurring events before the reduce.
 
 React's guide to [scaling up with reducer and context](https://react.dev/learn/scaling-up-with-reducer-and-context) separates state and dispatch, and the provider follows that split. The state hook `useCalendarEvents` returns `getEvents` and `isPending`, and the dispatch hook `useCalendarEventsDispatch` returns `mutate`.
 
@@ -626,7 +626,7 @@ If the write fails, the server events remain unchanged. The temporary position s
 
 ### The Full `CalendarEventsProvider`
 
-Here is the provider with the contexts and the hooks that read them. The recurrence handling lives in `applyEventChanges`, next to the reducer in the calendar utils, so the provider only holds the queue, the pending changes, and the context:
+Here is the provider with the contexts and the hooks that read them:
 
 ```tsx
 // providers/calendar-events-provider.tsx
