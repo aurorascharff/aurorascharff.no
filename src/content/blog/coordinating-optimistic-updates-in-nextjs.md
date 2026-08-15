@@ -15,7 +15,7 @@ tags:
 description: Learn how I combine useActionState and useOptimistic to keep rapid mutations responsive and ordered in Huddle and Flow.
 ---
 
-I've recently been sharing [how to build SPA-like experiences with Next.js](https://x.com/aurorascharff/status/2087171648247988705) through [Next Beats](https://next-beats.dev/), [Drop](https://next16-social-media.vercel.app/), [Flow](https://next16-calendar.vercel.app/), and [Huddle](https://next16-team-chat.vercel.app/). One pattern I use in Huddle and Flow, but have not covered yet, is coordinating optimistic writes when interactions overlap. Other frameworks handle some of this for us, like [React Router](https://reactrouter.com/explanation/race-conditions) cancelling interrupted requests and stale revalidations, or [Solid Router](https://docs.solidjs.com/solid-router/concepts/actions) tracking pending submissions. In React, we can combine `useActionState` and `useOptimistic`.
+I've recently been sharing [how to build SPA-like experiences with Next.js](https://x.com/aurorascharff/status/2087171648247988705) through [Next Beats](https://next-beats.dev/), [Drop](https://next16-social-media.vercel.app/), [Flow](https://next16-calendar.vercel.app/), and [Huddle](https://next16-team-chat.vercel.app/). One pattern I use in Huddle and Flow, but have not covered yet, is coordinating optimistic writes when interactions overlap. Overlapping writes are a common thing to deal with on the web, and frameworks handle them differently, like [React Router](https://reactrouter.com/explanation/race-conditions) cancelling interrupted requests and stale revalidations, or [Solid Router](https://docs.solidjs.com/solid-router/concepts/actions) tracking pending submissions. In React, we can combine `useActionState` and `useOptimistic`.
 
 In this post, we'll look at how these hooks work together in Huddle, then scale the pattern across the component tree in Flow.
 
@@ -503,7 +503,7 @@ However, `CalendarBoard` still renders the `events` it received from `CalendarWe
 
 ### Applying Event Changes with useOptimistic
 
-To show a change before the save finishes, `useOptimistic` needs an update function that calculates the next events. Huddle could pass `channelLayoutReducer` straight in, because the server write already needed it, but Flow's Server Function writes to the database directly. Let's write the reducer for the client instead, taking the events from the server and one `EventChange` and returning the next event list:
+To show a change before the save finishes, `useOptimistic` needs an update function that calculates the next events. Saving Huddle's sidebar means writing the whole layout, so the server already calculated it with `channelLayoutReducer` and we could pass that straight in. A calendar event is a single row that Flow updates on its own, so there is nothing to reuse. Let's write the reducer for the client instead, taking the events from the server and one `EventChange` and returning the next event list:
 
 ```tsx
 // features/calendar/utils/event-change-reducer.ts
