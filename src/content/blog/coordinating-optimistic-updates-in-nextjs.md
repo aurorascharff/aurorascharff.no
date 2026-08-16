@@ -847,16 +847,14 @@ export function useSuspenseMessages(channelId: string) {
 }
 ```
 
-That leaves us with two caches to coordinate, so a mutation invalidates the Next.js cache in the Server Function and updates the relevant SWR keys in the browser.
+That leaves us with two caches to coordinate, so a mutation has to invalidate the Next.js cache in the Server Function and update the relevant SWR keys in the browser.
 
-For messages, that trade-off is worth it, and Next.js documents this handoff for both [SWR](https://nextjs.org/docs/app/guides/client-side-data-fetching/swr#provide-initial-data-from-a-server-component) and [TanStack Query](https://nextjs.org/docs/app/guides/client-side-data-fetching/tanstack-query).
-
-Without a client data library, sharing the optimistic state across the component tree takes the wiring we did in Flow. You might reach for one earlier, depending on your app.
+I reach for a library when the data changes on its own, like messages arriving while you read them. A channel layout only changes when someone drags it, so `useActionState` and `useOptimistic` are enough. Next.js has guides for the same handoff with [SWR](https://nextjs.org/docs/app/guides/client-side-data-fetching/swr#provide-initial-data-from-a-server-component) and with [TanStack Query](https://nextjs.org/docs/app/guides/client-side-data-fetching/tanstack-query).
 
 ## Conclusion
 
 What I like about this pattern is that Server Components continue to own the data. We only add enough client state to coordinate the interaction, then let the server result take over when the Action finishes.
 
-Coordinating this by hand is still a fair amount of wiring, and it looks the same in Huddle and Flow. Maybe we'll see these patterns built into React or Next.js in the future.
+Putting the reducer, the Action queue, and the optimistic state together is still a fair amount of wiring, and it has the same fundamental pieces in Huddle and Flow. Maybe we'll see these patterns built into React or Next.js in the future.
 
 I hope this post has been helpful. Please let me know if you have any questions or comments, and follow me on [Bluesky](https://bsky.app/profile/aurorascharff.no) or [X](https://x.com/aurorascharff) for more updates. Happy coding! 🚀
