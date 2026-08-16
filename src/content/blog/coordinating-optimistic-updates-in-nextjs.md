@@ -779,7 +779,7 @@ export function CalendarBoard({
 }
 ```
 
-The board never touches `pendingChanges` itself. It asks for the events with the changes already applied. Flow's hook also takes the visible days, and the week grid runs from 06:00 to 06:00, so the days the board passes include the following calendar day too. The month view's `CalendarMonthBoard` calls the same hook before grouping events into days.
+The board never touches `pendingChanges` itself. It asks for the events with the changes already applied. The month view's `CalendarMonthBoard` calls the same hook before grouping events into days.
 
 ### Updating and Deleting Events from the Popover
 
