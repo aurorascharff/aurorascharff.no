@@ -67,9 +67,10 @@ If you can't verify something, ask, leave it out, or mark it `[VERIFY]` inline a
 
 This skill is content-type-agnostic. Format-specific skills build on it and add their own structure and review items:
 
-| Content type                      | Skill                                                                     |
-| --------------------------------- | ------------------------------------------------------------------------- |
-| Blog posts (aurorascharff.no)     | `.agents/skills/blog-writing/` in the `aurorascharff.no` repo             |
+| Content type                          | Skill                                                                 |
+| -------------------------------------- | ---------------------------------------------------------------------- |
+| Blog posts (aurorascharff.no)          | `.agents/skills/blog-writing/` in the `aurorascharff.no` repo          |
+| Social posts (X, Bluesky, LinkedIn)    | `.agents/skills/social-media/` in the private Content folder           |
 
 When a content-type skill exists for the task, read its `SKILL.md` too; it inherits everything here and its checklist runs on top of the review framework. To add a new content type (talks, social threads), create a sibling skill that starts by pointing here, and register it in this table.
 
