@@ -1,6 +1,6 @@
 # Patterns that read as AI (never do these)
 
-The tells Aurora flags in drafts. Every one of these has been rejected in a real edit. When one appears, rewrite the sentence's structure; swapping the flagged word for a sibling keeps the same rhythm and stays wrong.
+The tells Aurora flags in drafts. Every one of these has been rejected in a real edit. When one appears, rewrite the sentence's structure, since swapping the flagged word for a sibling keeps the same rhythm and stays wrong. Watch tightening passes especially: compression breeds punch lines, turning a plain two-clause explanation into a see-saw summary ("The pattern went in, and plain relative anchors came out."). Shorter must mean plainer, never punchier, so re-check every shortened sentence against this list.
 
 ## Punctuation and rhythm
 

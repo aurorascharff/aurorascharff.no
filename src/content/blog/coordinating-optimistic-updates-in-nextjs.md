@@ -12,7 +12,7 @@ tags:
   - useActionState
   - useOptimistic
   - Server Functions
-description: Learn how I combine useActionState and useOptimistic to keep rapid mutations responsive and ordered in Huddle and Flow.
+description: Several changes can happen before the first save finishes. Here is how useActionState and useOptimistic keep those changes on screen while the saves run in order.
 ---
 
 I've recently been sharing [how to build SPA-like experiences with Next.js](https://x.com/aurorascharff/status/2087171648247988705) through [Next Beats](https://next-beats.dev/), [Drop](https://next16-social-media.vercel.app/), [Flow](https://next16-calendar.vercel.app/), and [Huddle](https://next16-team-chat.vercel.app/). One pattern I use in Huddle and Flow, but have not covered yet, is coordinating optimistic writes when interactions overlap. Overlapping writes are a common thing to deal with on the web, and frameworks handle them differently, like [React Router](https://reactrouter.com/explanation/race-conditions) cancelling interrupted requests and stale revalidations, or [Solid Router](https://docs.solidjs.com/solid-router/concepts/actions) tracking pending submissions. In React, we can combine `useActionState` and `useOptimistic`.
