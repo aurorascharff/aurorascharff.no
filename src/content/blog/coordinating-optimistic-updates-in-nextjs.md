@@ -448,7 +448,7 @@ export async function saveEventChange(change: EventChange) {
 }
 
 async function moveEvent({ day, sourceId, start }: MoveEventInput) {
-  await verifyAuth();
+  const user = await verifyAuth();
   const event = await findEvent(sourceId);
   if (event?.demo) {
     return { error: "Create your own calendar to make changes." };
