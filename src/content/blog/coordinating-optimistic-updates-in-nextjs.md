@@ -296,7 +296,7 @@ When `runChange` fires, the sidebar renders `optimisticGroups` immediately while
 
 An optimistic change can still fail to save. We want to let the user know and return the sidebar to the last layout that did save.
 
-We can handle both inside the callback passed to `useActionState`. If `saveChannelLayout` throws, let's show a toast and return the `groups` passed into the callback:
+We can handle both inside the callback passed to `useActionState`. If `saveChannelLayout` throws, let's show a toast and return the previous groups passed into the callback:
 
 ```tsx
 // features/channel/components/channel-nav.tsx
@@ -311,12 +311,12 @@ export function ChannelNav({
   groups: LayoutGroup[];
 }) {
   const [groups, dispatch] = useActionState(
-    async (groups: LayoutGroup[], change: LayoutChange) => {
+    async (previousGroups: LayoutGroup[], change: LayoutChange) => {
       try {
-        return await saveChannelLayout(groups, change);
+        return await saveChannelLayout(previousGroups, change);
       } catch {
         toast.error("Could not save channel layout. Try again.");
-        return groups;
+        return previousGroups;
       }
     },
     initialGroups
@@ -347,12 +347,12 @@ export function ChannelNav({
   groups: LayoutGroup[];
 }) {
   const [groups, dispatch] = useActionState(
-    async (groups: LayoutGroup[], change: LayoutChange) => {
+    async (previousGroups: LayoutGroup[], change: LayoutChange) => {
       try {
-        return await saveChannelLayout(groups, change);
+        return await saveChannelLayout(previousGroups, change);
       } catch {
         toast.error("Could not save channel layout. Try again.");
-        return groups;
+        return previousGroups;
       }
     },
     initialGroups
