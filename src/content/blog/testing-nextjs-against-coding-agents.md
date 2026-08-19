@@ -211,11 +211,11 @@ The dashboard is a Next.js 16 app with Cache Components enabled, so it runs on t
 
 ## Testing My 16.3 Work Before It Shipped
 
-That branch-pointing is how I tested my own 16.3 work. The error messages, Skills, and docs I worked on all shipped with [Next.js 16.3: AI Improvements](https://nextjs.org/blog/next-16-3-ai-improvements), and I could check them against a preview build before they merged. None of this was a fixed pipeline. It was a mix of automated and manual, and it was up to me what felt worth testing, but the option was always there.
+I used those branch runs to test my own 16.3 work. The error messages, Skills, and docs I worked on shipped with [Next.js 16.3: AI Improvements](https://nextjs.org/blog/next-16-3-ai-improvements), and I could check them against a preview build before they merged. This was a mix of automated and manual work rather than a fixed pipeline. I chose which changes were worth running through it.
 
-Next.js publishes a preview build for PRs as an installable tarball, so a run can take a PR URL, resolve it to that tarball, and install it into the sandbox app before the agent starts. When a change felt worth checking, I could push the branch and watch how an agent reacted to it before it merged.
+Next.js publishes PR preview builds as installable tarballs. A run can take the PR URL, resolve the tarball, and install it in the sandbox before the agent starts. When a change felt worth checking, I could push the branch and watch how an agent reacted before it merged.
 
-Being able to run this before a merge at all is the point, and the sandbox is what makes it cheap, with nothing to clean up afterward and a lot it handles that I'd otherwise get wrong myself.
+The sandbox made these pre-merge checks cheap. It handled the isolated environment and cleanup that I would otherwise have to maintain myself.
 
 ### The Error Messages
 
@@ -247,9 +247,9 @@ When I reworded one of those errors, I could point a run at the PR preview to se
    prompt is scoped to the specific fix the developer chose, not a generic dump  [sandbox]
 ```
 
-The feature itself works. What the log caught is that it's undocumented, so an agent grepping for the Copy prompt affordance finds nothing.
+The Copy prompt feature worked, but the log caught that it was undocumented. An agent searching the bundled docs for the affordance found nothing.
 
-Runs like this shaped the details that shipped. Both docs findings became PRs. [#94564](https://github.com/vercel/next.js/pull/94564) moved the Insight error pages into canary so the sandbox app installs them offline and their links resolve, something only an agent stuck in a sandbox would notice was missing, and [#95193](https://github.com/vercel/next.js/pull/95193) restructured those pages to orient the reader and point at the new 16.3 guides. On the overlay side, I restructured the Copy prompt body into a step-by-step checklist ([#95186](https://github.com/vercel/next.js/pull/95186)) and dropped the fix cards that didn't apply to the failing code ([#94926](https://github.com/vercel/next.js/pull/94926)).
+Both docs findings became PRs. [#94564](https://github.com/vercel/next.js/pull/94564) moved the Insight error pages into canary so the sandbox app could install them offline and resolve their links. [#95193](https://github.com/vercel/next.js/pull/95193) restructured those pages to orient the reader and point at the new 16.3 guides. I also reworked the Copy prompt body into a step-by-step checklist ([#95186](https://github.com/vercel/next.js/pull/95186)) and removed fix cards that did not apply to the failing code ([#94926](https://github.com/vercel/next.js/pull/94926)).
 
 ### The Skills
 
@@ -268,7 +268,7 @@ I checked the [first-party Skills](https://nextjs.org/blog/next-16-3-ai-improvem
    ◐ (Partial Prerender); /dashboard stays ƒ (Dynamic)  [sandbox]
 ```
 
-The skill's sequencing works as written, and the run also caught a real gotcha. The blanket opt-out the codemod applies clears validation but not synchronous-IO reads, so a `new Date()` in the root layout footer still failed `/_not-found` even after opting out. Watching agents hit edges like this is what fed into the [`next-cache-components-adoption`](https://github.com/vercel/next.js/tree/canary/skills/next-cache-components-adoption) skill.
+The skill's sequencing worked as written, and the run caught a real gotcha. The blanket opt-out from the codemod clears validation but not synchronous I/O reads, so a `new Date()` in the root layout footer still failed `/_not-found`. Findings like this went back into the [`next-cache-components-adoption`](https://github.com/vercel/next.js/tree/canary/skills/next-cache-components-adoption) skill.
 
 ### The Docs
 
@@ -320,17 +320,17 @@ When a fix felt worth re-checking, I could run the same prompt against its previ
 
 ## Letting eve Own the Plumbing
 
-Everything so far ran on the first version of this setup. It used Vercel Workflow for durable runs, the AI SDK with AI Gateway for the model, the chat SDK for Slack, and Redis and Blob for storage, with a sentinel string for human-in-the-loop.
+The first version used Vercel Workflow for durable runs, the AI SDK with AI Gateway for the model, the chat SDK for Slack, and Redis and Blob for storage. A sentinel string handled human-in-the-loop questions.
 
 I was already running the loop regularly by the time [eve](https://eve.dev) came out, and migrating to it deleted around 1,900 lines of my code for the same surface: the dashboard, the Slack bot, and the loop. The whole `workflows/` package of durable-run orchestration, including the `DurableAgent` run loop from the Slack section, collapsed into eve's session loop.
 
 ### What Moved Into eve
 
-Slack shows the change most clearly. The first version used the chat SDK with a `slack-manifest.json` checked into the repo, its scopes and event subscriptions maintained by hand, and pattern-matched thread replies faking human-in-the-loop, because questions came back as free text I had to answer in prose. All it could really do was start a run and report back.
+Slack shows the change most clearly. The first version kept a `slack-manifest.json` in the repo, with scopes and event subscriptions maintained by hand. Human-in-the-loop questions came back as free text, so I pattern-matched thread replies to resume the run. The bot could start a run and report back, but it could not do much else.
 
-On eve the whole channel is one file, `ask_question` renders as real buttons and resumes with structured input, and Vercel Connect provisioned the new Slack app in one CLI call instead of the api.slack.com walkthrough, with no manifest in the repo anymore.
+On eve, the whole channel fits in one file. The `ask_question` tool renders real buttons and resumes with structured input. Vercel Connect also provisioned the Slack app in one CLI call, so the repo no longer needs the manifest or the api.slack.com setup walkthrough.
 
-The pieces are all still there, they moved into eve's file structure, and now the framework owns the sessions, the sandbox lifecycle, the channels, and the scheduling:
+The same pieces moved into eve's file structure, while the framework took over sessions, sandbox lifecycle, channels, and scheduling:
 
 ```text
 agent/
@@ -358,11 +358,11 @@ export default defineSandbox({
 });
 ```
 
-### What It Let the Agent Do
+### Coordinating Runs with eve
 
-The migration also changed the agent's role. Before, it was something the workflow kicked off once per run, with no way to coordinate the runs or even see the others. On eve it became the orchestrator of all of them, with past runs indexed, so it can answer questions about older ones and act like one continuous assistant instead of a series of one-shot triggers.
+The migration also changed what the agent could do. The first version started a separate agent for a run, and that agent could not see or coordinate the others. On eve, past runs are indexed and one agent can coordinate them, answer questions about older runs, and continue the conversation across sessions.
 
-That opened up things the first version had no way to do, because it only knew about the run in front of it:
+Now I can ask the DX Agent questions across the runs it has collected:
 
 ```text
 @dxagent how did this run do compared to the one without partialPrefetching?
@@ -372,11 +372,11 @@ That opened up things the first version had no way to do, because it only knew a
 @dxagent favorite this run
 ```
 
-Runs also got faster, and the suite runs that used to die halfway with no error now finish, a bug I'd sunk real time into that the migration cleared on its own, which is where I learned the framework the agent runs on is a DX surface too.
+Runs also got faster. Suite runs that used to stop halfway without an error now finish, which fixed a problem I had spent a lot of time investigating. The framework the agent runs on affects the developer experience too.
 
 ## Collecting Friction at the End of a Session
 
-The active skill gets its detail by changing how the agent works from the start of a task. I also wanted to see whether we could collect useful feedback from a regular coding session, so I built a [passive version](https://github.com/aurorascharff/agent-friction-skill/blob/main/passive/SKILL.md) as a proof of concept.
+The friction log so far has been active. The agent follows the skill from the start and records what happens while it works. I also wanted to see whether we could collect useful feedback from a regular coding session, so I built a [passive version](https://github.com/aurorascharff/agent-friction-skill/blob/main/passive/SKILL.md) as a proof of concept.
 
 The flow works like this:
 
@@ -385,7 +385,7 @@ The flow works like this:
 3. The endpoint validates the report, stores it as a private draft, and returns a signed review URL that expires after 10 minutes.
 4. The agent opens the review page. Nothing has been shared yet, and the developer can submit the report or discard it.
 
-Here is a small example payload about discovering the agent feedback support:
+Here is the sample payload I used to test the review form:
 
 ```json
 {
@@ -418,11 +418,11 @@ The review form renders that report before anything is shared:
 
 ![The passive friction report review form showing a sample report with Discard and Submit report controls](@assets/passive-friction-report-review.png)
 
-Submitting promotes the draft to a durable report. The app stores Markdown for people to read and structured JSON for tools to query, both in private Blob storage. The report and triage APIs require a bearer token, so we can collect the reports in the DX Agent without making them public. Discarding deletes the draft, and an untouched draft expires on its own.
+If the developer submits the form, the draft becomes a durable report. I store it as Markdown for people to read and structured JSON for tools to query, both in private Blob storage. The report and triage APIs require a bearer token, so the DX Agent can collect the reports without making them public. Discarding deletes the draft, and an untouched draft expires on its own.
 
 The collection and review flow worked in my tests. The unreliable part was getting the agent to invoke an end-of-session skill consistently, so I kept this version as a proof of concept.
 
-## Anyone Can Build This
+## Applying the Setup Beyond Next.js
 
 The skill and the viewer are open source, and nothing else in the setup is specific to Next.js. You can give a fresh agent a real task in a clean sandbox, have it log where it gets stuck, and read the parts you'd otherwise skim.
 
