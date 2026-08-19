@@ -1,6 +1,7 @@
 ---
 author: Aurora Scharff
 pubDatetime: 2026-07-16T15:00:00Z
+modDatetime: 2026-08-19T00:00:00Z
 title: Testing Next.js Against Coding Agents
 slug: testing-nextjs-against-coding-agents
 featured: false
@@ -50,7 +51,7 @@ The run that made me stop asking afterward was one where Sonnet kept ignoring [A
 
 Friction logging is an old practice where an engineer works through a task and writes down everything that confuses them along the way. I wasn't especially familiar with it when I started. The manual version is valuable, but it only gives you the engineer's point of view. I wanted the agent's too.
 
-So I made a skill, [friction-log](https://github.com/aurorascharff/skills/tree/main/skills/friction-log), that changes how the agent behaves during a task. It logs gaps in real time instead of guessing past them, tags steps green, yellow, or red, and cites where its decisions came from, whether that's the docs, a web search, training data, or the sandbox.
+So I made a skill, [friction-log](https://github.com/aurorascharff/agent-friction-skill), that changes how the agent behaves during a task. It logs gaps in real time instead of guessing past them, tags steps green, yellow, or red, and cites where its decisions came from, whether that's the docs, a web search, training data, or the sandbox.
 
 What comes out is a structured markdown file with a header, the prompt, a summary, action items split into docs, framework, and DX or research, and the tagged log.
 
@@ -219,7 +220,7 @@ The sandbox made these pre-merge checks cheap. It handled the isolated environme
 
 ### The Error Messages
 
-With Cache Components, Next.js needs to know whether awaited server data should stream, be cached, or block navigation. [Instant Insights](https://nextjs.org/blog/next-16-3-instant-navigations#stream-cache-or-block) presents those choices in the overlay, with a [**Copy prompt** button](https://nextjs.org/blog/next-16-3-ai-improvements#actionable-errors) and a [docs page](https://nextjs.org/docs/messages/blocking-prerender-dynamic) for each fix. An agent that follows the link gets the pattern we'd recommend instead of guessing at one.
+With Cache Components, uncached server data outside `<Suspense>` blocks prerendering. [Instant Insights](https://nextjs.org/blog/next-16-3-instant-navigations#stream-cache-or-block) presents Stream, Cache, and Block as fix cards in the overlay. The cards include a [**Copy prompt** button](https://nextjs.org/blog/next-16-3-ai-improvements#actionable-errors) and link to the relevant section of the [docs page](https://nextjs.org/docs/messages/blocking-prerender-dynamic), so an agent gets the pattern we'd recommend instead of guessing at one.
 
 ![The dev overlay Instant Insights panel with the Stream, Cache, and Block fix cards and a Copy prompt button](@assets/dev-overlay-insights.avif)
 
@@ -228,11 +229,10 @@ The same menu prints in the terminal, which is where agents actually read it:
 ```text
 Ways to fix this:
   - [stream] Provide a placeholder with `<Suspense fallback={...}>` around the data access
-    https://nextjs.org/docs/messages/blocking-prerender-dynamic#wrap-in-or-move-into-suspense
-  - [cache] Cache the data access with `"use cache"` (does not apply to `connection()`)
-    https://nextjs.org/docs/messages/blocking-prerender-dynamic#cache-the-component-or-data
-  - [block] Set `export const instant = false` to silence this error and allow a blocking route
-    https://nextjs.org/docs/messages/blocking-prerender-dynamic#allow-blocking-route
+  - [cache] For uncached data (`fetch`, database calls): cache the access with `"use cache"` (does not apply to `connection()`)
+  - [block] Set `export const instant = false` to allow a blocking route
+
+Learn more: https://nextjs.org/docs/messages/blocking-prerender-dynamic
 ```
 
 When I reworded one of those errors, I ran the same prompt and model against the change's PR preview. This showed whether the agent picked the intended fix or fell back to training data. Here is part of a run that went looking for the Copy prompt feature itself:
@@ -274,7 +274,7 @@ The skill's sequencing worked as written, and the run caught a real gotcha. The 
 
 There wasn't a guide for reading `next build` output under Cache Components, and agents kept misreading it. The output is new enough that it isn't in training data, so a run would guess at what the route table and Partial Prerender glyphs meant.
 
-The [Building guide](https://preview.nextjs.org/docs/app/guides/building) I wrote walks through that output. You build a product page, hit the `blocking-prerender-dynamic` error, and follow the terminal output step by step. Before the guide shipped, I had an agent work through it against the PR preview and compare its copied transcripts with what the binary printed. It flagged three:
+The [Building guide](https://nextjs.org/docs/app/guides/building) I wrote walks through that output. You build a product page, hit the `blocking-prerender-dynamic` error, and follow the terminal output step by step. Before the guide shipped, I had an agent work through it against the PR preview and compare its copied transcripts with what the binary printed. It flagged three:
 
 ```text
 ## Log
@@ -316,7 +316,7 @@ Agents sometimes flagged small things they weren't asked to look for, including 
 | 🟡 The `[block]` fix said "silence this warning", but it shows up as an Error, not a warning            | [#95187](https://github.com/vercel/next.js/pull/95187) removes "silence this warning" from the instant validation fix output |
 | 🟡 The upgrade codemod hard-aborts without a git repo, with no `--yes`/`--no-git` path for agents or CI | [#95312](https://github.com/vercel/next.js/pull/95312) makes the codemod upgrade non-interactive for agents and CI           |
 | 🟡 The `cacheTag` docs don't show `updateTag` next to `revalidateTag`                                   | [#94508](https://github.com/vercel/next.js/pull/94508) adds an `updateTag` example to the `cacheTag` page                    |
-| 🟡 `export const prefetch = 'allow-runtime'` has no docs page, discoverable only via the reference app  | [#94997](https://github.com/vercel/next.js/pull/94997) documents `allow-runtime`, sync-IO, and `instant = false`             |
+| 🟡 `export const prefetch = 'allow-runtime'` had no docs page and was discoverable only through the reference app | [#94997](https://github.com/vercel/next.js/pull/94997) documented the option, now named `prefetch = 'partial'`, along with sync I/O and `instant = false` |
 
 When a fix felt worth re-checking, I could run the same prompt against its preview build to confirm the friction was gone before it merged.
 
@@ -383,7 +383,7 @@ The friction log so far has been active. The agent follows the skill from the st
 This version waits until the end of the session:
 
 1. At the end of a session, the skill scans the conversation for build failures, missing docs, misleading errors, and workarounds. It exits without saying anything when the session was clean.
-2. When it finds friction, it sends a structured report to a [draft endpoint](https://github.com/aurorascharff/visualizer/blob/main/app/api/draft/route.ts). The [schema](https://github.com/aurorascharff/visualizer/blob/main/lib/payload.ts) has fields for the framework, version, friction points, and action items, but no field for the raw prompt, transcript, commands, or file paths.
+2. When it finds friction, it sends a structured report to a [draft endpoint](https://github.com/aurorascharff/agent-friction-skill-visualizer/blob/main/app/api/draft/route.ts). The [schema](https://github.com/aurorascharff/agent-friction-skill-visualizer/blob/main/lib/payload.ts) has fields for the framework, version, friction points, and action items, but no field for the raw prompt, transcript, commands, or file paths.
 3. The endpoint validates the report, stores it as a private draft, and returns a signed review URL that expires after 10 minutes.
 4. The agent opens the review page. Nothing has been shared yet, and the developer can submit the report or discard it.
 
