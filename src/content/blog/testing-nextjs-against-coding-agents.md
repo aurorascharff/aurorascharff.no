@@ -1,7 +1,6 @@
 ---
 author: Aurora Scharff
-pubDatetime: 2026-07-16T15:00:00Z
-modDatetime: 2026-08-19T00:00:00Z
+pubDatetime: 2026-08-19T00:00:00Z
 title: Testing Next.js Against Coding Agents
 slug: testing-nextjs-against-coding-agents
 featured: false
