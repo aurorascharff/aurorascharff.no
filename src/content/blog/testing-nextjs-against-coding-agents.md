@@ -4,7 +4,7 @@ pubDatetime: 2026-08-19T00:00:00Z
 title: Testing Next.js Against Coding Agents
 slug: testing-nextjs-against-coding-agents
 featured: false
-draft: false
+draft: true
 tags:
   - Next.js 16
   - Coding Agents
