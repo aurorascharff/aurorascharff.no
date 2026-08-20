@@ -3,7 +3,7 @@ name: tech-writing
 description: Aurora's technical writing voice, for any content in any repo — blog posts, READMEs, docs, talk notes, social posts. Use when writing, editing, or reviewing anything she publishes under her name. Routes to style rules, anti-AI patterns, and a review framework; content-type skills (like blog-writing) build on this one.
 metadata:
   author: aurora
-  version: "2.0.0"
+  version: "2.1.0"
 ---
 
 # Aurora's technical writing
@@ -33,6 +33,8 @@ She writes like a concrete technical explainer, not a narrative essayist. The pr
 - **She'll coin and italicize a term** when it earns it (*popcorn UI*), and use "we" for a teaching walkthrough, "I" for her own experience.
 
 The failure mode to avoid is the opposite of hers: a polished reflective essay with literary rhythm and neat closers.
+
+Removing AI tells is only half the edit. Keep the first-person opinion, concrete reactions, and changes in sentence length that give the draft a real speaker. Do not polish away a useful aside or honest uncertainty to make the structure more symmetrical.
 
 ## Source of truth hierarchy
 
