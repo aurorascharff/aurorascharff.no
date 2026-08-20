@@ -11,30 +11,30 @@ tags:
   - Developer Experience
   - Cache Components
   - AI
-description: More code is written by coding agents, and they trip in the same places developers do. Here is the friction-logging workflow I built to test Next.js against agents, and what it taught me about error messages, docs, and DX.
+description: Coding agents trip in many of the same places developers do. Here is the friction-logging workflow I built to test Next.js against agents, and what it taught me about error messages, docs, and DX.
 ---
 
 I work on developer experience on the Next.js team at Vercel, including the docs, error messages, [codemods](https://nextjs.org/docs/app/guides/upgrading/codemods), and [adoption skills](https://github.com/vercel/next.js/tree/canary/skills) that make a feature usable for whoever picks it up next. That's now an agent as often as a person. A coding agent reads all of this when it builds with Next.js, takes unclear guidance at face value, and gets stuck in many of the same places a developer would. So I started running agents against our work to find those places on purpose.
 
-In this post, I'll walk through the setup I built and what it taught me about error messages, docs, and DX. We'll start with a friction-logging skill and a Vercel Sandbox for each run, add models through the AI SDK, Slack, and a dashboard, then move the main system onto [eve](https://eve.dev), Vercel's framework for durable agents. I'll also show the passive collection flow I tried for regular coding sessions.
+In this post, I'll walk through the setup I built and what it taught me about error messages, docs, and DX. I'll start with the friction-logging skill and the Vercel Sandbox behind each run, then show how I connected the system to Slack, a dashboard, and [eve](https://eve.dev), Vercel's framework for durable agents. I'll also cover the passive collection flow I tried for regular coding sessions.
 
 ## Table of contents
 
-## The Goal
+## Why I Started Testing with Agents
 
 I built this because agents were doing a bad job. Building with newer APIs like [Cache Components](https://nextjs.org/docs/app/api-reference/config/next-config-js/cacheComponents), they weren't getting it right even though the docs were bundled in the project, and I wanted to understand what they actually did and why. At Vercel we build agents for everything, and I'd been wanting to automate my own DX work, so this felt like the thing to build.
 
 I also wanted to test my own changes. Error messages have been neglected for a long time, and agents make that harder to ignore. An agent has to read an error, work out what it means, and act on it in the same way a developer does. A vague message leaves it guessing. Whenever I changed an error or a docs page, I wanted to know whether it helped or whether I was shipping different red text, while there was still time to change the design.
 
-## Why Agents Make Good Test Subjects
+## Using Agents as Fresh Testers
 
-Testing a feature with someone who has never seen it is one of the most useful things you can do in DX. They hit the confusing parts that the people who built it have learned to ignore. The catch is that you run out of fresh testers fast, because everyone is only new once.
+Testing a feature with someone who has never seen it exposes the confusing parts that the people who built it have learned to ignore. The catch is that you run out of fresh testers fast, because everyone is only new once.
 
 An agent is a fresh tester you can run as often as you want, provided each run starts without memory. Claude Code keeps memory between sessions, which helps in real work but gets in the way here. A second run would test the framework together with whatever the agent learned last time. So I start each run cold, with no history.
 
-A cold agent hits the same rough edge run after run, the one a developer would have worked around and stopped noticing. For a real user that repetition is a problem, but here it's exactly what I want. It's more honest too, since the agent doesn't know it's being tested and has no reason to smooth over or play up what it hit.
+A cold agent hits the same rough edge run after run, the one a developer would have worked around and stopped noticing. For a real user that repetition is a problem, but here it's exactly what I want. The agent also doesn't know it's being tested, so it has no reason to smooth over or play up what it hit.
 
-Cold runs matter most for new features. An agent can fall back on training data for an older API, but that data is months out of date. For something new, it has little to go on except the docs and error messages we wrote.
+Cold runs are especially useful for new features. An agent can fall back on training data for an older API. For something new, it has little to go on except the docs and error messages we wrote.
 
 ## Why Evals Weren't Enough
 
@@ -46,15 +46,15 @@ Asking the agent afterward what it struggled with didn't work either. It would t
 
 The run that made me stop asking afterward was one where Sonnet kept ignoring [AGENTS.md](https://agents.md), and I couldn't tell why. Its first answers sounded plausible but didn't hold up. After asking the same question several times, I found the real reason. That harness had no tool for reading inside `node_modules`, so the agent could not follow the guidance. If one concrete fact was this hard to recover afterward, I needed to log the friction while the agent worked.
 
-## A Skill That Makes Friction Visible
+## Logging Friction During the Run
 
-Friction logging is an old practice where an engineer works through a task and writes down everything that confuses them along the way. I wasn't especially familiar with it when I started. The manual version is valuable, but it only gives you the engineer's point of view. I wanted the agent's too.
+A friction log records everything that confuses an engineer while they work through a task. I wasn't especially familiar with the practice when I started. The manual version is valuable, but it only gives you the engineer's point of view. I wanted the agent's too.
 
 So I made a skill, [friction-log](https://github.com/aurorascharff/agent-friction-skill), that changes how the agent behaves during a task. It logs gaps in real time instead of guessing past them, tags steps green, yellow, or red, and cites where its decisions came from, whether that's the docs, a web search, training data, or the sandbox.
 
-What comes out is a structured markdown file with a header, the prompt, a summary, action items split into docs, framework, and DX or research, and the tagged log.
+The skill writes a structured Markdown file with a header, the prompt, a summary, action items split into docs, framework, and DX or research, and the tagged log.
 
-Here's one run's log, trimmed but kept whole so you can see what it records:
+Here's one trimmed run, with every section intact so you can see what the skill records:
 
 ```text
 # Friction Log: `cacheComponents` + `use cache` Root Layout with Cookie-Based Auth
@@ -94,7 +94,7 @@ The task contains a structural contradiction: `use cache` and `cookies()` are mu
 
 This run predates the error-message work in 16.3. The agent hit the same error on two builds, while the message pointed at the wrong file and gave it no clear fix. I saw this often, and it is the kind of friction that work was built to remove.
 
-The summary and action items are what I actually read. They are already sorted by where the fix belongs, so I turn the ones worth doing into tracked issues and come back to them later. The `[docs]`, `[training data]`, and `[sandbox]` tags let me trace a finding back to its source.
+I spend most of my time on the summary and action items. The skill sorts them by where the fix belongs, so I turn the ones worth doing into tracked issues and come back to them later. The `[docs]`, `[training data]`, and `[sandbox]` tags let me trace a finding back to its source.
 
 The skill is open source, and you can add it with:
 
@@ -125,7 +125,7 @@ const log = await sandbox.readFileToBuffer({
 
 Runs start from identical state, so two of them are comparable.
 
-## Giving the Agent Real Tasks
+## Choosing Tasks for Each Run
 
 A run still needs something to do. I give the agent concrete tasks, from building an app to reproducing or triaging a GitHub issue, and most of mine center on Cache Components. Here are a few real prompts from my runs:
 
@@ -149,7 +149,7 @@ The log header records the model, harness, and Next.js version. Since the model 
 
 This lets me keep the task fixed and change one thing at a time. The same prompt across a few models shows whether an error message trips all of them or only the weaker ones. Running it in another harness, such as Claude Code, helps separate Next.js friction from the tool reading it. I change the model or the framework version for a comparison, never both.
 
-## Driving It from Slack
+## Starting Runs from Slack
 
 I started by kicking runs off by hand. To start them from where I already work, I wired the system into Slack with the [chat SDK](https://chat-sdk.dev), Vercel's toolkit for building chat apps. This became the DX Agent, and it listens for mentions:
 
@@ -183,7 +183,7 @@ const agent = new DurableAgent({
 });
 ```
 
-The result comes back in the thread when it's done. Here are a few real mentions from the channel, followed by the card it posts when a run finishes:
+The bot posts the result back to the thread when the run finishes. Here are a few real mentions from the channel, followed by the card it posts:
 
 ```text
 @dxagent build a commerce app with Cache Components
@@ -195,17 +195,17 @@ dxagent  📋 Triage: getAll() drops duplicate-named cookies (#95265)
          [ View run ]  [ Browse source ]
 ```
 
-## Turning the Logs into a Next.js Dashboard
+## Building a Next.js Dashboard for the Runs
 
 The Slack threads quickly became hard to keep track of, so I built a Next.js dashboard around the runs:
 
-- **Runs**: the full log with its severity dots and the source the agent produced, where a red or yellow entry can become a tracked issue.
-- **Suites**: grouped prompts, run as a set against a new canary or a PR preview.
-- **Friction rate**: charted per version, so a drop from one canary to the next shows the framework getting easier for what the suite covers.
-- **Goals**: a target on a suite, like keeping Cache Components under 20%.
-- **Comparison**: two runs side by side, with the friction that appeared or went away.
+- **Runs.** The full log includes its severity dots and the source the agent produced. A red or yellow entry can become a tracked issue.
+- **Suites.** Grouped prompts run as a set against a new canary or a PR preview.
+- **Friction rate.** The dashboard charts the rate by version, so a drop from one canary to the next shows the framework getting easier for what the suite covers.
+- **Goals.** A suite can have a target, like keeping Cache Components under 20%.
+- **Comparison.** The dashboard puts two runs side by side and marks the friction that appeared or went away.
 
-I still drove this version by hand, clicking through runs and reading the charts. Once the runs were indexed, eve could later use the same data to run suites and answer questions across them without me opening the dashboard.
+I still ran this version by hand, clicking through runs and reading the charts. Later, eve could use the indexed data to run suites and answer questions without me opening the dashboard.
 
 The dashboard is a Next.js 16 app with Cache Components enabled, so it runs on the features it helps me test. A run can also point at a specific branch, so I could test a PR's preview build before it merged.
 
@@ -303,7 +303,7 @@ The branch printed it one line earlier because `params` had become a runtime API
 
 Rereading a docs PR catches unclear writing, but not a transcript that has drifted from what the binary prints. Catching that by hand would mean working through the whole guide myself, running it step by step and comparing the output to what's written, line by line. Running an agent through the guide does exactly that.
 
-### Smaller Findings Along the Way
+### Other Findings
 
 Agents sometimes flagged small things they weren't asked to look for, including details I might not have filed separately. Several were still worth a PR:
 
@@ -317,17 +317,17 @@ Agents sometimes flagged small things they weren't asked to look for, including 
 | 🟡 The `cacheTag` docs don't show `updateTag` next to `revalidateTag`                                   | [#94508](https://github.com/vercel/next.js/pull/94508) adds an `updateTag` example to the `cacheTag` page                    |
 | 🟡 `export const prefetch = 'allow-runtime'` had no docs page and was discoverable only through the reference app | [#94997](https://github.com/vercel/next.js/pull/94997) documented the option, now named `prefetch = 'partial'`, along with sync I/O and `instant = false` |
 
-When a fix felt worth re-checking, I could run the same prompt against its preview build to confirm the friction was gone before it merged.
+For changes I wanted to verify, I ran the same prompt against the preview build again before it merged.
 
-## Letting eve Own the Plumbing
+## Moving the DX Agent to eve
 
 The first version used Vercel Workflow for durable runs, the AI SDK with AI Gateway for the model, the chat SDK for Slack, and Redis and Blob for storage. A sentinel string handled human-in-the-loop questions.
 
-I was already running the loop regularly by the time [eve](https://eve.dev) came out. Migrating deleted around 1,900 lines of code while keeping the dashboard, Slack bot, and agent loop. The `workflows/` package, including the `DurableAgent` loop from the Slack section, moved into eve's session loop.
+I was already running the loop regularly by the time [eve](https://eve.dev) came out. The migration removed around 1,900 lines of code while keeping the dashboard, Slack bot, and agent loop. The `workflows/` package, including the `DurableAgent` loop from the Slack section, moved into eve's session loop.
 
-### What Moved Into eve
+### What eve Replaced
 
-Slack shows the change most clearly. The first version kept a `slack-manifest.json` in the repo, with scopes and event subscriptions maintained by hand. Human-in-the-loop questions came back as free text, so I pattern-matched thread replies to resume the run. The bot could start a run and report back, but it could not do much else.
+The Slack integration changed the most. The first version kept a `slack-manifest.json` in the repo, with scopes and event subscriptions maintained by hand. Human-in-the-loop questions came back as free text, so I pattern-matched thread replies to resume the run. The bot could start a run and report back, but it could not do much else.
 
 On eve, the whole channel fits in one file. The `ask_question` tool renders real buttons and resumes with structured input. Vercel Connect also provisioned the Slack app in one CLI call, so the repo no longer needs the manifest or the api.slack.com setup walkthrough.
 
@@ -373,11 +373,11 @@ Now I can ask the DX Agent questions across the runs it has collected:
 @dxagent favorite this run
 ```
 
-Runs also got faster. Suite runs that used to stop halfway without an error now finish, which fixed a problem I had spent a lot of time investigating. It reminded me to test the framework running the agent as part of the experience too.
+Suite runs that used to stop halfway without an error now finish, which fixed a problem I had spent a lot of time investigating. It reminded me to test the framework running the agent as part of the experience too.
 
 ## Collecting Friction at the End of a Session
 
-The friction log so far has been active. The agent follows the skill from the start and records what happens while it works. I also wanted to see whether we could collect useful feedback from a regular coding session, so I built a [passive version](https://github.com/aurorascharff/agent-friction-skill/blob/main/passive/SKILL.md) as a proof of concept.
+The friction-log skill records problems as the agent works. I also wanted to see whether we could collect useful feedback from a regular coding session, so I built a [passive version](https://github.com/aurorascharff/agent-friction-skill/blob/main/passive/SKILL.md) as a proof of concept.
 
 This version waits until the end of the session:
 
@@ -427,6 +427,6 @@ The collection and review flow worked in my tests. The unreliable part was getti
 
 The skill and viewer are open source, and the same setup applies beyond Next.js. You can give a fresh agent a real task in a clean sandbox, have it log where it gets stuck, and read the parts you'd otherwise skim.
 
-The friction it hits is the same friction your users hit, so fixing it for the agent helps them too. I still use evals to catch regressions. The friction log shows how rough a passing run was along the way.
+Agents hit some of the same friction as developers, so the logs can point to problems worth fixing for both. I still use evals to catch regressions. The friction log shows how rough a passing run was along the way.
 
 I hope this post has been helpful. Please let me know if you have any questions or comments, and follow me on [Bluesky](https://bsky.app/profile/aurorascharff.no) or [X](https://x.com/aurorascharff) for more updates. Happy coding! 🚀
