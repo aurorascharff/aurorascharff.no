@@ -6,6 +6,7 @@ Sentence-level and snippet-level rules for anything written in Aurora's voice. T
 
 - Connected sentences that show the relationship (because, so, while), with short sentences to land a point.
 - First person. Past tense for what she did, present tense for how things work.
+- Keep a real speaker in the draft. When Aurora has an opinion, reaction, or uncertainty, state it in first person and tie it to the concrete detail that caused it. Never invent personality to make neutral source material sound lively.
 - She leans on "we" more than "I", especially in explanatory and walkthrough passages. Use "we"/"our" for shared work and for walking the reader through something; reserve "I" for her own initiative and specific contributions. When a sentence could go either way, prefer "we".
 - Let code and real examples carry the weight; the prose points at them, it doesn't restate them.
 - Divide the work around a snippet. The lead-in explains why we need the code and introduces the new idea. The paragraph after it explains the resulting behavior or trade-off. Don't narrate the arguments line by line or repeat the same result on both sides.
@@ -18,7 +19,11 @@ Sentence-level and snippet-level rules for anything written in Aurora's voice. T
 - Don't open a sentence with inline code (a function, API, hook, or config-flag name). Lead with a word and put the code mid-sentence: "Turning on `cacheComponents` gives you an instant shell". A definition-style bullet list may start each item on the name it defines ("- `useTransition()` provides a pending state..."), which is a shape she uses.
 - No vague referents. "The simplest one", "that changes things", or a heading like "Driving It from the URL" leave the reader asking what one, what things, what it. Name the noun, and always in headings.
 - Watch for word echoes: the same distinctive word landing twice in close range. Vary the word or restructure one of the sentences.
+- Repeat the correct technical term when it keeps the subject clear. Do not cycle through loose synonyms to avoid repetition.
 - A quality word has to mean something concrete in context. "The search field stays instant" says nothing; "renders in the static shell and keeps focus while results stream" says what happens. If a claim can't be unpacked into behavior, replace it with the behavior.
+- Prefer active voice when the actor matters. "The compiler validates the query" is clearer than "the query is validated". Passive voice is fine when the actor is unknown or beside the point.
+- Split a sentence when the reader has to backtrack to parse it. Keep one main idea per sentence, then connect the next sentence with the real causal relationship.
+- Cut adverbs that only prop up a weak verb. Replace them with the concrete behavior, a measurement, or a stronger plain verb.
 - When two kinds of information pair up (a before and an after, a finding and its fix, an option and its trade-off), a table or list is clearer than cramming them into one sentence.
 - When a claim needs a quantity, give the real number or qualify it honestly ("up to", "approximately"). No vague quantifiers ("significantly", "dramatically") and no decorative counts (see anti-AI patterns).
 
@@ -37,6 +42,7 @@ Snippets do a lot of the explaining. Match how she writes them:
 - **Keep each snippet to the one point** the surrounding paragraph makes. Abstract away CSS and unrelated markup, use generic elements.
 - **Collapse the parts that don't matter** with `// ...` or `// ...fetch logic...` rather than showing them in full.
 - **Keep the structural outline when it helps explain the pattern.** For a switch statement, route tree, provider, or group of handlers, show the cases or entry points and collapse the implementation inside the parts that are not being discussed.
+- **Never collapse security checks into a comment.** Auth, ownership, and validation guards before a write are load-bearing in any snippet that shows the write, since readers copy the code and skip the comments. Elide the payload shaping or the cache invalidation instead.
 - **Don't leave unexplained helpers in a snippet.** An identifier should be introduced, obvious from the platform, or central to the pattern. What counts as a distraction depends on the piece: in one about coordinating optimistic updates, the database write inside a Server Function is noise and belongs in a comment saying what was left out; in a piece about the write itself, those lines are the subject. Decide per piece, and don't pull in a helper the text never explains just to make a snippet look fuller.
 - **Use an inline comment to flag the key line**: `const loggedIn = getIsAuthenticated(); // no await, no blocking`.
 - **Make snippets look real, not pseudocode.** Include the imports that matter. Code blocks should work when copied; if a value needs replacing, make the placeholder obvious.

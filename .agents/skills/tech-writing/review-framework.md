@@ -30,10 +30,14 @@ Read every sentence against [anti-ai-patterns.md](anti-ai-patterns.md).
 - [ ] Grep for `—`, `–`, and `;` in prose; check every remaining `:` introduces a list or code block
 - [ ] No inversions, aphorisms, signposting, empty frames, or essayist connectives
 - [ ] No metaphor verbs, superlatives, filler words, or vague quantifiers
+- [ ] No vague attributions, puffery, superficial `-ing` clauses, forced groups of three, or false ranges
+- [ ] No decorative bold, inline-label colon lists, synonym cycling, or abstract technical nouns used as metaphors
+- [ ] Active voice names the actor when it matters. Dense sentences are split, and adverbs carry a fact or are removed
 - [ ] No sentence opens on inline code
 - [ ] No vague referents; every heading and claim names its noun
 - [ ] No word echoes; no quality words that can't be unpacked into behavior
 - [ ] "In the interface" / "in the UI" is replaced by the surface that changed
+- [ ] The cleanup did not sterilize the draft. Supported first-person opinions, concrete reactions, and honest uncertainty remain
 
 ## Pass 4: Code
 

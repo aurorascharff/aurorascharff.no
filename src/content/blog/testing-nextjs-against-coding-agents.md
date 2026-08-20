@@ -22,7 +22,7 @@ In this post, I'll walk through the setup I built and what it taught me about er
 
 ## Why I Started Testing with Agents
 
-I built this because agents were doing a bad job. Building with newer APIs like [Cache Components](https://nextjs.org/docs/app/api-reference/config/next-config-js/cacheComponents), they weren't getting it right even though the docs were bundled in the project, and I wanted to understand what they actually did and why. At Vercel we build agents for everything, and I'd been wanting to automate my own DX work, so this felt like the thing to build.
+I built this because agents were doing a bad job. Building with newer APIs like [Cache Components](https://nextjs.org/docs/app/api-reference/config/next-config-js/cacheComponents), they weren't getting it right even though the docs were bundled in the project, and I wanted to understand what they actually did and why. At Vercel we build agents for everything, and I'd been wanting to automate my own DX work. Testing Next.js with agents brought those two interests together.
 
 I also wanted to test my own changes. Error messages have been neglected for a long time, and agents make that harder to ignore. An agent has to read an error, work out what it means, and act on it in the same way a developer does. A vague message leaves it guessing. Whenever I changed an error or a docs page, I wanted to know whether it helped or whether I was shipping different red text, while there was still time to change the design.
 
@@ -92,7 +92,7 @@ The task contains a structural contradiction: `use cache` and `cookies()` are mu
 - 🟡 **Cache key per user-name creates unbounded entries**: `CachedShell` receives `userName` as a prop, so Alice's shell and Bob's shell are separate cache entries. The docs don't discuss this tradeoff. [training data]
 ```
 
-This run predates the error-message work in 16.3. The agent hit the same error on two builds, while the message pointed at the wrong file and gave it no clear fix. I saw this often, and it is the kind of friction that work was built to remove.
+This run predates the error-message work in 16.3. The agent hit the same error on two builds, while the message pointed at the wrong file and gave it no clear fix. I saw this often, and it is the kind of friction I wanted the error-message work to remove.
 
 I spend most of my time on the summary and action items. The skill sorts them by where the fix belongs, so I turn the ones worth doing into tracked issues and come back to them later. The `[docs]`, `[training data]`, and `[sandbox]` tags let me trace a finding back to its source.
 
@@ -207,13 +207,13 @@ The Slack threads quickly became hard to keep track of, so I built a Next.js das
 
 I still ran this version by hand, clicking through runs and reading the charts. Later, eve could use the indexed data to run suites and answer questions without me opening the dashboard.
 
-The dashboard is a Next.js 16 app with Cache Components enabled, so it runs on the features it helps me test. A run can also point at a specific branch, so I could test a PR's preview build before it merged.
+The dashboard is a Next.js 16 app with Cache Components enabled, so it runs on the features it helps me test. A run can also point at a specific branch, so I can test a PR's preview build before it merges.
 
 ## Testing My 16.3 Work Before It Shipped
 
-I used those branch runs to test my own 16.3 work. The error messages, Skills, and docs I worked on shipped with [Next.js 16.3: AI Improvements](https://nextjs.org/blog/next-16-3-ai-improvements), and I could check them against a preview build before they merged. This was a mix of automated and manual work rather than a fixed pipeline. I chose which changes were worth running through it.
+I used those branch runs to test my own 16.3 work. The error messages, Skills, and docs I worked on shipped with [Next.js 16.3: AI Improvements](https://nextjs.org/blog/next-16-3-ai-improvements), and I could check them against a preview build before they merged. This was a mix of automated and manual work rather than a fixed pipeline. I chose which changes to run through it.
 
-Next.js publishes PR preview builds as installable tarballs. A run can take the PR URL, resolve the tarball, and install it in the sandbox before the agent starts. When a change felt worth checking, I could push the branch and watch how an agent reacted before it merged.
+Next.js publishes PR preview builds as installable tarballs. A run can take the PR URL, resolve the tarball, and install it in the sandbox before the agent starts. When I wanted to check a change, I could push the branch and watch how an agent reacted before it merged.
 
 The sandbox made these pre-merge checks cheap. It handled the isolated environment and cleanup that I would otherwise have to maintain myself.
 
@@ -252,7 +252,7 @@ Both docs findings became PRs. [#94564](https://github.com/vercel/next.js/pull/9
 
 ### The Skills
 
-I checked the [first-party Skills](https://nextjs.org/blog/next-16-3-ai-improvements#first-party-skills) the same way, with isolated runs against their PR previews. I also tried the tasks myself in my own agent to feel the experience. Here is a run following the Cache Components adoption skill:
+I checked the [first-party Skills](https://nextjs.org/blog/next-16-3-ai-improvements#first-party-skills) the same way, with isolated runs against their PR previews. I also worked through the tasks in my own agent so I could see the same failures directly. Here is a run following the Cache Components adoption skill:
 
 ```text
 ## Log
@@ -305,16 +305,16 @@ Rereading a docs PR catches unclear writing, but not a transcript that has drift
 
 ### Other Findings
 
-Agents sometimes flagged small things they weren't asked to look for, including details I might not have filed separately. Several were still worth a PR:
+Agents sometimes flagged small things they weren't asked to look for, including details I might not have filed separately. Several still turned into PRs:
 
-| Friction                                                                                                | Fix                                                                                                                          |
-| ------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| 🟡 No build output confirming `partialPrefetching` is active                                            | [#95593](https://github.com/vercel/next.js/pull/95593) logs "Partial Prefetching enabled" during `next build`                |
-| 🔴 First build failed on `/_not-found`: "uncached or runtime data during prerendering"                  | [#95163](https://github.com/vercel/next.js/pull/95163) clarifies `/_not-found` failures under Cache Components               |
-| 🟡 `partialPrefetching` is a separate required flag, not co-located in `cacheComponents.md`             | [#94818](https://github.com/vercel/next.js/pull/94818) tightens the Partial Prefetching API references                       |
-| 🟡 The `[block]` fix said "silence this warning", but it shows up as an Error, not a warning            | [#95187](https://github.com/vercel/next.js/pull/95187) removes "silence this warning" from the instant validation fix output |
-| 🟡 The upgrade codemod hard-aborts without a git repo, with no `--yes`/`--no-git` path for agents or CI | [#95312](https://github.com/vercel/next.js/pull/95312) makes the codemod upgrade non-interactive for agents and CI           |
-| 🟡 The `cacheTag` docs don't show `updateTag` next to `revalidateTag`                                   | [#94508](https://github.com/vercel/next.js/pull/94508) adds an `updateTag` example to the `cacheTag` page                    |
+| Friction                                                                                                          | Fix                                                                                                                                                       |
+| ----------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 🟡 No build output confirming `partialPrefetching` is active                                                      | [#95593](https://github.com/vercel/next.js/pull/95593) logs "Partial Prefetching enabled" during `next build`                                             |
+| 🔴 First build failed on `/_not-found`: "uncached or runtime data during prerendering"                            | [#95163](https://github.com/vercel/next.js/pull/95163) clarifies `/_not-found` failures under Cache Components                                            |
+| 🟡 `partialPrefetching` is a separate required flag, not co-located in `cacheComponents.md`                       | [#94818](https://github.com/vercel/next.js/pull/94818) tightens the Partial Prefetching API references                                                    |
+| 🟡 The `[block]` fix said "silence this warning", but it shows up as an Error, not a warning                      | [#95187](https://github.com/vercel/next.js/pull/95187) removes "silence this warning" from the instant validation fix output                              |
+| 🟡 The upgrade codemod hard-aborts without a git repo, with no `--yes`/`--no-git` path for agents or CI           | [#95312](https://github.com/vercel/next.js/pull/95312) makes the codemod upgrade non-interactive for agents and CI                                        |
+| 🟡 The `cacheTag` docs don't show `updateTag` next to `revalidateTag`                                             | [#94508](https://github.com/vercel/next.js/pull/94508) adds an `updateTag` example to the `cacheTag` page                                                 |
 | 🟡 `export const prefetch = 'allow-runtime'` had no docs page and was discoverable only through the reference app | [#94997](https://github.com/vercel/next.js/pull/94997) documented the option, now named `prefetch = 'partial'`, along with sync I/O and `instant = false` |
 
 For changes I wanted to verify, I ran the same prompt against the preview build again before it merged.
@@ -361,7 +361,7 @@ export default defineSandbox({
 
 ### Coordinating Runs with eve
 
-The migration also changed what the agent could do. The first version started a separate agent for a run, and that agent could not see or coordinate the others. On eve, past runs are indexed and one agent can coordinate them, answer questions about older runs, and continue the conversation across sessions.
+The first version started a separate agent for a run, and that agent could not see or coordinate the others. On eve, past runs are indexed, so one agent can coordinate them, answer questions about older runs, and continue the conversation across sessions.
 
 Now I can ask the DX Agent questions across the runs it has collected:
 
