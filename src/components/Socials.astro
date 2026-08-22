@@ -10,12 +10,14 @@ export interface Props {
 const { centered = false } = Astro.props;
 ---
 
-<div class={`social-icons ${centered ? "flex" : ""}`}>
+<div
+  class={`flex flex-wrap items-center gap-1 ${centered ? "justify-center" : ""}`}
+>
   {
     SOCIALS.filter(social => social.active).map(social => (
       <LinkButton
         href={social.href}
-        className="link-button"
+        className="p-2 hover:rotate-6 sm:p-1"
         title={social.linkTitle}
       >
         <Fragment set:html={socialIcons[social.name]} />
@@ -24,12 +26,3 @@ const { centered = false } = Astro.props;
     ))
   }
 </div>
-
-<style>
-  .social-icons {
-    @apply flex-wrap justify-center gap-1;
-  }
-  .link-button {
-    @apply p-2 hover:rotate-6 sm:p-1;
-  }
-</style>
