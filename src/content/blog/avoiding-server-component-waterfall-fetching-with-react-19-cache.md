@@ -327,7 +327,7 @@ async function Dashboard() {
 
   return (
     <>
-      {/* ...render projects... */}
+      <ProjectList projects={projects} />
       <UserMenu />
     </>
   );
