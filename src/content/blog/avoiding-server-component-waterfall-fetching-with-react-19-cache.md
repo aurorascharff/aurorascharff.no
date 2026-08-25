@@ -286,11 +286,11 @@ Another thing to note is that when using the `fetch()` API in Next.js, the data 
 
 ## Update: Preloading with `use cache: private`
 
-The examples above use React `cache()` to share the request between the preload helper and the component. With Cache Components, you don't need both. Add `"use cache"` to the data function instead, then call that same Cache Function from the preload helper and the component. Matching calls reuse the result.
+Since writing this post, Cache Components have given us another way to use the preload pattern. The examples above use React `cache()` to share the request between the preload helper and the component. With Cache Components, we can make the data function a Cache Function instead, then call it from both places. Matching calls reuse the result without also wrapping the function in React `cache()`.
 
-The [React `cache` caveats](https://react.dev/reference/react/cache#caveats) explain when cached values are invalidated, while the Next.js docs cover [React cache isolation inside Cache Functions](https://nextjs.org/docs/app/api-reference/directives/use-cache#reactcache-isolation).
+You can read more about when React invalidates cached values in the [React `cache` caveats](https://react.dev/reference/react/cache#caveats). The Next.js docs also explain [React cache isolation inside Cache Functions](https://nextjs.org/docs/app/api-reference/directives/use-cache#reactcache-isolation).
 
-I've also opened a [Next.js docs PR](https://github.com/vercel/next.js/pull/97864) to add this Cache Components version of the preload pattern.
+I'm also working on adding this Cache Components version to the [Next.js data fetching docs](https://github.com/vercel/next.js/pull/97864).
 
 The comments in this post come from an in-memory array, so React `cache()` is still enough for that example. To see where [`"use cache: private"`](https://nextjs.org/docs/app/api-reference/directives/use-cache-private) fits, let's preload the current user for an authenticated dashboard. Since `auth.getUser()` reads the session cookie, we can put that request inside a private Cache Function:
 
@@ -350,7 +350,7 @@ async function UserMenu() {
 
 The call to `preloadCurrentUser()` starts the request without awaiting it. While `Dashboard` loads the projects, the user lookup can continue in parallel. When `UserMenu` calls `getCurrentUser()`, it reuses the result from the same server request.
 
-The `stale: Infinity` option keeps this helper from shortening the route's [`stale` time](https://nextjs.org/docs/app/api-reference/functions/cacheLife#client-cache-behavior). It does not cache the current user forever. Next.js keeps the private result for the current server request, then discards it. The client router can still keep the rendered output in memory, but that cache disappears after a page reload.
+Here, I set `stale` to `Infinity` so the current user request does not shorten the route's [`stale` time](https://nextjs.org/docs/app/api-reference/functions/cacheLife#client-cache-behavior). This does not cache the current user forever. Next.js keeps the private result for the current server request, then discards it. The client router can keep the rendered output in memory until the page reloads.
 
 ## Key Takeaways
 
