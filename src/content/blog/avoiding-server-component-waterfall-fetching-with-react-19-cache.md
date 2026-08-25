@@ -286,9 +286,11 @@ Another thing to note is that when using the `fetch()` API in Next.js, the data 
 
 ## Update: Preloading with `use cache: private`
 
-The examples above use React `cache()` to share the request between the preload helper and the component. If you are using Cache Components, you don't need both. Add `"use cache"` to the data function instead, then call that same Cache Function from the preload helper and the component. Matching calls reuse the result through the Cache Function.
+The examples above use React `cache()` to share the request between the preload helper and the component. With Cache Components, you don't need both. Add `"use cache"` to the data function instead, then call that same Cache Function from the preload helper and the component. Matching calls reuse the result.
 
-This also avoids a boundary you can run into when combining the two. Each Cache Function gets an isolated React cache, so calls to `cache()` inside and outside it do not share their results. You can read more about this in the [React docs](https://react.dev/reference/react/cache#caveats) and the Next.js section on [React cache isolation](https://nextjs.org/docs/app/api-reference/directives/use-cache#reactcache-isolation).
+You can read more about the boundary in the [React `cache` caveats](https://react.dev/reference/react/cache#caveats) and [React cache isolation in Next.js](https://nextjs.org/docs/app/api-reference/directives/use-cache#reactcache-isolation).
+
+I've also opened a [Next.js docs PR](https://github.com/vercel/next.js/pull/97864) to add this Cache Components version of the preload pattern.
 
 The comments in this post come from an in-memory array, so React `cache()` is still enough for that example. To see where [`"use cache: private"`](https://nextjs.org/docs/app/api-reference/directives/use-cache-private) fits, let's preload the current user for an authenticated dashboard. Since `auth.getUser()` reads the session cookie, we can put that request inside a private Cache Function:
 
@@ -348,15 +350,7 @@ async function UserMenu() {
 
 The call to `preloadCurrentUser()` starts the request without awaiting it. While `Dashboard` loads the projects, the user lookup can continue in parallel. When `UserMenu` calls `getCurrentUser()`, it reuses the result from the same server request.
 
-There is one more detail here. A private Cache Function contributes a [`stale` time](https://nextjs.org/docs/app/api-reference/functions/cacheLife#client-cache-behavior) to the prefetched route:
-
-| Setup                                       | Effect on the route's stale time                                                |
-| ------------------------------------------- | ------------------------------------------------------------------------------- |
-| React `cache()`                             | Request-local deduplication, with no client stale-time contribution             |
-| Private Cache Function with default profile | Contributes the default stale time, currently five minutes                      |
-| `cacheLife({ stale: Infinity })`            | Adds no shorter constraint, so another cache or the route's static time decides |
-
-I don't want this user lookup to shorten the route's stale time, so I set `stale` to `Infinity`. This does not cache the current user forever. Next.js keeps the private result for the current server request, then discards it. The client router can still keep the rendered output in memory, but that cache disappears after a page reload.
+The `stale: Infinity` option keeps this helper from shortening the route's [`stale` time](https://nextjs.org/docs/app/api-reference/functions/cacheLife#client-cache-behavior). It does not cache the current user forever. Next.js keeps the private result for the current server request, then discards it. The client router can still keep the rendered output in memory, but that cache disappears after a page reload.
 
 ## Key Takeaways
 
@@ -364,7 +358,7 @@ I don't want this user lookup to shorten the route's stale time, so I set `stale
 - The `cache()` API can be used to reduce data coupling and maintain component composition.
 - When you are fetching the same data more than once within one server render, you should consider using the `cache()` API, unless your data fetching is already using the `fetch()` API.
 - The `cache()` API can also be used to preload data, allowing deeper components to reuse the preloaded data and avoid triggering a waterfall of data fetching, increasing performance. Remember not to await the preloading function.
-- With Cache Components enabled, React `cache()` results do not cross Cache Function boundaries. Put the cache boundary on the function you preload, and reach for `"use cache: private"` when it needs request-specific values that cannot practically be moved outside.
+- With Cache Components enabled, use a Cache Function for preloading instead of wrapping it in React `cache()`. Reach for `"use cache: private"` when that function needs request-specific values.
 - It's important to carefully consider where and when to implement the preloading pattern to avoid unnecessary complexity in your component hierarchy.
 
 ## Conclusion
