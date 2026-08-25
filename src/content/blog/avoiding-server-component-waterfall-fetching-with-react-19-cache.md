@@ -286,7 +286,7 @@ Another thing to note is that when using the `fetch()` API in Next.js, the data 
 
 ## Update: Preloading with `use cache: private`
 
-Since writing this post, Cache Components have added another way to implement this pattern for request-specific data. React invalidates `cache()` between server requests, as described in the [React docs](https://react.dev/reference/react/cache#caveats). In a Cache Components app, each Cache Function also gets an isolated React cache. The same memoized function does not share its result across that boundary. Next.js documents this under [React cache isolation](https://nextjs.org/docs/app/api-reference/directives/use-cache#reactcache-isolation).
+Since writing this post, Cache Components have added another boundary to the preload pattern. React invalidates `cache()` between server requests, as described in the [React docs](https://react.dev/reference/react/cache#caveats). Each Cache Function also gets an isolated React cache, so calls made inside and outside it do not share their results. Next.js documents this under [React cache isolation](https://nextjs.org/docs/app/api-reference/directives/use-cache#reactcache-isolation).
 
 The comments in this post come from an in-memory array, so they do not need a private cache. For this example, let's use an authenticated dashboard instead. The `auth.getUser()` function reads the current session from a cookie, so we can call it from a [`"use cache: private"`](https://nextjs.org/docs/app/api-reference/directives/use-cache-private) Cache Function:
 
@@ -308,7 +308,7 @@ export function preloadCurrentUser() {
 }
 ```
 
-Following the additional notes above, the `preloadCurrentUser()` function keeps the preload connected to the component that owns the data. We can start the user lookup before an async dashboard fetch:
+We can keep the preload helper from the additional notes above and start the user lookup before an async dashboard fetch:
 
 ```tsx
 // app/dashboard/page.tsx
@@ -327,7 +327,7 @@ async function Dashboard() {
 
   return (
     <>
-      <ProjectList projects={projects} />
+      {/* ...render projects... */}
       <UserMenu />
     </>
   );
@@ -346,9 +346,15 @@ async function UserMenu() {
 
 Calling `preloadCurrentUser()` starts `getCurrentUser()` without awaiting it. When `UserMenu` renders after the projects have loaded, it joins the pending user lookup instead of starting another one.
 
-Unlike `"use cache"`, the private directive never stores the result in the server cache. The function runs again for every server render, while prefetched results can be reused from the browser's in-memory cache during client navigation. They do not survive a page reload.
+Private Cache Functions also contribute a [`stale` time](https://nextjs.org/docs/app/api-reference/functions/cacheLife#client-cache-behavior) to the prefetched route:
 
-Setting `stale` to `Infinity` does not cache the result forever. It prevents the private Cache Function from lowering the route's client prefetch stale time.
+| Setup                                      | Effect on the route's stale time                                              |
+| ------------------------------------------ | ----------------------------------------------------------------------------- |
+| React `cache()`                            | Request-local deduplication, with no client stale-time contribution           |
+| Private Cache Function with default profile | Contributes the default stale time, currently five minutes                    |
+| `cacheLife({ stale: Infinity })`            | Adds no shorter constraint, so another cache or the route's static time decides |
+
+Setting `stale` to `Infinity` does not cache the current user forever. It keeps this helper from lowering the route's stale time. Private results are not stored in the server cache, and the browser clears them when the page reloads.
 
 ## Key Takeaways
 
