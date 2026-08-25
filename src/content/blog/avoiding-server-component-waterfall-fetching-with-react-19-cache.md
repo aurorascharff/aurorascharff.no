@@ -286,18 +286,20 @@ Another thing to note is that when using the `fetch()` API in Next.js, the data 
 
 ## Update: Preloading with `use cache: private`
 
-Since writing this post, Cache Components have added another boundary to the preload pattern. React invalidates `cache()` between server requests, as described in the [React docs](https://react.dev/reference/react/cache#caveats). Each Cache Function also gets an isolated React cache, so calls made inside and outside it do not share their results. Next.js documents this under [React cache isolation](https://nextjs.org/docs/app/api-reference/directives/use-cache#reactcache-isolation).
+The examples above use React `cache()` to share the request between the preload helper and the component. If you are using Cache Components, you don't need both. Add `"use cache"` to the data function instead, then call that same Cache Function from the preload helper and the component. Matching calls reuse the result through the Cache Function.
 
-The comments in this post come from an in-memory array, so they do not need a private cache. For this example, let's use an authenticated dashboard instead. The `auth.getUser()` function reads the current session from a cookie, so we can call it from a [`"use cache: private"`](https://nextjs.org/docs/app/api-reference/directives/use-cache-private) Cache Function:
+This also avoids a boundary you can run into when combining the two. Each Cache Function gets an isolated React cache, so calls to `cache()` inside and outside it do not share their results. You can read more about this in the [React docs](https://react.dev/reference/react/cache#caveats) and the Next.js section on [React cache isolation](https://nextjs.org/docs/app/api-reference/directives/use-cache#reactcache-isolation).
+
+The comments in this post come from an in-memory array, so React `cache()` is still enough for that example. To see where [`"use cache: private"`](https://nextjs.org/docs/app/api-reference/directives/use-cache-private) fits, let's preload the current user for an authenticated dashboard. Since `auth.getUser()` reads the session cookie, we can put that request inside a private Cache Function:
 
 ```tsx
 // lib/auth/get-current-user.ts
-import 'server-only';
-import { cacheLife } from 'next/cache';
-import { auth } from '@/lib/session';
+import "server-only";
+import { cacheLife } from "next/cache";
+import { auth } from "@/lib/session";
 
 export async function getCurrentUser() {
-  'use cache: private';
+  "use cache: private";
   cacheLife({ stale: Infinity });
 
   return auth.getUser();
@@ -308,7 +310,7 @@ export function preloadCurrentUser() {
 }
 ```
 
-We can keep the preload helper from the additional notes above and start the user lookup before an async dashboard fetch:
+Now we can start the user lookup at the top of the page and use the result later in `UserMenu`:
 
 ```tsx
 // app/dashboard/page.tsx
@@ -344,17 +346,17 @@ async function UserMenu() {
 }
 ```
 
-Calling `preloadCurrentUser()` starts `getCurrentUser()` without awaiting it. When `UserMenu` renders after the projects have loaded, it joins the pending user lookup instead of starting another one.
+The call to `preloadCurrentUser()` starts the request without awaiting it. While `Dashboard` loads the projects, the user lookup can continue in parallel. When `UserMenu` calls `getCurrentUser()`, it reuses the result from the same server request.
 
-Private Cache Functions also contribute a [`stale` time](https://nextjs.org/docs/app/api-reference/functions/cacheLife#client-cache-behavior) to the prefetched route:
+There is one more detail here. A private Cache Function contributes a [`stale` time](https://nextjs.org/docs/app/api-reference/functions/cacheLife#client-cache-behavior) to the prefetched route:
 
-| Setup                                      | Effect on the route's stale time                                              |
-| ------------------------------------------ | ----------------------------------------------------------------------------- |
-| React `cache()`                            | Request-local deduplication, with no client stale-time contribution           |
-| Private Cache Function with default profile | Contributes the default stale time, currently five minutes                    |
+| Setup                                       | Effect on the route's stale time                                                |
+| ------------------------------------------- | ------------------------------------------------------------------------------- |
+| React `cache()`                             | Request-local deduplication, with no client stale-time contribution             |
+| Private Cache Function with default profile | Contributes the default stale time, currently five minutes                      |
 | `cacheLife({ stale: Infinity })`            | Adds no shorter constraint, so another cache or the route's static time decides |
 
-Setting `stale` to `Infinity` does not cache the current user forever. It keeps this helper from lowering the route's stale time. Private results are not stored in the server cache, and the browser clears them when the page reloads.
+I don't want this user lookup to shorten the route's stale time, so I set `stale` to `Infinity`. This does not cache the current user forever. Next.js keeps the private result for the current server request, then discards it. The client router can still keep the rendered output in memory, but that cache disappears after a page reload.
 
 ## Key Takeaways
 
