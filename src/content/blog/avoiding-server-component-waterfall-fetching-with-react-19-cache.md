@@ -288,7 +288,7 @@ Another thing to note is that when using the `fetch()` API in Next.js, the data 
 
 The examples above use React `cache()` to share the request between the preload helper and the component. With Cache Components, you don't need both. Add `"use cache"` to the data function instead, then call that same Cache Function from the preload helper and the component. Matching calls reuse the result.
 
-You can read more about the boundary in the [React `cache` caveats](https://react.dev/reference/react/cache#caveats) and [React cache isolation in Next.js](https://nextjs.org/docs/app/api-reference/directives/use-cache#reactcache-isolation).
+The [React `cache` caveats](https://react.dev/reference/react/cache#caveats) explain when cached values are invalidated, while the Next.js docs cover [React cache isolation inside Cache Functions](https://nextjs.org/docs/app/api-reference/directives/use-cache#reactcache-isolation).
 
 I've also opened a [Next.js docs PR](https://github.com/vercel/next.js/pull/97864) to add this Cache Components version of the preload pattern.
 
