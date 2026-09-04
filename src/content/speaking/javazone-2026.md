@@ -2,7 +2,7 @@
 organizer: JavaZone 2026
 date: 2026-09-02T08:00:00Z
 name: "Talk: What RSCs Can Do in Next.js Today"
-completed: false
+completed: true
 address: "Oslo, Norway"
 websiteLink: "https://2026.javazone.no"
 link: "https://2026.javazone.no/program/216a87ee-5624-4484-8ad6-e308d107797b"
