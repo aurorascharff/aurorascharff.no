@@ -3,7 +3,7 @@ name: tech-writing
 description: Aurora's technical writing voice, for any content in any repo — blog posts, READMEs, docs, talk notes, social posts. Use when writing, editing, or reviewing anything she publishes under her name. Routes to style rules, anti-AI patterns, and a review framework; content-type skills (like blog-writing) build on this one.
 metadata:
   author: aurora
-  version: "2.1.0"
+  version: "2.2.0"
 ---
 
 # Aurora's technical writing

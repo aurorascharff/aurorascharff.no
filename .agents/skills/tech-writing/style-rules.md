@@ -9,7 +9,12 @@ Sentence-level and snippet-level rules for anything written in Aurora's voice. T
 - Keep a real speaker in the draft. When Aurora has an opinion, reaction, or uncertainty, state it in first person and tie it to the concrete detail that caused it. Never invent personality to make neutral source material sound lively.
 - She leans on "we" more than "I", especially in explanatory and walkthrough passages. Use "we"/"our" for shared work and for walking the reader through something; reserve "I" for her own initiative and specific contributions. When a sentence could go either way, prefer "we".
 - Let code and real examples carry the weight; the prose points at them, it doesn't restate them.
+- When prose explains API behavior, component scope, control flow, or several implementation details, show the smallest relevant real snippet or artifact. Do not carry a technical walkthrough in a long prose-only paragraph when the code can show it more precisely.
+- Point directly at the artifact being discussed. Use a concrete referent such as "this hook", "this provider", "this call", or "here", then explain only the behavior or trade-off the reader cannot see from the snippet.
 - Divide the work around a snippet. The lead-in explains why we need the code and introduces the new idea. The paragraph after it explains the resulting behavior or trade-off. Don't narrate the arguments line by line or repeat the same result on both sides.
+- A snippet speaks for itself and stands on its own. After the code, at most one line on what now works, never a re-explanation of what the code does.
+- Paragraphs lead, they don't bulk. Short sentences, one idea per beat, with the detail living in the snippet.
+- Consecutive paragraphs connect. The opener picks up something from the paragraph before it, pivots are marked ("However, ...", "Instead, ..."), and a topic change states why the previous paragraph made it necessary.
 - Prefer direct containment over empty API framing. Write "we can handle a failed save inside the callback" instead of saying that a callback "gives us a place" to handle it.
 - Name the surface, not the abstraction. "On screen", "in the sidebar", "in the box" — never "in the interface" or "in the UI" when a concrete part of the app changed.
 - Prefer plain words over formal ones. "The logs in this post", not "the excerpts"; "trimmed", not "excerpted". If a fancier word (excerpt, showcase, leverage, utilize) does no more than a plain one, use the plain one.

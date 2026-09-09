@@ -3,7 +3,7 @@ name: blog-writing
 description: Writing, editing, or reviewing blog posts on aurorascharff.no (src/content/blog). Post structure, frontmatter, walkthrough conventions, images, MDX demos, and update sections. Builds on the tech-writing skill, which holds the voice and snippet rules.
 metadata:
   author: aurora
-  version: "2.0.0"
+  version: "2.1.0"
 ---
 
 # Blog writing
@@ -36,6 +36,7 @@ description: A concise 1-2 sentence description. Used for SEO and post excerpts.
 
 - `modDatetime` is added only when a published post is updated.
 - Use a `.md` file by default. Use `.mdx` for posts with interactive React demos (see MDX below).
+- Titles are action titles that name the concrete thing ("Coordinating Optimistic Updates in Next.js"), not essay titles. The slug matches the title.
 
 **Images and GIFs**: place them in `src/assets/` and reference with `![Alt text describing the demo](@assets/my-demo.gif)`. Every image gets meaningful alt text and sits where it's discussed.
 
@@ -58,6 +59,9 @@ Keep the background (the why, the mechanism) out of the intro. If it runs past t
 ## Structure
 
 - Headings in Title Case, descriptive not clever. "Background", "The Use Case", "The Problem: Dynamic Rendering" over "X, Not Y" turns of phrase.
+- Separate levels of abstraction into sections. A general model is its own section rather than the intro of the build that applies it, a related-but-different application is a sibling rather than a subsection, and a section with subsections opens with what they share and a short roadmap. A tangent goes in a `>` note.
+- Introduce an API in steps: name it, what it hooks into, what it gives us, what we can use it for.
+- A post that weighs an approach can close with a Pros and Cons section before the Conclusion, weighing the general model the post taught, not only the specific helper it built.
 - `## Table of contents` immediately after the intro, exactly that string. The TOC plugin keys on it.
 - One idea per section; each stands on its own.
 - Explain the progression between sections. When one piece follows another, open the new section by saying why the last one made it necessary, so the build reads as one story instead of a parts list.
@@ -79,9 +83,11 @@ Keep the background (the why, the mechanism) out of the intro. If it runs past t
 - In a multi-feature post, every feature section closes the same way: a "The Full" H3 holding the assembled code, with the component name in backticks in the heading, a "This way, ..." sentence stating what the approach buys, then "**Try it:** [live link]. **Code:** [file link]." The demo app's name and links belong in the intro, the Try-it lines, and the conclusion, not in section openers.
 - Skip the Full section when the component was already shown whole earlier and assembling it again would only repeat that snippet, but keep the "This way, ..." sentence and the Try-it line.
 - When one of her posts already covers the background, link that post instead of re-explaining, and cite external sources through her post when she has already built on them.
+- Cite her own posts in first person ("In a previous post on X, I found that..."), and mention a cross-post example briefly instead of re-running its flow.
 - Introduce a usage or example section conversationally ("Let's say we wanted to X in a Y, where..."). Keep the progressive teaching sections on generic examples, and save specific use cases for the usage sections.
 - When linking a guide or doc that has shipped, link the live page a reader can actually read, not the GitHub PR. A PR link is for citing a specific change.
 - Key takeaways are general principles, not restatements of the example. The conclusion should add something, not repeat earlier sections.
+- Conclusions are short: a first-person takeaway and at most a sentence of cost or outlook, never a recap of the post's own examples.
 - Close with the standard sign-off: "I hope this post has been helpful. Please let me know if you have any questions or comments, and follow me on [Bluesky](https://bsky.app/profile/aurorascharff.no) or [X](https://x.com/aurorascharff) for more updates. Happy coding! 🚀"
 
 ## Update sections

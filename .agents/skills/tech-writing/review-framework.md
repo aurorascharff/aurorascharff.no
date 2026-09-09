@@ -19,6 +19,7 @@ Does the piece build in the right order?
 
 - [ ] Nothing references a concept, component, or mechanism before the text introduces it
 - [ ] Each mechanism appears at the point it does work in the story, not earlier
+- [ ] API behavior, component scope, control flow, and other implementation specifics are shown with the smallest relevant real snippet or artifact, not a long prose-only explanation
 - [ ] Claims across sections line up; contradictions are resolved into one stated distinction
 - [ ] Paired information (before/after, finding/fix, option/trade-off) is a table or list, not a run-on sentence
 - [ ] No heading sits over a single short paragraph
@@ -44,6 +45,7 @@ Read every sentence against [anti-ai-patterns.md](anti-ai-patterns.md).
 Check every snippet against the code rules in [style-rules.md](style-rules.md).
 
 - [ ] File-path comments, tagged fences, trimmed to the point
+- [ ] The surrounding prose points to the exact artifact with a concrete referent such as "this hook", "this provider", "this call", or "here", then adds only what the reader cannot see in the snippet
 - [ ] No unexplained helpers; what's beside the point is collapsed into a comment that says what it was
 - [ ] All snippets type-check against each other; simplifications are flagged and applied consistently
 - [ ] Full-component snippets come from the repo file, not stitched from earlier fragments
