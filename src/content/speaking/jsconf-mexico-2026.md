@@ -1,10 +1,10 @@
 ---
 organizer: JSConf Mexico 2026
 date: 2026-10-29T08:00:00Z
-name: "Talk (to be announced)"
+name: "Talk: What RSCs Can Do in Next.js Today"
 completed: false
 address: "Guadalajara, Mexico"
-websiteLink: "https://jsconfmx.org"
+websiteLink: "https://www.jsconf.mx/en"
 link: "https://www.jsconf.mx/en#speakers"
-description: "Talk details to be announced."
+description: "Building app-like UX on the web has usually meant reaching for an SPA, shipping the data layer to the browser and writing a lot of code to keep the UI fast and fresh. This talk shows how Next.js takes a different path with React Server Components, where each piece of your app runs where it belongs while the mental model stays the same, so you get instant-feeling UX, streamed UI, fresh data, and Core Web Vitals that hold up as your product scales."
 ---
