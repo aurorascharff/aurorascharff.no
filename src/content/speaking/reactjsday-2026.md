@@ -5,6 +5,5 @@ name: "Talk (to be announced)"
 completed: false
 address: "Verona, Italy"
 websiteLink: "https://www.reactjsday.it"
-link: "https://www.reactjsday.it/speakers/"
 description: "Talk details to be announced."
 ---
