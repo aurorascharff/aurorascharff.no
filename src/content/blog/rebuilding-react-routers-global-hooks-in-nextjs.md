@@ -4,7 +4,7 @@ pubDatetime: 2026-09-09T10:00:00Z
 title: Rebuilding React Router's Global Hooks in Next.js
 slug: rebuilding-react-routers-global-hooks-in-nextjs
 featured: false
-draft: false
+draft: true
 tags:
   - React
   - Next.js 16
