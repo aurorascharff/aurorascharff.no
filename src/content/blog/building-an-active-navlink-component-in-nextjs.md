@@ -1,6 +1,7 @@
 ---
 author: Aurora Scharff
 pubDatetime: 2026-05-23T10:00:00Z
+modDatetime: 2026-08-16T10:00:00Z
 title: Building an Active NavLink Component in Next.js
 slug: building-an-active-navlink-component-in-nextjs
 featured: false
@@ -556,6 +557,8 @@ const config: NextConfig = {
 
 Static routes still render fine. But navigating to `/drop/[id]` throws a missing-Suspense-boundary error pointing at `usePathname`. The nav lives in the root layout, which is shared across all routes, so `usePathname()` runs on the dynamic route too. When `cacheComponents` is enabled, [`usePathname()` is treated as a dynamic API](https://nextjs.org/docs/app/api-reference/functions/use-pathname#good-to-know) on routes with a dynamic param, and reading a dynamic value without a Suspense boundary above it is a runtime error, unless we use `generateStaticParams` to prerender it.
 
+Note that it's the active state that's dynamic here, not the links. Our hrefs are `/` and `/search`, plain static strings. We'll come back to this distinction [at the end of the post](#update-in-segment-navigation-with-userelativehref), where a proposed hook makes dynamic hrefs static, and the active state along with them.
+
 We need a `Suspense` boundary somewhere. This also surfaces another problem we've been ignoring: the `ProfileLink` is an async Server Component, and without a boundary around it the entire layout blocks until the handle resolves. We need to wrap that too.
 
 The most obvious fix is wrapping the entire nav:
@@ -718,10 +721,136 @@ This returns `""` on the server and the first client render, then the real pathn
 
 That still leaves a flash: every link renders inactive until the effect fires. If you already have the [inline script from earlier](#preventing-flickering-on-first-paint), it covers this case too, since it reads `location.pathname` directly and doesn't go through `usePathname()`.
 
+## Update: In-Segment Navigation with useRelativeHref
+
+Since writing this post, a new experimental App Router hook has been proposed, [`unstable_useRelativeHref`](https://github.com/vercel/next.js/pull/96068), and it targets the one navigation problem this post left unsolved: links *inside* a dynamic segment. It's unmerged and prefixed with `unstable_` as I write this, so treat the code below as a preview, not something to ship yet.
+
+The nav we built lives in the root layout, where the hrefs are static strings like `/search`, so there is nothing for the hook to improve there. The problem shows up when the navigation moves inside the dynamic route. Let's say we add a tab bar to the profile pages, with Posts as the index page and a nested Followers page:
+
+```text
+app/
+  u/[handle]/
+    layout.tsx
+    page.tsx
+    followers/page.tsx
+```
+
+Each tab links to a route that includes the current handle, so the tab bar has to read the param with `useParams()` to build its hrefs. Under `cacheComponents` that read is dynamic, and it sits in a layout shared by every profile page. The entire tab bar drops out of the static shell only because the hrefs need a handle filled in, and the tabs are the same for every profile.
+
+Instead of building the full path, `useRelativeHref` lets us name the target as a route *pattern*, and returns a relative URL from the current page to it:
+
+```tsx
+"use client";
+
+import { unstable_useRelativeHref as useRelativeHref } from "next/navigation";
+
+// On /u/aurora/followers (route /u/[handle]/followers):
+useRelativeHref("/u/[handle]"); // "./"
+useRelativeHref("/u/[handle]/followers"); // "followers/"
+```
+
+The `aurora` never appears. The hook expresses the target as steps from the current page, and the browser resolves `./` against the URL it is already on, like any relative link in HTML. Since no result names the handle, the hrefs can prerender into the static shell, and the same shell works for every profile.
+
+One thing to be aware of: relative resolution drops the URL's final segment, so `./` means the current page's *parent*, and a target that is the page itself spells that segment back out, which is why the second call returns `followers/`. The target is checked against your app's generated route types, so a route that doesn't exist is a type error.
+
+### RelativeNavLink
+
+The tab bar still needs to know which tab is active. The proposal's tab bar example pairs the hook with [`useSelectedLayoutSegment()`](https://nextjs.org/docs/app/api-reference/functions/use-selected-layout-segment), which returns the active child segment of the layout: `null` on the profile index, `"followers"` on the nested page. So the consumer passes the segment each link stands for, and we put the Suspense boundary inside the component like [earlier](#moving-suspense-inside-navlink):
+
+```tsx
+// app/components/relative-nav-link.tsx
+"use client";
+
+import type { Route } from "next";
+import Link from "next/link";
+import { Suspense } from "react";
+import {
+  unstable_useRelativeHref as useRelativeHref,
+  useSelectedLayoutSegment,
+} from "next/navigation";
+
+type Props = {
+  href: string;
+  segment: string | null;
+  className?: string;
+  children: React.ReactNode;
+};
+
+export function RelativeNavLink(props: Props) {
+  return (
+    <Suspense
+      fallback={
+        <span aria-hidden className={props.className}>
+          {props.children}
+        </span>
+      }
+    >
+      <RelativeNavLinkInner {...props} />
+    </Suspense>
+  );
+}
+
+function RelativeNavLinkInner({ href, segment, className, children }: Props) {
+  const relativeHref = useRelativeHref(href);
+  const activeSegment = useSelectedLayoutSegment();
+  const isActive = segment === activeSegment;
+
+  return (
+    <Link
+      href={relativeHref as Route}
+      aria-current={isActive ? "page" : undefined}
+      className={className}
+    >
+      {children}
+    </Link>
+  );
+}
+```
+
+The fallback renders the same content without the link, so nothing shifts when the boundary resolves. And this is a second component next to `NavLink`, not a replacement, because the two match differently. Matching by segment is blind to param values: on `/u/vex`, a `segment="u"` check would mark your Profile link active on someone else's profile. Telling `/u/vex` from `/u/aurora` takes the pathname comparison from `NavLink`, so `ProfileLink` and every other link whose href comes from data keep using that, and `RelativeNavLink` covers the links that are defined by route position.
+
+Here is the profile layout. It's a Server Component, so the links stick to string classNames and plain children:
+
+```tsx
+// app/u/[handle]/layout.tsx
+<nav>
+  <RelativeNavLink href="/u/[handle]" segment={null} className="nav-item aria-[current=page]:font-bold">
+    Posts
+  </RelativeNavLink>
+  <RelativeNavLink href="/u/[handle]/followers" segment="followers" className="nav-item aria-[current=page]:font-bold">
+    Followers
+  </RelativeNavLink>
+</nav>
+```
+
+Here is the HTML this renders on `/u/aurora/followers`:
+
+```html
+<nav>
+  <a href="./">Posts</a>
+  <a href="followers/" aria-current="page">Followers</a>
+</nav>
+```
+
+The `href` in the DOM is the relative URL the hook resolved from the pattern. Clicking Posts navigates to `./`, which the browser resolves to `/u/aurora` using the handle already in the address bar. The segment read marks Followers current. No handle is read anywhere, so the links prerender, and only the active marker resolves at request time.
+
+I've been trying this against a preview build of the PR in [next16-social-media](https://github.com/aurorascharff/next16-social-media), on the [`test-userelativehref` branch](https://github.com/aurorascharff/next16-social-media/tree/test-userelativehref). It only runs with the PR's tarball installed. **Code:** [`relative-nav-link.tsx`](https://github.com/aurorascharff/next16-social-media/blob/test-userelativehref/components/ui/relative-nav-link.tsx).
+
+### The Trade-offs
+
+- **The links prerender, the highlight doesn't.** A shell can't know which tab you're on, so `useSelectedLayoutSegment()` resolves per request inside the component's boundary.
+- **The param page itself still deopts.** A target at or below the current page spells the final segment back out, so on `/u/aurora` both tabs name the handle and resolve at request time. Sub-pages like `/u/aurora/followers` stay static.
+- **The two hooks can disagree.** `useRelativeHref(target)` resolves the same target from anywhere, while `useSelectedLayoutSegment()` reads the layout it renders in. They agree here because the nav lives in the layout at `/u/[handle]`. The proposal sketches `useSelectedLayoutSegment(target)` to remove the mismatch, but that isn't in the first version.
+- **Corners of the routing model stay dynamic or fragile.** Catch-alls make the traversal depth per-request, rewrites can point a relative href somewhere the route tree didn't intend, and route groups still shift the segment matching, though the hrefs themselves ignore them.
+
+The hook never throws. An unresolvable param is left as literal `[param]` text with a development warning, and correctness is enforced at the type level. The proposal also leaves room for a version with no segment read at all, deriving the highlight from the shape of the relative href, but the preview build's own-page results still carry a `./` prefix, so that stays an idea for now.
+
+Keep `NavLink` for the root layout and for links whose href comes from data. Reach for `RelativeNavLink` inside a dynamic segment, where the href comes from the route structure and deopts today. It's experimental for now, and worth following the PR if you have a tab bar deopting a layout.
+
 ## Conclusion
 
 We started with a hardcoded `active` class and worked through quite a few iterations: the render-prop pattern, `useLinkStatus` for pending states, prefix matching, `aria-current`, TypeScript, an inline script for flicker-free first paint, and Suspense boundaries for `cacheComponents`. We also looked at two approaches for reading the active route, `usePathname()` and `useSelectedLayoutSegments()`, each with their own trade-offs. That's a lot of ground for one component, but each piece solves a real problem that comes up in production apps.
 
-You might not need all of this. A plain `usePathname()` call in a navbar component is a fine starting point. But if you want a single, reusable `NavLink` that handles render props, pending states, `cacheComponents`, and flicker-free first paint, now you know how to build one. Both implementations can be found in [next16-social-media](https://github.com/aurorascharff/next16-social-media) ([live demo](https://next16-social-media.vercel.app)): the [`usePathname` version](https://github.com/aurorascharff/next16-social-media/blob/main/components/ui/nav-link.tsx) and the [`useSelectedLayoutSegments` version](https://github.com/aurorascharff/next16-social-media/blob/main/components/ui/nav-link-segments.tsx).
+You might not need all of this. A plain `usePathname()` call in a navbar component is a fine starting point. But if you want a single, reusable `NavLink` that handles render props, pending states, `cacheComponents`, and flicker-free first paint, now you know how to build one. And if your nav sits inside a dynamic segment rather than at the root, the [`useRelativeHref` update](#update-in-segment-navigation-with-userelativehref) above shows how both the links and the highlight might soon get easier to build. Both implementations can be found in [next16-social-media](https://github.com/aurorascharff/next16-social-media) ([live demo](https://next16-social-media.vercel.app)): the [`usePathname` version](https://github.com/aurorascharff/next16-social-media/blob/main/components/ui/nav-link.tsx) and the [`useSelectedLayoutSegments` version](https://github.com/aurorascharff/next16-social-media/blob/main/components/ui/nav-link-segments.tsx).
 
 I hope this post has been helpful. Please let me know if you have any questions or comments, and follow me on [Bluesky](https://bsky.app/profile/aurorascharff.no) or [X](https://x.com/aurorascharff) for more updates. Happy coding! 🚀
