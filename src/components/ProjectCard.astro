@@ -1,0 +1,72 @@
+---
+import type { Project } from "../data/projects";
+
+export interface Props {
+  project: Project;
+  detailed?: boolean;
+}
+
+const { project, detailed = false } = Astro.props;
+const Heading = detailed ? "h2" : "h3";
+---
+
+<li class="my-8 flex flex-col gap-4 sm:flex-row sm:gap-6" id={project.id}>
+  <a
+    href={project.demo}
+    target="_blank"
+    class="focus-outline block shrink-0 sm:w-2/5"
+    aria-label={`Open the ${project.name} demo`}
+  >
+    <img
+      src={project.image}
+      alt={project.imageAlt}
+      width="1280"
+      height="720"
+      loading="lazy"
+      class="w-full rounded-lg border border-skin-line"
+    />
+  </a>
+  <div class="flex flex-col gap-[1px]">
+    <a
+      href={project.demo}
+      target="_blank"
+      class="inline-block text-lg font-medium text-skin-accent decoration-dashed underline-offset-4 hover:underline focus-visible:no-underline focus-visible:underline-offset-0"
+    >
+      <Heading class="inline">{project.name}</Heading>
+    </a>
+    <p>{detailed ? project.description : project.summary}</p>
+    <p class="mt-2 text-sm">
+      <a
+        href={project.demo}
+        target="_blank"
+        class="underline decoration-dashed underline-offset-4 hover:text-skin-accent"
+        >Live demo</a
+      >
+      <span aria-hidden="true">&nbsp;|&nbsp;</span>
+      <a
+        href={project.source}
+        target="_blank"
+        class="underline decoration-dashed underline-offset-4 hover:text-skin-accent"
+        >Source code</a
+      >
+    </p>
+    {
+      detailed && project.related.length > 0 && (
+        <p class="mt-2 text-sm">
+          Related:{" "}
+          {project.related.map((link, index) => (
+            <>
+              {index > 0 && <span aria-hidden="true">&nbsp;|&nbsp;</span>}
+              <a
+                href={link.href}
+                class="underline decoration-dashed underline-offset-4 hover:text-skin-accent"
+              >
+                {link.label}
+              </a>
+            </>
+          ))}
+        </p>
+      )
+    }
+  </div>
+</li>

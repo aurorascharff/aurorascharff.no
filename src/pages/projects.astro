@@ -1,0 +1,33 @@
+---
+import { SITE } from "@config";
+import Layout from "@layouts/Layout.astro";
+import Main from "@layouts/Main.astro";
+import Header from "@components/Header.astro";
+import Footer from "@components/Footer.astro";
+import ProjectCard from "@components/ProjectCard.astro";
+import { projects } from "../data/projects";
+---
+
+<Layout
+  title={`Projects | ${SITE.title}`}
+  description="Demo apps by Aurora Scharff for working through React and Next.js patterns, with live demos, source code, and related writing."
+>
+  <Header activeNav="projects" />
+  <Main
+    pageTitle="Projects"
+    pageDesc="Demo apps I build to work through React and Next.js patterns."
+  >
+    <ul>
+      {projects.map(project => <ProjectCard project={project} detailed />)}
+    </ul>
+    <p class="mt-8">
+      Smaller experiments and the code from my blog posts live on <a
+        href="https://github.com/aurorascharff"
+        target="_blank"
+        class="text-skin-accent underline decoration-dashed underline-offset-4 hover:text-skin-accent/80"
+        >GitHub</a
+      >.
+    </p>
+  </Main>
+  <Footer />
+</Layout>

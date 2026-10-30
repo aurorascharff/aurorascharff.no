@@ -6,26 +6,45 @@ import Footer from "@components/Footer.astro";
 import LinkButton from "@components/LinkButton.astro";
 import Hr from "@components/Hr.astro";
 import Card from "@components/Card";
+import Event from "@components/Event";
+import ProjectCard from "@components/ProjectCard.astro";
 import BuyMeACoffee from "@components/BuyMeACoffee";
 import Socials from "@components/Socials.astro";
 import getSortedPosts from "@utils/getSortedPosts";
+import getSortedEvents from "@utils/getSortedEvents";
 import getPostSlug from "@utils/getPostSlug";
+import { projects } from "../data/projects";
 import { SOCIALS } from "@config";
 
-const posts = await getCollection("blog");
+const posts = getSortedPosts(await getCollection("blog"));
+const featuredPosts = posts.filter(({ data }) => data.featured);
+const recentPosts = posts.filter(({ data }) => !data.featured).slice(0, 3);
 
-const sortedPosts = getSortedPosts(posts);
-const featuredPosts = sortedPosts.filter(({ data }) => data.featured);
-const recentPosts = sortedPosts.filter(({ data }) => !data.featured);
+const events = getSortedEvents(await getCollection("speaking"));
+const recentTalks = events
+  .filter(
+    ({ data }) => data.completed && data.link && /\btalk\b/i.test(data.name)
+  )
+  .slice(0, 3);
 
 const socialCount = SOCIALS.filter(social => social.active).length;
 ---
 
-<Layout>
+<Layout
+  description="Aurora Scharff is a software engineer on the Next.js team at Vercel. Demo apps, practical guides, and talks on React and Next.js."
+>
   <Header />
   <main id="main-content">
-    <section id="hero">
-      <h1 class="mr-2">/blog</h1>
+    <section id="hero" class="flow-root">
+      <img
+        src="/assets/main.JPG"
+        alt="Aurora Scharff"
+        width="3200"
+        height="3200"
+        fetchpriority="high"
+        class="mb-4 mt-4 w-40 rounded-lg sm:float-right sm:ml-6 sm:mt-8 sm:w-1/3"
+      />
+      <h1>Hey, I'm Aurora ♡</h1>
       <a
         target="_blank"
         href="/rss.xml"
@@ -42,21 +61,27 @@ const socialCount = SOCIALS.filter(social => social.active).length;
         </svg>
         <span class="sr-only">RSS Feed</span>
       </a>
-
       <p>
-        Hey, I'm Aurora ♡ I work on the Next.js team at Vercel, where I focus on
-        developer experience, docs, and education. I'm also the React
-        Certification Lead at certificates.dev. Here I write practical guides on
-        React, Next.js, and modern web development.
+        I'm a software engineer from Norway. I work on developer experience,
+        docs, and education on the Next.js team at <a
+          href="https://vercel.com"
+          target="_blank"
+          class="text-link">Vercel</a
+        >, and I'm the React Certification Lead at <a
+          href="https://certificates.dev"
+          target="_blank"
+          class="text-link">certificates.dev</a
+        >.
       </p>
-      <div
-        class="flex flex-col items-center gap-4 text-center sm:flex-row sm:text-start"
-      >
-        If you would like to support my work, you can
-        <BuyMeACoffee client:load />
-      </div>
+      <p>
+        Here you'll find the demo apps I build to work through React and Next.js
+        patterns, the guides I write about what I learn from them, and
+        recordings of my talks. There's more on the <a
+          href="/about"
+          class="text-link">about page</a
+        >.
+      </p>
       {
-        // only display if at least one social link is enabled
         socialCount > 0 && (
           <div class="social-wrapper">
             <div class="social-links">Social Links:</div>
@@ -68,11 +93,32 @@ const socialCount = SOCIALS.filter(social => social.active).length;
 
     <Hr />
 
+    <section id="projects">
+      <h2>Projects</h2>
+      <p class="section-desc">
+        Demo apps for trying out new Next.js features in something closer to a
+        real app. Each one has a live demo and its source on GitHub.
+      </p>
+      <ul>
+        {projects.map(project => <ProjectCard project={project} />)}
+      </ul>
+      <LinkButton href="/projects/" className="more-link">
+        All projects
+        <svg xmlns="http://www.w3.org/2000/svg"
+          ><path
+            d="m11.293 17.293 1.414 1.414L19.414 12l-6.707-6.707-1.414 1.414L15.586 11H6v2h9.586z"
+          ></path>
+        </svg>
+      </LinkButton>
+    </section>
+
+    <Hr />
+
     {
       featuredPosts.length > 0 && (
         <>
           <section id="featured">
-            <h2>Featured</h2>
+            <h2>Featured Posts</h2>
             <ul>
               {featuredPosts.map(post => (
                 <Card
@@ -83,41 +129,58 @@ const socialCount = SOCIALS.filter(social => social.active).length;
               ))}
             </ul>
           </section>
-          {recentPosts.length > 0 && <Hr />}
+          <Hr />
         </>
       )
     }
 
-    {
-      recentPosts.length > 0 && (
-        <section id="recent-posts">
-          <h2>Recent Posts</h2>
-          <ul>
-            {recentPosts.map(
-              (post, index) =>
-                index < 4 && (
-                  <Card
-                    href={`/posts/${getPostSlug(post)}/`}
-                    frontmatter={post.data}
-                    secHeading={false}
-                  />
-                )
-            )}
-          </ul>
-        </section>
-      )
-    }
-    <div class="all-posts-btn-wrapper">
-      <LinkButton href="/posts/">
-        All Posts
+    <section id="recent-posts">
+      <h2>Recent Posts</h2>
+      <ul>
+        {
+          recentPosts.map(post => (
+            <Card
+              href={`/posts/${getPostSlug(post)}/`}
+              frontmatter={post.data}
+              secHeading={false}
+            />
+          ))
+        }
+      </ul>
+      <LinkButton href="/posts/" className="more-link">
+        All posts
         <svg xmlns="http://www.w3.org/2000/svg"
           ><path
             d="m11.293 17.293 1.414 1.414L19.414 12l-6.707-6.707-1.414 1.414L15.586 11H6v2h9.586z"
           ></path>
         </svg>
       </LinkButton>
-    </div>
+    </section>
+
+    <Hr />
+
+    <section id="talks">
+      <h2>Recent Talks</h2>
+      <ul>
+        {recentTalks.map(({ data }) => <Event frontmatter={data} />)}
+      </ul>
+      <LinkButton href="/speaking/" className="more-link">
+        All talks and workshops
+        <svg xmlns="http://www.w3.org/2000/svg"
+          ><path
+            d="m11.293 17.293 1.414 1.414L19.414 12l-6.707-6.707-1.414 1.414L15.586 11H6v2h9.586z"
+          ></path>
+        </svg>
+      </LinkButton>
+    </section>
   </main>
+
+  <div
+    class="mb-8 mt-4 flex flex-col items-center justify-center gap-4 text-center sm:flex-row sm:text-start"
+  >
+    If you would like to support my work, you can
+    <BuyMeACoffee client:load />
+  </div>
 
   <Footer />
 </Layout>
@@ -128,7 +191,7 @@ const socialCount = SOCIALS.filter(social => social.active).length;
     @apply pb-6 pt-8;
   }
   #hero h1 {
-    @apply my-4 inline-block text-3xl font-bold sm:my-8 sm:text-5xl;
+    @apply my-4 mr-2 inline-block text-3xl font-bold sm:my-8 sm:text-4xl;
   }
   #hero .rss-link {
     @apply mb-6;
@@ -139,6 +202,9 @@ const socialCount = SOCIALS.filter(social => social.active).length;
   #hero p {
     @apply my-2;
   }
+  .text-link {
+    @apply underline decoration-dashed underline-offset-4 hover:text-skin-accent;
+  }
   .social-wrapper {
     @apply mt-4 flex flex-col sm:flex-row sm:items-center;
   }
@@ -146,16 +212,23 @@ const socialCount = SOCIALS.filter(social => social.active).length;
     @apply mb-1 mr-2 whitespace-nowrap sm:mb-0;
   }
 
-  /* ===== Featured & Recent Posts Sections ===== */
+  /* ===== Content Sections ===== */
+  #projects,
   #featured,
-  #recent-posts {
+  #recent-posts,
+  #talks {
     @apply pb-6 pt-12;
   }
+  #projects h2,
   #featured h2,
-  #recent-posts h2 {
+  #recent-posts h2,
+  #talks h2 {
     @apply text-2xl font-semibold tracking-wide;
   }
-  .all-posts-btn-wrapper {
-    @apply my-8 text-center;
+  .section-desc {
+    @apply mt-2;
+  }
+  .more-link {
+    @apply mt-2 underline decoration-dashed underline-offset-8;
   }
 </style>

@@ -21,6 +21,13 @@ const { currentPage, totalPages, paginatedPosts } = Astro.props;
 <Layout title={`Posts | ${SITE.title}`}>
   <Header activeNav="posts" />
   <Main pageTitle="Posts" pageDesc="All the articles I've posted.">
+    <nav
+      aria-label="Blog resources"
+      class="flex gap-6 text-sm text-skin-accent"
+    >
+      <a href="/tags" class="hover:underline">Browse by topic</a>
+      <a href="/rss.xml" class="hover:underline">Subscribe via RSS</a>
+    </nav>
     <ul>
       {
         paginatedPosts.map(post => (
