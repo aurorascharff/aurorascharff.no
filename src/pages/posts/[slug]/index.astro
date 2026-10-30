@@ -6,13 +6,14 @@ import getSortedPosts from "@utils/getSortedPosts";
 import getPageNumbers from "@utils/getPageNumbers";
 import getPagination from "@utils/getPagination";
 import getPostSlug from "@utils/getPostSlug";
+import postFilter from "@utils/postFilter";
 
 export interface Props {
   post: CollectionEntry<"blog">;
 }
 
 export async function getStaticPaths() {
-  const posts = await getCollection("blog", ({ data }) => !data.draft);
+  const posts = await getCollection("blog", postFilter);
 
   const postResult = posts.map(post => ({
     params: { slug: getPostSlug(post) },

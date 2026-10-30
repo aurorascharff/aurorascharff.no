@@ -8,9 +8,10 @@ import Footer from "@components/Footer.astro";
 import SearchBar from "@components/Search";
 import getSortedPosts from "@utils/getSortedPosts";
 import getPostSlug from "@utils/getPostSlug";
+import postFilter from "@utils/postFilter";
 
-// Retrieve all published articles
-const posts = await getCollection("blog", ({ data }) => !data.draft);
+// Include drafts locally, but keep them out of production builds.
+const posts = await getCollection("blog", postFilter);
 const sortedPosts = getSortedPosts(posts);
 
 // List of items to search in
