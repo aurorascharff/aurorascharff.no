@@ -342,25 +342,20 @@ Blocking navigation is the second behavior we wanted from React Router. There ar
 - For client-side navigation, the Next.js docs show a [navigation blocking pattern](https://nextjs.org/docs/app/api-reference/components/link#blocking-navigation) with Context and a custom `Link`.
 - For refreshes and closed tabs, the browser provides the [`beforeunload`](https://developer.mozilla.org/en-US/docs/Web/API/Window/beforeunload_event) event.
 
-Here, we'll handle client-side navigation by storing whether navigation is blocked and checking it inside the `navigate()` function we already use:
+The provider already owns `navigate()`, so it can keep one blocked state and check it when someone tries to leave:
 
 ```tsx
 // components/navigation-provider.tsx
 type NavigationContextValue = {
-  isPending: boolean;
+  // ...isPending and navigate
   setIsBlocked: (blocked: boolean) => void;
-  navigate: (href: string, options?: NavigateOptions) => void;
 };
 
 export function NavigationProvider({ children }: { children: ReactNode }) {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  // ...router and transition from above
   const [isBlocked, setIsBlocked] = useState(false);
 
-  function navigate(
-    href: string,
-    { replace = false, scroll }: NavigateOptions = {}
-  ) {
+  function navigate(href: string, options?: NavigateOptions) {
     if (
       isBlocked &&
       !window.confirm("You have unsaved changes. Leave anyway?")
@@ -368,56 +363,47 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    setIsBlocked(false);
-    startTransition(() => {
-      const options = { scroll };
-      if (replace) {
-        router.replace(href, options);
-      } else {
-        router.push(href, options);
-      }
-    });
+    // ...start the navigation as above
   }
 
-  return (
-    <NavigationContext value={{ isPending, setIsBlocked, navigate }}>
-      {children}
-    </NavigationContext>
-  );
+  // ...return the provider with setIsBlocked in its value
 }
 ```
 
-Now `navigate()` asks before leaving while something is blocked. The form still owns whether it is dirty, and only shares that decision with the provider, which we can do in an effect:
+The hook keeps that state in sync and handles full page unloads while its condition is true:
 
 ```tsx
-// components/editor.tsx
-"use client";
-
-import { useEffect, useState } from "react";
-import { useAppNavigation } from "./navigation-provider";
-
-export function Editor() {
-  const [isDirty, setIsDirty] = useState(false);
+// components/navigation-provider.tsx
+export function useNavigationBlocker(shouldBlock: boolean) {
   const { setIsBlocked } = useAppNavigation();
 
   useEffect(() => {
-    setIsBlocked(isDirty);
-    return () => setIsBlocked(false);
-  }, [isDirty, setIsBlocked]);
+    setIsBlocked(shouldBlock);
+    if (!shouldBlock) return;
 
-  return (
-    <form onChange={() => setIsDirty(true)}>
-      {/* fields and save button */}
-    </form>
-  );
+    function handleBeforeUnload(event: BeforeUnloadEvent) {
+      event.preventDefault();
+      event.returnValue = true;
+    }
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      setIsBlocked(false);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [setIsBlocked, shouldBlock]);
 }
 ```
 
-Here, the editor still owns `isDirty` and only registers it with the provider. After a save, it calls `setIsDirty(false)`. `NavigationProvider` has to wrap both the editor and the links that can leave it.
+The form calls `useNavigationBlocker(isDirty)`. The editor should keep `isDirty` true while a save is in flight, then set it to false after the save succeeds. If an upload also needs to finish, it can pass `isDirty || isUploading` instead.
 
-This example assumes there is one blocking form. With several editors, the provider should store registrations instead of one boolean so one editor cannot clear another's blocker.
+This version assumes one blocking form. If several forms can be dirty at the same time, the context needs to store separate registrations instead of one boolean.
 
-The blocker only covers navigation through `AppLink` and `navigate()`. A plain `Link`, a direct `router.push()`, and the browser's back and forward buttons skip it. `beforeunload` covers refreshes and closed tabs, but not client-side navigation. React Router can cover more because `useBlocker()` is part of the router's navigation lifecycle.
+Calling `preventDefault()` in the `beforeunload` handler requests the browser dialog, while `returnValue` keeps compatibility with legacy implementations. The browser controls the text. The event also does not fire reliably in every mobile lifecycle, so it should warn about unsaved work rather than replace durable draft storage.
+
+The blocker only covers client-side navigation through `AppLink` and `navigate()`. A plain `Link`, a direct `router.push()`, and the browser's back and forward buttons skip it. React Router can cover more because `useBlocker()` is part of the router's navigation lifecycle.
+
+With [Cache Components enabled](https://nextjs.org/docs/app/guides/preserving-ui-state), Next.js keeps up to three recently visited routes mounted with React's `<Activity>`, so going back can restore an unsaved form. It still does not block navigation, the oldest route can be evicted, and refreshing or closing the tab still needs `beforeunload` or durable draft storage.
 
 ## Using the Same Pattern Beyond Navigation
 
