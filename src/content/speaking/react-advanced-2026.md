@@ -2,7 +2,7 @@
 organizer: React Advanced 2026
 date: 2026-10-26T14:10:00Z
 name: "Remote Talk: What RSCs Can Do in Next.js Today"
-completed: false
+completed: true
 address: "Remote"
 link: "https://gitnation.com/contents/what-rscs-can-do-in-nextjs-today-3862"
 websiteLink: "https://reactadvanced.com"
