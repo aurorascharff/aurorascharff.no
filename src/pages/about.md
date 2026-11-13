@@ -7,10 +7,10 @@ title: "About me"
 
 Hey, I'm Aurora Scharff ♡
 
-I'm a Software Engineer from Norway, working on developer experience, docs, and education on the Next.js team at [Vercel](https://vercel.com), and as the React Certification Lead at [certificates.dev](https://certificates.dev). I contribute to the Next.js framework, build developer tooling, create demo applications, and write deep-dive blog posts. I'm also a member of the React Working Group.
+I'm a software engineer from Norway on the Next.js team at [Vercel](https://vercel.com), where I work on developer experience, docs, and education. My current focus is agentic developer experience and evals.
 
-I enjoy solving problems, learning new things, and sharing knowledge. I've delivered 30+ talks and workshops across 20+ conferences worldwide, including React Conf and Next.js Conf.
+As a member of the [React Docs & Community Working Group](https://react.dev/community/team#aurora-scharff), I contribute to React documentation alongside my work on the Next.js framework and developer tooling. Here on the blog, I share practical guides and demo applications about React, Next.js, and modern web development.
 
-You can also find my writing on the [certificates.dev blog](https://certificates.dev/blog?tech=react).
+Beyond the blog, I've delivered 30+ talks and workshops across 20+ conferences worldwide, including React Conf and Next.js Conf. I also lead React certification at [certificates.dev](https://certificates.dev), where you can find [more of my writing](https://certificates.dev/blog?tech=react).
 
 I'd love to hear from you. Reach out on X, Bluesky, or LinkedIn!
