@@ -7,7 +7,9 @@ title: "About me"
 
 Hey, I'm Aurora Scharff ♡
 
-I'm a software engineer from Norway on the Next.js team at [Vercel](https://vercel.com), working on agentic developer experience and evals. I contribute to the Next.js framework and React documentation, build developer tooling, and share knowledge through demo apps, blog posts, workshops, and conference talks.
+I'm a Software Engineer from Norway, working on developer experience, docs, and education on the Next.js team at [Vercel](https://vercel.com). I contribute to the Next.js framework, build developer tooling, create demo applications, and write deep-dive blog posts.
+
+My current focus is agentic developer experience and evals.
 
 I enjoy solving problems, learning new things, and sharing knowledge. I've delivered 30+ talks and workshops across 20+ conferences worldwide, including React Conf and Next.js Conf.
 
