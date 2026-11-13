@@ -1,6 +1,6 @@
 # aurorascharff.no
 
-Aurora Scharff's personal site and blog: practical guides on React, Next.js, and modern web development, plus a speaking archive. Live at [aurorascharff.no](https://aurorascharff.no).
+Aurora Scharff's personal site and blog. On the Next.js team at Vercel, working on agentic developer experience, tooling, and evaluations. Practical guides and experiments with React and Next.js, plus a speaking archive. Live at [aurorascharff.no](https://aurorascharff.no).
 
 Built with [Astro](https://astro.build), based on the [AstroPaper](https://github.com/satnaing/astro-paper) theme with a custom design.
 
